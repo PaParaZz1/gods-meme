@@ -14,6 +14,7 @@ const config: Config = {
       fontFamily: {
         inika: ["var(--font-inika)"],
         phudu: ["var(--font-phudu)"],
+        lexend: ["var(--font-lexend)"],
       },
       colors: {
         background: "hsl(var(--background))",

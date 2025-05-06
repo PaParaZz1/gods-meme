@@ -23,11 +23,14 @@ export default function LandingPage() {
       <div className="h-[320px]"></div>
 
       {/* Text content */}
-      <div className="text-center px-6 py-8 max-w-sm mx-auto">
-        <h1 className="text-5xl font-inika text-[#333333] mb-6">GOD'S MEME</h1>
-        <p className="text-[#333333] text-lg leading-relaxed font-lexend">
-          Type in a keyword, and boom! God's MEME will spit out a meme so perfect, it'll make you question whether free
-          will even exists. Because apparently, even the universe runs on memes.
+      <div className="text-center px-6 py-8 max-w-xs mx-auto">
+        <h1 className="text-4xl font-inika text-[#333333] mb-6">GOD'S MEME</h1>
+        <p className="text-[#333333] text-lg leading-relaxed font-['Lexend']">
+          Type in a keyword, and boom! 
+          <br />
+          God's MEME will deliver a meme so perfect, you'll question free will itself. 
+          <br />
+          Because apparently, even the universe runs on memes.
         </p>
       </div>
 

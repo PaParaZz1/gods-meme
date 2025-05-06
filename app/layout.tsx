@@ -1,5 +1,5 @@
 import type React from "react"
-import { Inika, Phudu } from "next/font/google"
+import { Inika, Phudu, Lexend } from "next/font/google"
 import "./globals.css"
 
 const inika = Inika({
@@ -12,6 +12,12 @@ const phudu = Phudu({
   weight: ["400", "500", "700"],
   subsets: ["latin"],
   variable: "--font-phudu",
+})
+
+const lexend = Lexend({
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+  variable: "--font-lexend",
 })
 
 export default function RootLayout({
