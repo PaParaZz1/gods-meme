@@ -16,6 +16,11 @@ export default function MemeGenerator() {
   const [isInputFocused, setIsInputFocused] = useState(false)
   const [isBlending, setIsBlending] = useState(false)
   const [isTouchActive, setIsTouchActive] = useState(false)
+  const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 })
+  const [isDragging, setIsDragging] = useState(false)
+  const dragItemRef = useRef<HTMLDivElement>(null)
+  const initialTouchRef = useRef({ x: 0, y: 0 })
+  const initialElementPosRef = useRef({ x: 0, y: 0 })
 
   const tabContent = {
     sentiment: {
@@ -97,43 +102,73 @@ export default function MemeGenerator() {
     setDraggedItem(null)
   }
 
-  // add touch event handler for mobile devices
-  const handleTouchStart = (item: string) => {
+  // Enhanced touch event handlers for mobile devices
+  const handleItemTouchStart = (e: React.TouchEvent, item: string) => {
+    if (getWaterLevel(item) <= 0) return;
+    
     setDraggedItem(item)
+    setIsDragging(true)
+    
+    const touch = e.touches[0]
+    initialTouchRef.current = { x: touch.clientX, y: touch.clientY }
+    
+    // Use touch position directly as the initial drag position
+    setDragPosition({ x: touch.clientX, y: touch.clientY })
   }
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (draggedItem && godAreaRef.current) {
-      const godRect = godAreaRef.current.getBoundingClientRect()
-      const touch = e.changedTouches[0]
-      
-      if (
-        touch.clientX >= godRect.left &&
-        touch.clientX <= godRect.right &&
-        touch.clientY >= godRect.top &&
-        touch.clientY <= godRect.bottom
-      ) {
-        setWaterLevels(prev => {
-          const currentLevel = prev[selectedTab as keyof typeof waterLevels][draggedItem as any]
-          if (currentLevel > 0) {
-            return {
-              ...prev,
-              [selectedTab]: {
-                ...prev[selectedTab as keyof typeof waterLevels],
-                [draggedItem]: currentLevel - 1
-              }
+  const handleItemTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging || !draggedItem) return;
+    
+    const touch = e.touches[0]
+    
+    // Use current touch position directly
+    setDragPosition({
+      x: touch.clientX,
+      y: touch.clientY
+    })
+    
+    e.preventDefault()
+  }
+
+  const handleItemTouchEnd = (e: React.TouchEvent) => {
+    if (!isDragging || !draggedItem || !godAreaRef.current) {
+      setIsDragging(false)
+      setDraggedItem(null)
+      return;
+    }
+    
+    const godRect = godAreaRef.current.getBoundingClientRect()
+    const touch = e.changedTouches[0]
+    
+    if (
+      touch.clientX >= godRect.left &&
+      touch.clientX <= godRect.right &&
+      touch.clientY >= godRect.top &&
+      touch.clientY <= godRect.bottom
+    ) {
+      // Dragged to god area, decrease water level
+      setWaterLevels(prev => {
+        const currentLevel = prev[selectedTab as keyof typeof waterLevels][draggedItem as any]
+        if (currentLevel > 0) {
+          return {
+            ...prev,
+            [selectedTab]: {
+              ...prev[selectedTab as keyof typeof waterLevels],
+              [draggedItem]: currentLevel - 1
             }
           }
-          return prev
-        })
-      }
+        }
+        return prev
+      })
     }
+    
+    setIsDragging(false)
     setDraggedItem(null)
   }
 
   const handleBlendClick = () => {
     setIsBlending(true)
-    // 模拟处理时间，3秒后重置状态
+    // Simulate processing time, reset state after 3 seconds
     setTimeout(() => {
       setIsBlending(false)
     }, 3000)
@@ -144,14 +179,18 @@ export default function MemeGenerator() {
   }
 
   const handleButtonTouchEnd = () => {
-    // 短暂延迟重置状态，让用户能看到效果
+    // Short delay to reset state, allowing user to see the effect
     setTimeout(() => {
       setIsTouchActive(false)
     }, 300)
   }
 
   return (
-    <div className="flex flex-col items-center max-w-md mx-auto min-h-screen">
+    <div 
+      className="flex flex-col items-center max-w-md mx-auto min-h-screen"
+      onTouchMove={handleItemTouchMove}
+      onTouchEnd={handleItemTouchEnd}
+    >
       {/* Header */}
       <div className="w-full flex flex-col items-center relative px-6 pt-8">
         {/* Question mark button positioned absolutely to the right */}
@@ -279,19 +318,19 @@ export default function MemeGenerator() {
                 onClick={() => toggleWaterLevel(item)}
               >
                 <div 
-                  className="h-[78px] flex items-center justify-center relative"
+                  ref={draggedItem === item ? dragItemRef : null}
+                  className={`h-[78px] flex items-center justify-center relative ${getWaterLevel(item) > 0 ? 'cursor-grab active:cursor-grabbing' : ''}`}
                   draggable={getWaterLevel(item) > 0}
                   onDragStart={() => handleDragStart(item)}
                   onDragEnd={handleDragEnd}
-                  onTouchStart={() => handleTouchStart(item)}
-                  onTouchEnd={handleTouchEnd}
+                  onTouchStart={(e) => handleItemTouchStart(e, item)}
                 >
                   <Image 
                     src={`/glass_base.png`} 
                     alt={item} 
                     width={48} 
                     height={72} 
-                    className={`object-contain relative z-10 ${draggedItem === item ? 'opacity-50' : ''}`}
+                    className={`object-contain relative z-10 ${draggedItem === item && isDragging ? 'opacity-30' : draggedItem === item ? 'opacity-50' : ''}`}
                   />
                   
                   {getWaterLevel(item) > 0 && (
@@ -301,7 +340,7 @@ export default function MemeGenerator() {
                         alt={`Water level ${getWaterLevel(item)}`}
                         width={48}
                         height={72}
-                        className={`object-contain transition-all duration-300 ease-out ${draggedItem === item ? 'opacity-50' : ''}`}
+                        className={`object-contain transition-all duration-300 ease-out ${draggedItem === item && isDragging ? 'opacity-30' : draggedItem === item ? 'opacity-50' : ''}`}
                       />
                     </div>
                   )}
@@ -338,10 +377,10 @@ export default function MemeGenerator() {
             BLEND IT
           </span>
           
-          {/* 悬停时的背景效果 */}
+          {/* Hover background effect */}
           <div className={`absolute inset-0 bg-gradient-to-r from-[#333333] via-[#444444] to-[#333333] transition-opacity duration-300 ${isTouchActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}></div>
           
-          {/* 悬停时的粒子效果 */}
+          {/* Hover particle effects */}
           <div className={`absolute inset-0 overflow-hidden transition-opacity duration-300 ${isTouchActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
             <div className="absolute h-1 w-1 bg-white/40 rounded-full top-[20%] left-[15%] animate-float-particle1"></div>
             <div className="absolute h-1.5 w-1.5 bg-white/30 rounded-full top-[60%] left-[25%] animate-float-particle2"></div>
@@ -350,17 +389,17 @@ export default function MemeGenerator() {
             <div className="absolute h-1.5 w-1.5 bg-white/30 rounded-full top-[40%] left-[40%] animate-float-particle5"></div>
           </div>
           
-          {/* 文字效果 */}
+          {/* Text effect */}
           <span className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${isTouchActive ? 'tracking-wider' : ''}`}>
             {isBlending ? '' : ''}
           </span>
           
           {isBlending && (
             <>
-              {/* 边缘脉冲效果 */}
+              {/* Pulse border effect */}
               <div className="absolute inset-0 rounded-full border-2 border-white/0 animate-pulse-border"></div>
               
-              {/* 处理中的点 */}
+              {/* Loading dots */}
               <div className="absolute right-8 top-1/2 -translate-y-1/2 flex space-x-1">
                 <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse-dot1"></div>
                 <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse-dot2"></div>
@@ -376,6 +415,40 @@ export default function MemeGenerator() {
         <ChevronsDown className="w-4 h-4" />
         <span className="text-xs text-[#666666]">Scroll down to view gallery</span>
       </div>
+
+      {/* Floating drag element */}
+      {isDragging && draggedItem && (
+        <div 
+          className="fixed pointer-events-none z-50"
+          style={{ 
+            left: `${dragPosition.x}px`, 
+            top: `${dragPosition.y}px`,
+            transform: 'translate(-50%, -50%)' // Center the element
+          }}
+        >
+          <div className="relative">
+            <Image 
+              src={`/glass_base.png`} 
+              alt={draggedItem} 
+              width={48} 
+              height={72} 
+              className="object-contain relative z-10 opacity-80"
+            />
+            
+            {getWaterLevel(draggedItem) > 0 && (
+              <div className="absolute inset-0 scale-220 bottom-5 left-[calc(-4px)] flex items-center justify-center z-0">
+                <Image 
+                  src={`/water_level${getWaterLevel(draggedItem)}.png`}
+                  alt={`Water level ${getWaterLevel(draggedItem)}`}
+                  width={48}
+                  height={72}
+                  className="object-contain opacity-80"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Add these animations to your global CSS or tailwind.config.js */}
       <style jsx global>{`
