@@ -11,6 +11,12 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      scale: {
+        '160': '1.6',
+        '180': '1.8',
+        '200': '2',
+        '220': '2.2',
+      },
       fontFamily: {
         inika: ["var(--font-inika)"],
         phudu: ["var(--font-phudu)"],

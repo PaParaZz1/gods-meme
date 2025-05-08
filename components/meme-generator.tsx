@@ -6,6 +6,11 @@ import Image from "next/image"
 
 export default function MemeGenerator() {
   const [selectedTab, setSelectedTab] = useState("sentiment")
+  const [waterLevels, setWaterLevels] = useState({
+    sentiment: { happiness: 3, love: 3, anger: 3, sorrow: 3, fear: 3, hate: 3 },
+    intention: { humor: 3, sarcasm: 3, rant: 3, encourage: 3, "self-mockery": 3, expressive: 3 },
+    style: { motivational: 3, funny: 3, wholesome: 3, dark: 3, romantic: 3, sarcastic: 3 }
+  })
 
   const tabContent = {
     sentiment: {
@@ -23,6 +28,25 @@ export default function MemeGenerator() {
   }
 
   const currentTabContent = tabContent[selectedTab as keyof typeof tabContent]
+
+  const toggleWaterLevel = (item: keyof typeof waterLevels.sentiment | keyof typeof waterLevels.intention | keyof typeof waterLevels.style) => {
+    setWaterLevels(prev => {
+      const currentLevel = prev[selectedTab][item]
+      const newLevel = currentLevel % 3 + 1
+      
+      return {
+        ...prev,
+        [selectedTab]: {
+          ...prev[selectedTab as keyof typeof waterLevels],
+          [item]: newLevel
+        }
+      }
+    })
+  }
+
+  const getWaterLevel = (item: string) => {
+    return waterLevels[selectedTab as keyof typeof waterLevels][item as any] || 2
+  }
 
   return (
     <div className="flex flex-col items-center max-w-md mx-auto min-h-screen">
@@ -141,9 +165,29 @@ export default function MemeGenerator() {
         <div className="bg-[#EEEEEE] rounded-lg p-4 mx-2">
           <div className="grid grid-cols-6 gap-2">
             {currentTabContent.items.map((item) => (
-              <div key={item} className="flex flex-col items-center">
-                <div className="h-[78px] flex items-center justify-center">
-                  <Image src={`/glass_base.png`} alt={item} width={48} height={72} className="object-contain" />
+              <div 
+                key={item} 
+                className="flex flex-col items-center cursor-pointer"
+                onClick={() => toggleWaterLevel(item)}
+              >
+                <div className="h-[78px] flex items-center justify-center relative">
+                  <Image 
+                    src={`/glass_base.png`} 
+                    alt={item} 
+                    width={48} 
+                    height={72} 
+                    className="object-contain relative z-10" 
+                  />
+                  
+                  <div className="absolute inset-0 scale-220 bottom-5 left-[calc(-4px)] flex items-center justify-center z-0">
+                    <Image 
+                      src={`/water_level${getWaterLevel(item)}.png`}
+                      alt={`Water level ${getWaterLevel(item)}`}
+                      width={48}
+                      height={72}
+                      className="object-contain transition-all duration-300 ease-out"
+                    />
+                  </div>
                 </div>
                 <span className="text-xs font-inika text-center mt-1">{item}</span>
               </div>
@@ -182,12 +226,21 @@ export default function MemeGenerator() {
           100% { transform: translateX(100%); }
         }
         
+        @keyframes wave {
+          0%, 100% { transform: translateX(-100%); }
+          50% { transform: translateX(100%); }
+        }
+        
         .animate-fadeIn {
           animation: fadeIn 0.3s ease-out forwards;
         }
         
         .animate-shimmer {
           animation: shimmer 2s infinite;
+        }
+        
+        .animate-wave {
+          animation: wave 2s ease-in-out infinite;
         }
       `}</style>
     </div>
