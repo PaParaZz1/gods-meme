@@ -71,7 +71,7 @@ export default function MemeGenerator() {
       </div>
 
       {/* Category Tabs */}
-      <div className="w-full px-16 mt-6">
+      <div className="w-full px-16 my-6">
         <div className="flex space-x-2 items-center justify-center">
           <button
             className={`flex items-center rounded-full relative overflow-hidden transform transition-all duration-300 ease-in-out active:scale-95 ${
@@ -137,7 +137,7 @@ export default function MemeGenerator() {
       </div>
 
       {/* Dynamic Content Grid based on selected tab */}
-      <div className="w-full px-2 mt-2">
+      <div className="w-full px-2">
         <div className="bg-[#EEEEEE] rounded-lg p-4 mx-2">
           <div className="grid grid-cols-6 gap-2">
             {currentTabContent.items.map((item) => (
