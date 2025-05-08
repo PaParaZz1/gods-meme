@@ -11,18 +11,20 @@ export default function LandingPage() {
   const [isHovering, setIsHovering] = useState(false)
   const [isClicking, setIsClicking] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [isSmallMobile, setIsSmallMobile] = useState(false)
 
-  // Detect mobile devices
+  // Detect mobile devices and small screens
   useEffect(() => {
-    const checkMobile = () => {
+    const checkScreenSize = () => {
       setIsMobile(window.innerWidth < 768)
+      setIsSmallMobile(window.innerWidth < 380) // For iPhone SE and other small devices
     }
     
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
+    checkScreenSize()
+    window.addEventListener('resize', checkScreenSize)
     
     return () => {
-      window.removeEventListener('resize', checkMobile)
+      window.removeEventListener('resize', checkScreenSize)
     }
   }, [])
 
@@ -52,20 +54,27 @@ export default function LandingPage() {
           <Image 
             src={LogoCat} 
             alt="God's Meme Cat Logo" 
-            width={400} 
-            height={320}
+            width={isSmallMobile ? 240 : 400} 
+            height={isSmallMobile ? 200 : 320}
+            className="transform-gpu transition-all duration-300"
+            style={{ 
+              width: isSmallMobile ? '240px' : '400px',
+              height: 'auto'
+            }}
             priority
           />
         </div>
       </div>
 
-      {/* Spacer to push content below fixed header */}
-      <div className="h-[320px]"></div>
+      {/* Spacer to push content below fixed header - responsive height */}
+      <div className={`${isSmallMobile ? 'h-[200px]' : 'h-[320px]'}`}></div>
 
-      {/* Text content */}
+      {/* Text content - adjust for small screens */}
       <div className="text-center px-6 py-8 max-w-xs mx-auto">
-        <h1 className="text-4xl font-inika text-[#333333] mb-6">GOD'S MEME</h1>
-        <p className="text-[#333333] text-lg leading-relaxed font-['Lexend']">
+        <h1 className={`font-inika text-[#333333] mb-6 ${isSmallMobile ? 'text-3xl' : 'text-4xl'}`}>
+          GOD'S MEME
+        </h1>
+        <p className={`text-[#333333] leading-relaxed font-['Lexend'] ${isSmallMobile ? 'text-base' : 'text-lg'}`}>
           Type in a keyword, and boom! 
           <br />
           God's MEME will deliver a meme so perfect, you'll question free will itself. 

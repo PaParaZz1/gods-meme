@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { ChevronsDown } from "lucide-react"
 import Image from "next/image"
 
@@ -102,6 +102,27 @@ export default function MemeGenerator() {
     setDraggedItem(null)
   }
 
+  // Prevent page scrolling when dragging
+  const preventScroll = (e: TouchEvent) => {
+    if (isDragging) {
+      e.preventDefault();
+    }
+  }
+
+  // Add and remove event listeners for scroll prevention
+  useEffect(() => {
+    if (isDragging) {
+      // Add passive: false to override default browser behavior
+      document.addEventListener('touchmove', preventScroll, { passive: false });
+    } else {
+      document.removeEventListener('touchmove', preventScroll);
+    }
+    
+    return () => {
+      document.removeEventListener('touchmove', preventScroll);
+    };
+  }, [isDragging]);
+
   // Enhanced touch event handlers for mobile devices
   const handleItemTouchStart = (e: React.TouchEvent, item: string) => {
     if (getWaterLevel(item) <= 0) return;
@@ -114,6 +135,9 @@ export default function MemeGenerator() {
     
     // Use touch position directly as the initial drag position
     setDragPosition({ x: touch.clientX, y: touch.clientY })
+    
+    // Prevent default to avoid triggering scroll
+    e.preventDefault();
   }
 
   const handleItemTouchMove = (e: React.TouchEvent) => {
@@ -127,7 +151,8 @@ export default function MemeGenerator() {
       y: touch.clientY
     })
     
-    e.preventDefault()
+    // Prevent default to avoid triggering scroll
+    e.preventDefault();
   }
 
   const handleItemTouchEnd = (e: React.TouchEvent) => {
@@ -187,7 +212,7 @@ export default function MemeGenerator() {
 
   return (
     <div 
-      className="flex flex-col items-center max-w-md mx-auto min-h-screen"
+      className="flex flex-col items-center max-w-md mx-auto min-h-screen overscroll-none"
       onTouchMove={handleItemTouchMove}
       onTouchEnd={handleItemTouchEnd}
     >
