@@ -1,87 +1,151 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronDown } from "lucide-react"
-import CatLogo from "./shared/cat-logo"
-import { SentimentIcon, Character1Icon, Character2Icon, GlassIcon, DuckCharacter } from "./shared/icons"
+import { ChevronsDown } from "lucide-react"
+import Image from "next/image"
 
 export default function MemeGenerator() {
   const [selectedTab, setSelectedTab] = useState("sentiment")
 
+  const tabContent = {
+    sentiment: {
+      title: "Sentiment",
+      items: ["happiness", "love", "anger", "sorrow", "fear", "hate"]
+    },
+    intention: {
+      title: "Intention",
+      items: ["humor", "sarcasm", "rant", "encourage", "self-mockery", "expressive"]
+    },
+    style: {
+      title: "Style",
+      items: ["motivational", "funny", "wholesome", "dark", "romantic", "sarcastic"]
+    }
+  }
+
+  const currentTabContent = tabContent[selectedTab as keyof typeof tabContent]
+
   return (
     <div className="flex flex-col items-center max-w-md mx-auto min-h-screen">
       {/* Header */}
-      <div className="w-full flex justify-between items-center px-6 py-4">
-        <div className="flex items-center">
-          <div className="bg-[#333333] rounded-full w-16 h-16 flex items-center justify-center mr-3">
-            <CatLogo size="small" />
-          </div>
-          <h1 className="text-3xl font-inika font-bold text-[#333333]">GOD'S MEME</h1>
+      <div className="w-full flex flex-col items-center relative px-6 pt-8">
+        {/* Question mark button positioned absolutely to the right */}
+        <div className="absolute right-6 top-10">
+          <button className="w-6 h-6 bg-[#333333] rounded-full flex items-center justify-center text-white text-xl">
+            ?
+          </button>
         </div>
-        <button className="w-10 h-10 bg-[#333333] rounded-full flex items-center justify-center text-white text-xl font-bold">
-          ?
-        </button>
+        
+        {/* Centered logo and title */}
+        <div className="flex flex-col items-center">
+          <div className="bg-[#333333] rounded-full w-16 h-16 flex items-center justify-center mb-2">
+            <Image src="/logo_head.png" alt="God's Meme Logo" width={96} height={96} />
+          </div>
+          <h1 className="text-3xl font-inika text-[#333333]">GOD'S MEME</h1>
+        </div>
       </div>
 
-      {/* Search Input */}
-      <div className="w-full px-6 mt-4 relative">
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full">
-          <div className="border-b-2 border-[#333333] w-full absolute top-0"></div>
+      {/* Search Input with curved lines */}
+      <div className="w-full mt-4 relative">
+        <div className="relative px-8">
+          <input
+            type="text"
+            placeholder="Enter your keywords"
+            className="w-full px-6 py-3 rounded-full border-2 border-[#333333] text-left bg-white font-lexend"
+            style={{ textAlign: 'left' }}
+          />
         </div>
-        <input
-          type="text"
-          placeholder="Enter your keywords"
-          className="w-full px-6 py-3 rounded-full border-2 border-[#333333] text-center relative z-10 bg-white"
-        />
+        
+        {/* Left curved line - flatter curve from edge to padding */}
+        <div className="absolute left-0 top-1/4 -translate-y-1/2 pointer-events-none">
+          <svg width="32" height="20" viewBox="0 0 32 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 5 Q10 15, 32 20" stroke="#333333" strokeWidth="2" />
+          </svg>
+        </div>
+        
+        {/* Right curved line - flatter curve from padding to edge */}
+        <div className="absolute right-0 top-1/4 -translate-y-1/2 pointer-events-none">
+          <svg width="32" height="20" viewBox="0 0 32 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M32 5 Q22 15, 0 20" stroke="#333333" strokeWidth="2" />
+          </svg>
+        </div>
       </div>
 
       {/* Category Tabs */}
-      <div className="w-full px-6 mt-6">
-        <div className="flex space-x-2">
+      <div className="w-full px-16 mt-6">
+        <div className="flex space-x-2 items-center justify-center">
           <button
-            className={`flex items-center rounded-full px-4 py-2 ${
-              selectedTab === "sentiment" ? "bg-[#EEEEEE]" : "bg-white"
+            className={`flex items-center rounded-full relative overflow-hidden transform transition-all duration-300 ease-in-out active:scale-95 ${
+              selectedTab === "sentiment" 
+                ? "pr-3 bg-[#EEEEEE] shadow-inner" 
+                : "bg-white hover:bg-gray-50 hover:shadow-sm"
             }`}
             onClick={() => setSelectedTab("sentiment")}
           >
-            <div className="w-10 h-10 rounded-full border-2 border-[#333333] flex items-center justify-center mr-2">
-              <SentimentIcon />
+            <div className={`relative z-10 transition-transform duration-300 ${selectedTab === "sentiment" ? "scale-100" : ""}`}>
+              <Image src="/sentiment.png" alt="Sentiment" width={49} height={49} className="mr-1" />
             </div>
-            <span className="font-inika">Sentiment</span>
+            {selectedTab === "sentiment" && (
+              <span className="font-inika text-sm relative z-10 animate-fadeIn">
+                Sentiment
+              </span>
+            )}
+            {selectedTab === "sentiment" && (
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
+            )}
           </button>
           <button
-            className={`flex items-center rounded-full px-4 py-2 ${
-              selectedTab === "character1" ? "bg-[#EEEEEE]" : "bg-white"
+            className={`flex items-center rounded-full relative overflow-hidden transform transition-all duration-300 ease-in-out active:scale-95 ${
+              selectedTab === "intention" 
+                ? "pr-3 bg-[#EEEEEE] shadow-inner" 
+                : "bg-white hover:bg-gray-50 hover:shadow-sm"
             }`}
-            onClick={() => setSelectedTab("character1")}
+            onClick={() => setSelectedTab("intention")}
           >
-            <div className="w-10 h-10 rounded-full border-2 border-[#333333] flex items-center justify-center">
-              <Character1Icon />
+            <div className={`relative z-10 transition-transform duration-300 ${selectedTab === "intention" ? "scale-100" : ""}`}>
+              <Image src="/intention.png" alt="Intention" width={49} height={49} className="mr-1" />
             </div>
+            {selectedTab === "intention" && (
+              <span className="font-inika text-sm relative z-10 animate-fadeIn">
+                Intention
+              </span>
+            )}
+            {selectedTab === "intention" && (
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
+            )}
           </button>
           <button
-            className={`flex items-center rounded-full px-4 py-2 ${
-              selectedTab === "character2" ? "bg-[#EEEEEE]" : "bg-white"
+            className={`flex items-center rounded-full relative overflow-hidden transform transition-all duration-300 ease-in-out active:scale-95 ${
+              selectedTab === "style" 
+                ? "pr-3 bg-[#EEEEEE] shadow-inner" 
+                : "bg-white hover:bg-gray-50 hover:shadow-sm"
             }`}
-            onClick={() => setSelectedTab("character2")}
+            onClick={() => setSelectedTab("style")}
           >
-            <div className="w-10 h-10 rounded-full border-2 border-[#333333] flex items-center justify-center">
-              <Character2Icon />
+            <div className={`relative z-10 transition-transform duration-300 ${selectedTab === "style" ? "scale-100" : ""}`}>
+              <Image src="/style.png" alt="Style" width={49} height={49} className="mr-1" />
             </div>
+            {selectedTab === "style" && (
+              <span className="font-inika text-sm relative z-10 animate-fadeIn">
+                Style
+              </span>
+            )}
+            {selectedTab === "style" && (
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
+            )}
           </button>
         </div>
       </div>
 
-      {/* Emotions Grid */}
-      <div className="w-full px-6 mt-4">
-        <div className="bg-[#EEEEEE] rounded-lg p-4">
+      {/* Dynamic Content Grid based on selected tab */}
+      <div className="w-full px-2 mt-2">
+        <div className="bg-[#EEEEEE] rounded-lg p-4 mx-2">
           <div className="grid grid-cols-6 gap-2">
-            {["happiness", "love", "anger", "sorrow", "fear", "hate"].map((emotion) => (
-              <div key={emotion} className="flex flex-col items-center">
-                <div className="w-12 h-16 flex items-center justify-center">
-                  <GlassIcon />
+            {currentTabContent.items.map((item) => (
+              <div key={item} className="flex flex-col items-center">
+                <div className="h-[78px] flex items-center justify-center">
+                  <Image src={`/glass_base.png`} alt={item} width={48} height={72} className="object-contain" />
                 </div>
-                <span className="text-xs mt-1">{emotion}</span>
+                <span className="text-xs font-inika text-center mt-1">{item}</span>
               </div>
             ))}
           </div>
@@ -89,23 +153,43 @@ export default function MemeGenerator() {
       </div>
 
       {/* Character Display */}
-      <div className="w-full flex justify-center mt-8 relative">
-        <div className="absolute bottom-0 w-full border-b-2 border-[#333333]"></div>
+      <div className="w-full flex justify-center mt-4 relative">
         <div className="relative">
-          <DuckCharacter />
+          <Image src="/meme_god_static.png" alt="Meme God" width={392} height={230} />
         </div>
       </div>
 
       {/* Blend Button */}
-      <div className="w-full px-6 mt-16 mb-4">
-        <button className="w-full bg-[#333333] text-white py-4 rounded-full font-phudu text-xl">BLEND IT</button>
+      <div className="w-full px-6 mt-8 mb-4">
+        <button className="w-full bg-[#333333] text-white py-4 rounded-full font-phudu text-2xl transform transition-transform active:scale-98 hover:shadow-lg">BLEND IT</button>
       </div>
 
       {/* Scroll Indicator */}
-      <div className="flex flex-col items-center mb-8">
-        <ChevronDown className="w-6 h-6" />
-        <span className="text-sm text-[#666666]">Scroll down to view gallery</span>
+      <div className="flex flex-col items-center">
+        <ChevronsDown className="w-4 h-4" />
+        <span className="text-xs text-[#666666]">Scroll down to view gallery</span>
       </div>
+
+      {/* Add these animations to your global CSS or tailwind.config.js */}
+      <style jsx global>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateX(-10px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+        
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out forwards;
+        }
+        
+        .animate-shimmer {
+          animation: shimmer 2s infinite;
+        }
+      `}</style>
     </div>
   )
 }
