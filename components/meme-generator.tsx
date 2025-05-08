@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { ChevronsDown } from "lucide-react"
 import Image from "next/image"
 
@@ -11,6 +11,11 @@ export default function MemeGenerator() {
     intention: { humor: 3, sarcasm: 3, rant: 3, encourage: 3, "self-mockery": 3, expressive: 3 },
     style: { motivational: 3, funny: 3, wholesome: 3, dark: 3, romantic: 3, sarcastic: 3 }
   })
+  const [draggedItem, setDraggedItem] = useState<string | null>(null)
+  const godAreaRef = useRef<HTMLDivElement>(null)
+  const [isInputFocused, setIsInputFocused] = useState(false)
+  const [isBlending, setIsBlending] = useState(false)
+  const [isTouchActive, setIsTouchActive] = useState(false)
 
   const tabContent = {
     sentiment: {
@@ -32,6 +37,10 @@ export default function MemeGenerator() {
   const toggleWaterLevel = (item: keyof typeof waterLevels.sentiment | keyof typeof waterLevels.intention | keyof typeof waterLevels.style) => {
     setWaterLevels(prev => {
       const currentLevel = prev[selectedTab][item]
+      // only increase the level if it's not already at the max
+      if (currentLevel === 3) {
+        return prev
+      }
       const newLevel = currentLevel % 3 + 1
       
       return {
@@ -45,7 +54,100 @@ export default function MemeGenerator() {
   }
 
   const getWaterLevel = (item: string) => {
-    return waterLevels[selectedTab as keyof typeof waterLevels][item as any] || 2
+    return waterLevels[selectedTab as keyof typeof waterLevels][item as any] || 0
+  }
+
+  const handleDragStart = (item: string) => {
+    setDraggedItem(item)
+  }
+
+  // handle drag end event for desktop/pc devices
+  const handleDragEnd = () => {
+    if (draggedItem && godAreaRef.current) {
+      const godRect = godAreaRef.current.getBoundingClientRect()
+      
+      if (
+        typeof window.event !== 'undefined' && 
+        'clientX' in window.event && 
+        'clientY' in window.event
+      ) {
+        const e = window.event as MouseEvent
+        if (
+          e.clientX >= godRect.left &&
+          e.clientX <= godRect.right &&
+          e.clientY >= godRect.top &&
+          e.clientY <= godRect.bottom
+        ) {
+          setWaterLevels(prev => {
+            const currentLevel = prev[selectedTab as keyof typeof waterLevels][draggedItem as any]
+            if (currentLevel > 0) {
+              return {
+                ...prev,
+                [selectedTab]: {
+                  ...prev[selectedTab as keyof typeof waterLevels],
+                  [draggedItem]: currentLevel - 1
+                }
+              }
+            }
+            return prev
+          })
+        }
+      }
+    }
+    setDraggedItem(null)
+  }
+
+  // add touch event handler for mobile devices
+  const handleTouchStart = (item: string) => {
+    setDraggedItem(item)
+  }
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (draggedItem && godAreaRef.current) {
+      const godRect = godAreaRef.current.getBoundingClientRect()
+      const touch = e.changedTouches[0]
+      
+      if (
+        touch.clientX >= godRect.left &&
+        touch.clientX <= godRect.right &&
+        touch.clientY >= godRect.top &&
+        touch.clientY <= godRect.bottom
+      ) {
+        setWaterLevels(prev => {
+          const currentLevel = prev[selectedTab as keyof typeof waterLevels][draggedItem as any]
+          if (currentLevel > 0) {
+            return {
+              ...prev,
+              [selectedTab]: {
+                ...prev[selectedTab as keyof typeof waterLevels],
+                [draggedItem]: currentLevel - 1
+              }
+            }
+          }
+          return prev
+        })
+      }
+    }
+    setDraggedItem(null)
+  }
+
+  const handleBlendClick = () => {
+    setIsBlending(true)
+    // 模拟处理时间，3秒后重置状态
+    setTimeout(() => {
+      setIsBlending(false)
+    }, 3000)
+  }
+
+  const handleButtonTouchStart = () => {
+    setIsTouchActive(true)
+  }
+
+  const handleButtonTouchEnd = () => {
+    // 短暂延迟重置状态，让用户能看到效果
+    setTimeout(() => {
+      setIsTouchActive(false)
+    }, 300)
   }
 
   return (
@@ -73,9 +175,15 @@ export default function MemeGenerator() {
         <div className="relative px-8">
           <input
             type="text"
-            placeholder="Enter your keywords"
-            className="w-full px-6 py-3 rounded-full border-2 border-[#333333] text-left bg-white font-lexend"
+            placeholder="Enter your keywords (e.g. cat, funny)"
+            className={`w-full px-6 py-3 rounded-full border-2 border-[#333333] text-left font-lexend transition-colors duration-300 focus:outline-none ${
+              isInputFocused 
+                ? "bg-[#333333] text-white placeholder-white/70" 
+                : "bg-white text-[#333333] placeholder-[#666666]"
+            }`}
             style={{ textAlign: 'left' }}
+            onFocus={() => setIsInputFocused(true)}
+            onBlur={() => setIsInputFocused(false)}
           />
         </div>
         
@@ -170,24 +278,33 @@ export default function MemeGenerator() {
                 className="flex flex-col items-center cursor-pointer"
                 onClick={() => toggleWaterLevel(item)}
               >
-                <div className="h-[78px] flex items-center justify-center relative">
+                <div 
+                  className="h-[78px] flex items-center justify-center relative"
+                  draggable={getWaterLevel(item) > 0}
+                  onDragStart={() => handleDragStart(item)}
+                  onDragEnd={handleDragEnd}
+                  onTouchStart={() => handleTouchStart(item)}
+                  onTouchEnd={handleTouchEnd}
+                >
                   <Image 
                     src={`/glass_base.png`} 
                     alt={item} 
                     width={48} 
                     height={72} 
-                    className="object-contain relative z-10" 
+                    className={`object-contain relative z-10 ${draggedItem === item ? 'opacity-50' : ''}`}
                   />
                   
-                  <div className="absolute inset-0 scale-220 bottom-5 left-[calc(-4px)] flex items-center justify-center z-0">
-                    <Image 
-                      src={`/water_level${getWaterLevel(item)}.png`}
-                      alt={`Water level ${getWaterLevel(item)}`}
-                      width={48}
-                      height={72}
-                      className="object-contain transition-all duration-300 ease-out"
-                    />
-                  </div>
+                  {getWaterLevel(item) > 0 && (
+                    <div className="absolute inset-0 scale-220 bottom-5 left-[calc(-4px)] flex items-center justify-center z-0">
+                      <Image 
+                        src={`/water_level${getWaterLevel(item)}.png`}
+                        alt={`Water level ${getWaterLevel(item)}`}
+                        width={48}
+                        height={72}
+                        className={`object-contain transition-all duration-300 ease-out ${draggedItem === item ? 'opacity-50' : ''}`}
+                      />
+                    </div>
+                  )}
                 </div>
                 <span className="text-xs font-inika text-center mt-1">{item}</span>
               </div>
@@ -197,7 +314,10 @@ export default function MemeGenerator() {
       </div>
 
       {/* Character Display */}
-      <div className="w-full flex justify-center mt-4 relative">
+      <div 
+        ref={godAreaRef}
+        className={`w-full flex justify-center mt-4 relative ${draggedItem ? 'bg-[#EEEEEE]/50 rounded-xl border-2 border-dashed border-[#333333]/30' : ''}`}
+      >
         <div className="relative">
           <Image src="/meme_god_static.png" alt="Meme God" width={392} height={230} />
         </div>
@@ -205,7 +325,50 @@ export default function MemeGenerator() {
 
       {/* Blend Button */}
       <div className="w-full px-6 mt-8 mb-4">
-        <button className="w-full bg-[#333333] text-white py-4 rounded-full font-phudu text-2xl transform transition-transform active:scale-98 hover:shadow-lg">BLEND IT</button>
+        <button 
+          onClick={handleBlendClick}
+          disabled={isBlending}
+          onTouchStart={handleButtonTouchStart}
+          onTouchEnd={handleButtonTouchEnd}
+          className={`w-full bg-[#333333] text-white py-4 rounded-full font-phudu text-2xl 
+            transform transition-all duration-300 relative overflow-hidden group
+            ${isBlending ? 'scale-[0.98] shadow-inner' : 'hover:shadow-lg active:scale-[0.98]'}`}
+        >
+          <span className={`relative z-10 transition-all duration-300 ${isBlending ? 'opacity-70' : 'group-hover:tracking-wider'}`}>
+            BLEND IT
+          </span>
+          
+          {/* 悬停时的背景效果 */}
+          <div className={`absolute inset-0 bg-gradient-to-r from-[#333333] via-[#444444] to-[#333333] transition-opacity duration-300 ${isTouchActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}></div>
+          
+          {/* 悬停时的粒子效果 */}
+          <div className={`absolute inset-0 overflow-hidden transition-opacity duration-300 ${isTouchActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+            <div className="absolute h-1 w-1 bg-white/40 rounded-full top-[20%] left-[15%] animate-float-particle1"></div>
+            <div className="absolute h-1.5 w-1.5 bg-white/30 rounded-full top-[60%] left-[25%] animate-float-particle2"></div>
+            <div className="absolute h-1 w-1 bg-white/40 rounded-full top-[30%] left-[60%] animate-float-particle3"></div>
+            <div className="absolute h-2 w-2 bg-white/20 rounded-full top-[70%] left-[80%] animate-float-particle4"></div>
+            <div className="absolute h-1.5 w-1.5 bg-white/30 rounded-full top-[40%] left-[40%] animate-float-particle5"></div>
+          </div>
+          
+          {/* 文字效果 */}
+          <span className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${isTouchActive ? 'tracking-wider' : ''}`}>
+            {isBlending ? '' : ''}
+          </span>
+          
+          {isBlending && (
+            <>
+              {/* 边缘脉冲效果 */}
+              <div className="absolute inset-0 rounded-full border-2 border-white/0 animate-pulse-border"></div>
+              
+              {/* 处理中的点 */}
+              <div className="absolute right-8 top-1/2 -translate-y-1/2 flex space-x-1">
+                <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse-dot1"></div>
+                <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse-dot2"></div>
+                <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse-dot3"></div>
+              </div>
+            </>
+          )}
+        </button>
       </div>
 
       {/* Scroll Indicator */}
@@ -231,6 +394,56 @@ export default function MemeGenerator() {
           50% { transform: translateX(100%); }
         }
         
+        @keyframes scanning {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(400%); }
+        }
+        
+        @keyframes pulse-border {
+          0%, 100% { border-color: rgba(255, 255, 255, 0); }
+          50% { border-color: rgba(255, 255, 255, 0.3); }
+        }
+        
+        @keyframes pulse-dot1 {
+          0%, 100% { opacity: 0.4; }
+          25% { opacity: 1; }
+        }
+        
+        @keyframes pulse-dot2 {
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 1; }
+        }
+        
+        @keyframes pulse-dot3 {
+          0%, 100% { opacity: 0.4; }
+          75% { opacity: 1; }
+        }
+        
+        @keyframes float-particle1 {
+          0%, 100% { transform: translate(0, 0); }
+          50% { transform: translate(10px, -15px); }
+        }
+        
+        @keyframes float-particle2 {
+          0%, 100% { transform: translate(0, 0); }
+          50% { transform: translate(-8px, -12px); }
+        }
+        
+        @keyframes float-particle3 {
+          0%, 100% { transform: translate(0, 0); }
+          50% { transform: translate(12px, -10px); }
+        }
+        
+        @keyframes float-particle4 {
+          0%, 100% { transform: translate(0, 0); }
+          50% { transform: translate(-15px, -8px); }
+        }
+        
+        @keyframes float-particle5 {
+          0%, 100% { transform: translate(0, 0); }
+          50% { transform: translate(10px, -20px); }
+        }
+        
         .animate-fadeIn {
           animation: fadeIn 0.3s ease-out forwards;
         }
@@ -241,6 +454,46 @@ export default function MemeGenerator() {
         
         .animate-wave {
           animation: wave 2s ease-in-out infinite;
+        }
+        
+        .animate-scanning {
+          animation: scanning 2s linear infinite;
+        }
+        
+        .animate-pulse-border {
+          animation: pulse-border 2s ease-in-out infinite;
+        }
+        
+        .animate-pulse-dot1 {
+          animation: pulse-dot1 1.5s infinite;
+        }
+        
+        .animate-pulse-dot2 {
+          animation: pulse-dot2 1.5s infinite;
+        }
+        
+        .animate-pulse-dot3 {
+          animation: pulse-dot3 1.5s infinite;
+        }
+        
+        .animate-float-particle1 {
+          animation: float-particle1 3s ease-in-out infinite;
+        }
+        
+        .animate-float-particle2 {
+          animation: float-particle2 4s ease-in-out infinite;
+        }
+        
+        .animate-float-particle3 {
+          animation: float-particle3 3.5s ease-in-out infinite;
+        }
+        
+        .animate-float-particle4 {
+          animation: float-particle4 4.5s ease-in-out infinite;
+        }
+        
+        .animate-float-particle5 {
+          animation: float-particle5 5s ease-in-out infinite;
         }
       `}</style>
     </div>
