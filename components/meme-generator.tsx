@@ -3,8 +3,9 @@
 import { useState, useRef, useEffect } from "react"
 import { ChevronsDown } from "lucide-react"
 import Image from "next/image"
-
+import { useRouter } from "next/navigation"
 export default function MemeGenerator() {
+  const router = useRouter()
   const [selectedTab, setSelectedTab] = useState("sentiment")
   const [waterLevels, setWaterLevels] = useState({
     sentiment: { happiness: 3, love: 3, anger: 3, sorrow: 3, fear: 3, hate: 3 },
@@ -196,7 +197,8 @@ export default function MemeGenerator() {
     // Simulate processing time, reset state after 3 seconds
     setTimeout(() => {
       setIsBlending(false)
-    }, 3000)
+      router.push("/template-selection")
+    }, 1500)
   }
 
   const handleButtonTouchStart = () => {

@@ -1,4 +1,4 @@
-import type React from "react"
+import type { Metadata } from "next"
 import { Inika, Phudu, Lexend } from "next/font/google"
 import "./globals.css"
 
@@ -32,6 +32,8 @@ export default function RootLayout({
   )
 }
 
-export const metadata = {
-      generator: 'v0.dev'
-    };
+export const metadata: Metadata = {
+  title: "God's Meme",
+  description: "A meme generator that delivers memes so perfect, you'll question free will itself.",
+}
+
