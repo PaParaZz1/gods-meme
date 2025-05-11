@@ -24,6 +24,16 @@ export default function MemeGenerator() {
   const dragItemRef = useRef<HTMLDivElement>(null)
   const initialTouchRef = useRef({ x: 0, y: 0 })
   const initialElementPosRef = useRef({ x: 0, y: 0 })
+  
+  // New state for character animations
+  const [showAddAnimation, setShowAddAnimation] = useState(false)
+  const [showRemoveAnimation, setShowRemoveAnimation] = useState(false)
+  // New state to track if any animation is currently playing
+  const [isAnimationPlaying, setIsAnimationPlaying] = useState(false)
+
+  // Add a timestamp ref to track touch/click duration
+  const touchStartTimeRef = useRef<number>(0)
+  const isDragOperationRef = useRef<boolean>(false)
 
   const tabContent = {
     sentiment: {
@@ -43,12 +53,28 @@ export default function MemeGenerator() {
   const currentTabContent = tabContent[selectedTab as keyof typeof tabContent]
 
   const toggleWaterLevel = (item: keyof typeof waterLevels.sentiment | keyof typeof waterLevels.intention | keyof typeof waterLevels.style) => {
+    // Don't allow toggling if an animation is already playing
+    if (isAnimationPlaying) return;
+    
     setWaterLevels(prev => {
       const currentLevel = prev[selectedTab][item]
       // only increase the level if it's not already at the max
       if (currentLevel === 3) {
         return prev
       }
+      
+      // Show remove animation when clicking to change water level
+      setShowRemoveAnimation(true)
+      // Make sure add animation is not showing
+      setShowAddAnimation(false)
+      // Set animation playing state
+      setIsAnimationPlaying(true)
+      
+      setTimeout(() => {
+        setShowRemoveAnimation(false)
+        setIsAnimationPlaying(false)
+      }, 1500) // Animation duration
+      
       const newLevel = currentLevel % 3 + 1
       
       return {
@@ -70,38 +96,46 @@ export default function MemeGenerator() {
   }
 
   // handle drag end event for desktop/pc devices
-  const handleDragEnd = () => {
-    if (draggedItem && godAreaRef.current) {
-      const godRect = godAreaRef.current.getBoundingClientRect()
-      
-      if (
-        typeof window.event !== 'undefined' && 
-        'clientX' in window.event && 
-        'clientY' in window.event
-      ) {
-        const e = window.event as MouseEvent
-        if (
-          e.clientX >= godRect.left &&
-          e.clientX <= godRect.right &&
-          e.clientY >= godRect.top &&
-          e.clientY <= godRect.bottom
-        ) {
-          setWaterLevels(prev => {
-            const currentLevel = prev[selectedTab as keyof typeof waterLevels][draggedItem as any]
-            if (currentLevel > 0) {
-              return {
-                ...prev,
-                [selectedTab]: {
-                  ...prev[selectedTab as keyof typeof waterLevels],
-                  [draggedItem]: currentLevel - 1
-                }
-              }
-            }
-            return prev
-          })
-        }
-      }
+  const handleDragEnd = (e: React.DragEvent) => {
+    if (!draggedItem || !godAreaRef.current || isAnimationPlaying) {
+      setDraggedItem(null)
+      return;
     }
+    
+    const godRect = godAreaRef.current.getBoundingClientRect()
+    
+    if (
+      e.clientX >= godRect.left &&
+      e.clientX <= godRect.right &&
+      e.clientY >= godRect.top &&
+      e.clientY <= godRect.bottom
+    ) {
+      // Dragged to god area, decrease water level
+      setWaterLevels(prev => {
+        const currentLevel = prev[selectedTab as keyof typeof waterLevels][draggedItem as any]
+        if (currentLevel > 0) {
+          // Show add animation
+          setShowAddAnimation(true)
+          // Set animation playing state
+          setIsAnimationPlaying(true)
+          
+          setTimeout(() => {
+            setShowAddAnimation(false)
+            setIsAnimationPlaying(false)
+          }, 1500) // Animation duration
+          
+          return {
+            ...prev,
+            [selectedTab]: {
+              ...prev[selectedTab as keyof typeof waterLevels],
+              [draggedItem]: currentLevel - 1
+            }
+          }
+        }
+        return prev
+      })
+    }
+    
     setDraggedItem(null)
   }
 
@@ -126,25 +160,35 @@ export default function MemeGenerator() {
     };
   }, [isDragging]);
 
-  // Enhanced touch event handlers for mobile devices
+  // Modified handleItemTouchStart to always record start time
   const handleItemTouchStart = (e: React.TouchEvent, item: string) => {
-    if (getWaterLevel(item) <= 0) return;
+    // Always record the start time of the touch, regardless of water level
+    touchStartTimeRef.current = Date.now()
+    isDragOperationRef.current = false
     
-    setDraggedItem(item)
+    // Only proceed with drag setup if there's water to drag
+    if (getWaterLevel(item) === 0) return;
+    
+    // Set dragging state immediately
     setIsDragging(true)
     
     const touch = e.touches[0]
     initialTouchRef.current = { x: touch.clientX, y: touch.clientY }
     
-    // Use touch position directly as the initial drag position
-    setDragPosition({ x: touch.clientX, y: touch.clientY })
+    if (dragItemRef.current) {
+      const rect = dragItemRef.current.getBoundingClientRect()
+      initialElementPosRef.current = { x: rect.left, y: rect.top }
+    }
     
-    // Prevent default to avoid triggering scroll
-    e.preventDefault();
+    setDraggedItem(item)
   }
 
+  // Modified handleItemTouchMove to set drag operation flag
   const handleItemTouchMove = (e: React.TouchEvent) => {
     if (!isDragging || !draggedItem) return;
+    
+    // If the user has moved their finger, it's a drag operation
+    isDragOperationRef.current = true
     
     const touch = e.touches[0]
     
@@ -154,12 +198,10 @@ export default function MemeGenerator() {
       y: touch.clientY
     })
     
-    // Prevent default to avoid triggering scroll
-    e.preventDefault();
   }
 
   const handleItemTouchEnd = (e: React.TouchEvent) => {
-    if (!isDragging || !draggedItem || !godAreaRef.current) {
+    if (!isDragging || !draggedItem || !godAreaRef.current || isAnimationPlaying) {
       setIsDragging(false)
       setDraggedItem(null)
       return;
@@ -178,6 +220,16 @@ export default function MemeGenerator() {
       setWaterLevels(prev => {
         const currentLevel = prev[selectedTab as keyof typeof waterLevels][draggedItem as any]
         if (currentLevel > 0) {
+          // Show add animation
+          setShowAddAnimation(true)
+          // Set animation playing state
+          setIsAnimationPlaying(true)
+          
+          setTimeout(() => {
+            setShowAddAnimation(false)
+            setIsAnimationPlaying(false)
+          }, 1500) // Animation duration
+          
           return {
             ...prev,
             [selectedTab]: {
@@ -192,6 +244,20 @@ export default function MemeGenerator() {
     
     setIsDragging(false)
     setDraggedItem(null)
+  }
+
+  // Add a click handler for the water glasses with debugging
+  const handleWaterGlassClick = (item: keyof typeof waterLevels.sentiment | keyof typeof waterLevels.intention | keyof typeof waterLevels.style) => {
+    // Only handle as a click if the touch duration was short
+    const touchDuration = Date.now() - touchStartTimeRef.current
+    
+    // If this is a quick tap (less than 500ms), treat as a click
+    if (!isDragOperationRef.current && touchDuration < 500) {
+      toggleWaterLevel(item)
+    }
+    
+    // Reset the drag operation flag
+    isDragOperationRef.current = false
   }
 
   const handleBlendClick = () => {
@@ -370,7 +436,7 @@ export default function MemeGenerator() {
                   <motion.div
                     key={item} 
                     className="flex flex-col items-center cursor-pointer"
-                    onClick={() => toggleWaterLevel(item as keyof typeof waterLevels.sentiment | keyof typeof waterLevels.intention | keyof typeof waterLevels.style)}
+                    onClick={() => handleWaterGlassClick(item as keyof typeof waterLevels.sentiment | keyof typeof waterLevels.intention | keyof typeof waterLevels.style)}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{
@@ -422,14 +488,54 @@ export default function MemeGenerator() {
           </div>
         </div>
 
-        {/* Character Display */}
-        {/* className={`w-full flex justify-center mt-4 relative ${draggedItem ? 'bg-[#EEEEEE]/50 rounded-xl border-2 border-dashed border-[#333333]/30' : ''}`} */}
+        {/* Character Display with fixed animations */}
         <div 
           ref={godAreaRef}
           className={"w-full flex justify-center mt-4 relative"}
         >
-          <div className="relative">
-            <Image src="/meme_god_static.png" alt="Meme God" width={392} height={230} />
+          <div className="relative w-[230px] h-[230px]">
+            {/* Static image (always visible as base) */}
+            <div className="absolute inset-0">
+              <Image 
+                src="/god_add_elem_static.png" 
+                alt="Meme God" 
+                width={230} 
+                height={230} 
+                className={`${showAddAnimation || showRemoveAnimation ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
+              />
+            </div>
+            
+            {/* Add animation */}
+            {showAddAnimation && (
+              <div className="absolute inset-0">
+                <Image 
+                  src="/god_add_elem.gif" 
+                  alt="Adding Element" 
+                  width={230} 
+                  height={230} 
+                  priority 
+                />
+              </div>
+            )}
+            
+            {/* Remove animation */}
+            {showRemoveAnimation && (
+              <div className="absolute inset-0">
+                <Image 
+                  src="/god_remove_elem.gif" 
+                  alt="Removing Element" 
+                  width={230} 
+                  height={230} 
+                  priority 
+                />
+              </div>
+            )}
+            
+            {/* Highlight area when dragging */}
+            {/*<div className="absolute inset-0 rounded-xl border-2 border-dashed border-[#333333]/30 bg-[#EEEEEE]/50 pointer-events-none z-10" />*/}
+            {draggedItem && (
+              <div className="absolute inset-0 rounded-xl bg-[#EEEEEE]/50 pointer-events-none z-10" />
+            )}
           </div>
         </div>
 

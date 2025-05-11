@@ -47,9 +47,19 @@ if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.abspath(__file__))
     
     # Assuming the GIF is in the public folder
-    gif_path = os.path.join(script_dir, 'public', 'landing_cat.gif')
-    output_path = os.path.join(script_dir, 'public', 'landing_cat_static.png')
-    
-    # Extract and save the last frame
-    extract_last_frame(gif_path, output_path)
+    inputs = [
+        'landing_cat.gif',
+        'god_add_elem.gif',
+    ]
+    outputs = [
+       'landing_cat_static.png',
+       'god_add_elem_static.png' 
+    ]
+    for i, o in zip(inputs, outputs):
+        gif_path = os.path.join(script_dir, 'public', i)
+        output_path = os.path.join(script_dir, 'public', o)
+        
+        # Extract and save the last frame
+        extract_last_frame(gif_path, output_path)
+        print(f"{i} -> {o}")
     print("Done!")
