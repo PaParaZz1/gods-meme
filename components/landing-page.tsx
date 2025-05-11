@@ -54,7 +54,7 @@ export default function LandingPage() {
     const buttonTimer = setTimeout(() => setShowButton(true), 3000)
     
     // Set GIF to played after its duration 
-    const gifTimer = setTimeout(() => setGifPlayed(true), 4000)
+    const gifTimer = setTimeout(() => setGifPlayed(true), 3800)
     
     // Clean up timers
     return () => {
