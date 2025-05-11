@@ -1,9 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import LogoCat from "@/components/ui/logo-cat.svg"
 
 export default function LandingPage() {
   const router = useRouter()
@@ -11,19 +10,60 @@ export default function LandingPage() {
   const [isClicking, setIsClicking] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [isSmallMobile, setIsSmallMobile] = useState(false)
+  const [gifPlayed, setGifPlayed] = useState(false)
+  
+  // Animation states
+  const [isLoaded, setIsLoaded] = useState(false)
+  const [showLogo, setShowLogo] = useState(false)
+  const [showTitle, setShowTitle] = useState(false)
+  const [showText, setShowText] = useState(false)
+  const [showButton, setShowButton] = useState(false)
+  
+  // Ref for the GIF element
+  const gifRef = useRef(null)
 
-  // Detect mobile devices and small screens
+  // Handle touch start for mobile
+  const handleTouchStart = () => {
+    setIsHovering(true)
+  }
+
+  // Check if device is mobile
   useEffect(() => {
-    const checkScreenSize = () => {
+    const checkMobile = () => {
       setIsMobile(window.innerWidth < 768)
-      setIsSmallMobile(window.innerWidth < 380) // For iPhone SE and other small devices
+      setIsSmallMobile(window.innerWidth < 375)
     }
     
-    checkScreenSize()
-    window.addEventListener('resize', checkScreenSize)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
     
     return () => {
-      window.removeEventListener('resize', checkScreenSize)
+      window.removeEventListener('resize', checkMobile)
+    }
+  }, [])
+  
+  // Sequence the animations - compressed to 1800ms total
+  useEffect(() => {
+    // Start animations after a short delay
+    const loadTimer = setTimeout(() => setIsLoaded(true), 200)
+    
+    // Sequence the elements with compressed timing
+    const logoTimer = setTimeout(() => setShowLogo(true), 600)
+    const titleTimer = setTimeout(() => setShowTitle(true), 1200)
+    const textTimer = setTimeout(() => setShowText(true), 2000)
+    const buttonTimer = setTimeout(() => setShowButton(true), 3000)
+    
+    // Set GIF to played after its duration 
+    const gifTimer = setTimeout(() => setGifPlayed(true), 4000)
+    
+    // Clean up timers
+    return () => {
+      clearTimeout(loadTimer)
+      clearTimeout(logoTimer)
+      clearTimeout(titleTimer)
+      clearTimeout(textTimer)
+      clearTimeout(buttonTimer)
+      clearTimeout(gifTimer)
     }
   }, [])
 
@@ -37,31 +77,47 @@ export default function LandingPage() {
     }, 800)
   }
 
-  // For mobile, we'll show effects on touch start
-  const handleTouchStart = () => {
-    if (isMobile) {
-      setIsHovering(true)
-    }
-  }
+  // Prevent button animation on mobile
+  const buttonAnimationClass = isMobile ? '' : (isHovering ? 'scale-105 shadow-lg' : '')
 
   return (
-    <div className="flex flex-col items-center w-full">
+    <div className={`flex flex-col items-center w-full transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
       {/* Top section with cat illustration - fixed at top */}
-      <div className="w-full bg-[#333333] rounded-b-[50%] flex justify-center items-center fixed top-0 left-0 right-0 z-10">
-        <div className="relative">
-          {/* Cat logo */}
-          <Image 
-            src={LogoCat} 
-            alt="God's Meme Cat Logo" 
-            width={isSmallMobile ? 240 : 400} 
-            height={isSmallMobile ? 200 : 320}
-            className="transform-gpu transition-all duration-300"
-            style={{ 
-              width: isSmallMobile ? '240px' : '400px',
-              height: 'auto'
-            }}
-            priority
-          />
+      <div className="w-full bg-[#333333] fixed top-0 left-0 right-0 z-10" style={{ borderBottomLeftRadius: '75% 18%', borderBottomRightRadius: '75% 18%' }}>
+        <div className="flex justify-center items-center w-full">
+          {/* Cat logo - using GIF animation that plays once */}
+          <div className={`flex justify-center items-center w-full transition-all duration-300 ease-in-out transform ${showLogo ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+            {/* Show GIF initially, then switch to static image */}
+            <div className="flex justify-center w-full">
+              {!gifPlayed ? (
+                <Image 
+                  ref={gifRef}
+                  src="/landing_cat.gif" 
+                  alt="God's Meme Cat Logo Animation" 
+                  width={isSmallMobile ? 240 : 400} 
+                  height={isSmallMobile ? 200 : 320}
+                  className="transform-gpu mx-auto"
+                  style={{ 
+                    width: isSmallMobile ? '240px' : '400px',
+                    height: 'auto' 
+                  }}
+                  priority
+                />
+              ) : (
+                <Image 
+                  src="/landing_cat_static.png" 
+                  alt="God's Meme Cat Logo" 
+                  width={isSmallMobile ? 240 : 400} 
+                  height={isSmallMobile ? 200 : 320}
+                  className="transform-gpu mx-auto"
+                  style={{ 
+                    width: isSmallMobile ? '240px' : '400px',
+                    height: 'auto' 
+                  }}
+                />
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -70,10 +126,10 @@ export default function LandingPage() {
 
       {/* Text content - adjust for small screens */}
       <div className="text-center px-6 py-8 max-w-xs mx-auto">
-        <h1 className={`font-inika text-[#333333] mb-6 ${isSmallMobile ? 'text-3xl' : 'text-4xl'}`}>
+        <h1 className={`font-inika text-[#333333] mb-6 ${isSmallMobile ? 'text-3xl' : 'text-4xl'} transition-all duration-300 ease-in-out transform ${showTitle ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
           GOD'S MEME
         </h1>
-        <p className={`text-[#333333] leading-relaxed font-['Lexend'] ${isSmallMobile ? 'text-base' : 'text-lg'}`}>
+        <p className={`text-[#333333] leading-relaxed font-['Lexend'] ${isSmallMobile ? 'text-base' : 'text-lg'} transition-all duration-300 ease-in-out transform ${showText ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
           Type in a keyword, and boom! 
           <br />
           God's MEME will deliver a meme so perfect, you'll question free will itself. 
@@ -81,88 +137,51 @@ export default function LandingPage() {
           Because apparently, even the universe runs on memes.
         </p>
       </div>
-
+      
       {/* Button */}
       <div className="flex flex-col items-center w-full">
-        <button
+        <button 
           onClick={handleClick}
           onMouseEnter={() => setIsHovering(true)}
           onMouseLeave={() => setIsHovering(false)}
           onTouchStart={handleTouchStart}
           className={`
-            relative overflow-hidden bg-[#333333] text-white py-4 px-8 
+            relative overflow-hidden text-white py-4 px-8 
             rounded-full text-2xl font-phudu w-[90%] max-w-xs mt-4 
             transform transition-all duration-300 ease-in-out
-            ${isHovering ? 'scale-105 shadow-lg' : ''}
-            ${isClicking ? 'scale-95' : ''}
+            ${buttonAnimationClass}
+            ${isClicking ? 'scale-95' : 'bg-[#333333]'}
+            ${showButton ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
           `}
         >
-          {/* Tech effect elements */}
-          <div className="absolute inset-0 overflow-hidden">
-            {/* Gradient overlay */}
-            <div className={`
-              absolute inset-0 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-blue-500/20
-              transition-opacity duration-300 ${isHovering ? 'opacity-100' : 'opacity-0'}
-            `}></div>
-            
-            {/* Scan lines - visible on hover or mobile */}
-            {(isHovering || isMobile) && (
-              <>
-                <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent animate-scanline"></div>
-                <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent animate-scanline-reverse"></div>
-              </>
-            )}
-            
-            {/* Click effect - separate from button opacity */}
-            {isClicking && (
-              <div className="absolute inset-0 bg-white/30 animate-pulse-out z-20"></div>
-            )}
-          </div>
+          {/* Color transition overlay - radial gradient from center */}
+          <div className={`
+            absolute inset-0 bg-[#333333]
+            transition-all duration-800 ease-in-out
+            ${isClicking ? 'button-click-effect' : ''}
+          `}></div>
           
-          {/* Button text - stays visible during animation */}
-          <span className={`relative z-10 transition-opacity duration-800 ${isClicking ? 'opacity-0' : 'opacity-100'}`}>
-            LET THERE BE MEMES
-          </span>
+          {/* Button text */}
+          <span className="relative z-10">LET THERE BE MEMES</span>
         </button>
       </div>
 
-      {/* Animations */}
-      <style jsx global>{`
-        @keyframes scanline {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
+      {/* CSS for animations */}
+      <style jsx>{`
+        .button-click-effect {
+          background: radial-gradient(circle, #1a365d 0%, #333333 100%);
+          animation: pulseGradient 0.8s ease forwards;
         }
         
-        @keyframes scanline-reverse {
-          0% { transform: translateX(100%); }
-          100% { transform: translateX(-100%); }
-        }
-        
-        @keyframes pulse-out {
-          0% { opacity: 0; transform: scale(0.8); }
-          50% { opacity: 1; transform: scale(1.5); }
-          100% { opacity: 0; transform: scale(2); }
-        }
-        
-        .animate-scanline {
-          animation: scanline 2s linear infinite;
-        }
-        
-        .animate-scanline-reverse {
-          animation: scanline-reverse 2s linear infinite;
-        }
-        
-        .animate-pulse-out {
-          animation: pulse-out 0.8s ease-out forwards;
-        }
-        
-        /* Make sure animations work on mobile */
-        @media (max-width: 767px) {
-          .animate-scanline,
-          .animate-scanline-reverse,
-          .animate-pulse-out {
-            will-change: transform, opacity;
-            transform: translateZ(0);
+        @keyframes pulseGradient {
+          0% {
+            background: #333333;
+          }
+          50% {
+            background: radial-gradient(circle, #1a365d 30%, #333333 100%);
+          }
+          100% {
+            background: radial-gradient(circle, #1a365d 60%, #333333 100%);
           }
         }
       `}</style>
