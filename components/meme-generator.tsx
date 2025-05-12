@@ -493,13 +493,13 @@ export default function MemeGenerator() {
           ref={godAreaRef}
           className={"w-full flex justify-center mt-4 relative"}
         >
-          <div className="relative w-[230px] h-[230px]">
+          <div className="relative w-[390px] h-[230px]">
             {/* Static image (always visible as base) */}
             <div className="absolute inset-0">
               <Image 
-                src="/god_add_elem_static.png" 
+                src="/meme_god_static.png" 
                 alt="Meme God" 
-                width={230} 
+                width={390} 
                 height={230} 
                 className={`${showAddAnimation || showRemoveAnimation ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
               />
@@ -511,7 +511,7 @@ export default function MemeGenerator() {
                 <Image 
                   src="/god_add_elem.gif" 
                   alt="Adding Element" 
-                  width={230} 
+                  width={390} 
                   height={230} 
                   priority 
                 />
@@ -524,7 +524,7 @@ export default function MemeGenerator() {
                 <Image 
                   src="/god_remove_elem.gif" 
                   alt="Removing Element" 
-                  width={230} 
+                  width={390} 
                   height={230} 
                   priority 
                 />
@@ -540,7 +540,7 @@ export default function MemeGenerator() {
         </div>
 
         {/* Blend Button */}
-        <div className="w-full px-6 mt-8 mb-4">
+        <div className="w-full px-6 mt-6 mb-4">
           <button 
             onClick={handleBlendClick}
             disabled={isBlending}
