@@ -278,7 +278,7 @@ export default function TemplateEditor() {
       {/* Next button */}
       <div className="px-6 mt-4">
         <Link
-          href="/"
+          href="/generating"
           className="block w-full bg-[#333333] text-white py-3 rounded-full text-center font-phudu text-lg"
         >
           NEXT
