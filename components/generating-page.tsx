@@ -39,10 +39,7 @@ export default function GeneratingPage() {
           clearInterval(interval)
           // Show the meme
           setShowMeme(true)
-          // Return to home page after 3 seconds
-          setTimeout(() => {
-            //router.push("/")
-          }, 3000)
+          router.push("/generation-result")
           return 100
         }
         // Randomly increase progress to make it look more natural
