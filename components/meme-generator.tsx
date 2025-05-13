@@ -165,7 +165,6 @@ export default function MemeGenerator() {
 
   // Modified handleItemTouchStart to always record start time
   const handleItemTouchStart = (e: React.TouchEvent, item: string) => {
-    console.log(item, 'toouch in')
     // Always record the start time of the touch, regardless of water level
     touchStartTimeRef.current = Date.now()
     isDragOperationRef.current = false
@@ -252,7 +251,6 @@ export default function MemeGenerator() {
 
   // Find the handleWaterGlassClick function and optimize it
   const handleWaterGlassClick = (item: keyof typeof waterLevels.sentiment | keyof typeof waterLevels.intention | keyof typeof waterLevels.style) => {
-    console.log(item, 'water in')
     // Prevent multiple rapid clicks from causing issues
     if (isUpdatingWaterLevel) return;
     

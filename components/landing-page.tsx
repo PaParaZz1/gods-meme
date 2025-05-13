@@ -54,7 +54,7 @@ export default function LandingPage() {
     const buttonTimer = setTimeout(() => setShowButton(true), 3000)
     
     // Set GIF to played after its duration 
-    const gifTimer = setTimeout(() => setGifPlayed(true), 3800)
+    const gifTimer = setTimeout(() => setGifPlayed(true), 4000)
     
     // Clean up timers
     return () => {
@@ -105,7 +105,7 @@ export default function LandingPage() {
                 />
               ) : (
                 <Image 
-                  src="/landing_cat_static.png" 
+                  src="/landing_cat_waiting.gif" 
                   alt="God's Meme Cat Logo" 
                   width={isSmallMobile ? 240 : 400} 
                   height={isSmallMobile ? 200 : 320}
