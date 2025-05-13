@@ -35,6 +35,9 @@ export default function MemeGenerator() {
   const touchStartTimeRef = useRef<number>(0)
   const isDragOperationRef = useRef<boolean>(false)
 
+  // Add this state at the top of your component
+  const [isUpdatingWaterLevel, setIsUpdatingWaterLevel] = useState(false)
+
   const tabContent = {
     sentiment: {
       title: "Sentiment",
@@ -162,6 +165,7 @@ export default function MemeGenerator() {
 
   // Modified handleItemTouchStart to always record start time
   const handleItemTouchStart = (e: React.TouchEvent, item: string) => {
+    console.log(item, 'toouch in')
     // Always record the start time of the touch, regardless of water level
     touchStartTimeRef.current = Date.now()
     isDragOperationRef.current = false
@@ -246,18 +250,36 @@ export default function MemeGenerator() {
     setDraggedItem(null)
   }
 
-  // Add a click handler for the water glasses with debugging
+  // Find the handleWaterGlassClick function and optimize it
   const handleWaterGlassClick = (item: keyof typeof waterLevels.sentiment | keyof typeof waterLevels.intention | keyof typeof waterLevels.style) => {
-    // Only handle as a click if the touch duration was short
-    const touchDuration = Date.now() - touchStartTimeRef.current
+    console.log(item, 'water in')
+    // Prevent multiple rapid clicks from causing issues
+    if (isUpdatingWaterLevel) return;
     
-    // If this is a quick tap (less than 500ms), treat as a click
-    if (!isDragOperationRef.current && touchDuration < 500) {
-      toggleWaterLevel(item)
-    }
+    setIsUpdatingWaterLevel(true);
     
-    // Reset the drag operation flag
-    isDragOperationRef.current = false
+    setWaterLevels(prev => {
+      const currentLevel = prev[selectedTab][item as any]
+      // only increase the level if it's not already at the max
+      if (currentLevel === 3) {
+        return prev
+      }
+      
+      const newLevels = {
+        ...prev,
+        [selectedTab]: {
+          ...prev[selectedTab],
+          [item]: currentLevel + 1
+        }
+      }
+      
+      return newLevels
+    })
+    
+    // Reset the flag after a short delay
+    setTimeout(() => {
+      setIsUpdatingWaterLevel(false);
+    }, 50);
   }
 
   const handleBlendClick = () => {
@@ -425,7 +447,7 @@ export default function MemeGenerator() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -15, scale: 0.95 }}
                 transition={{ 
-                  duration: 0.25,
+                  duration: 0.0,
                   type: "spring",
                   stiffness: 400,
                   damping: 25
@@ -435,8 +457,11 @@ export default function MemeGenerator() {
                 {currentTabContent.items.map((item, index) => (
                   <motion.div
                     key={item} 
-                    className="flex flex-col items-center cursor-pointer"
-                    onClick={() => handleWaterGlassClick(item as keyof typeof waterLevels.sentiment | keyof typeof waterLevels.intention | keyof typeof waterLevels.style)}
+                    className="flex flex-col items-center cursor-pointer relative"
+                    // Add a larger invisible click area
+                    style={{ 
+                      touchAction: "manipulation" // Improves touch response
+                    }}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{
@@ -452,13 +477,15 @@ export default function MemeGenerator() {
                     }}
                     whileTap={{ scale: 0.95 }}
                   >
+                    {/* Add an invisible larger click area */}
+                    <div className="absolute inset-0 z-10" />
+                    
                     <div 
                       ref={draggedItem === item ? dragItemRef : null}
                       className={`h-[78px] flex items-center justify-center relative ${getWaterLevel(item) > 0 ? 'cursor-grab active:cursor-grabbing' : ''}`}
                       draggable={getWaterLevel(item) > 0}
                       onDragStart={() => handleDragStart(item)}
                       onDragEnd={handleDragEnd}
-                      onTouchStart={(e) => handleItemTouchStart(e, item)}
                     >
                       <Image 
                         src={`/glass_base.png`} 
@@ -466,6 +493,12 @@ export default function MemeGenerator() {
                         width={48} 
                         height={72} 
                         className={`object-contain relative z-10 ${draggedItem === item && isDragging ? 'opacity-30' : draggedItem === item ? 'opacity-50' : ''}`}
+                        onTouchStart={(e) => handleItemTouchStart(e, item)}
+                        onClick={(e) => {
+                          // Stop event propagation to prevent affecting adjacent cups
+                          e.stopPropagation();
+                          handleWaterGlassClick(item as keyof typeof waterLevels.sentiment | keyof typeof waterLevels.intention | keyof typeof waterLevels.style);
+                        }}
                       />
                       
                       {getWaterLevel(item) > 0 && (
@@ -532,10 +565,12 @@ export default function MemeGenerator() {
             )}
             
             {/* Highlight area when dragging */}
-            {/*<div className="absolute inset-0 rounded-xl border-2 border-dashed border-[#333333]/30 bg-[#EEEEEE]/50 pointer-events-none z-10" />*/}
+            {/*
+            <div className="absolute inset-0 rounded-xl border-2 border-dashed border-[#333333]/30 bg-[#EEEEEE]/50 pointer-events-none z-10" />*
             {draggedItem && (
               <div className="absolute inset-0 rounded-xl bg-[#EEEEEE]/50 pointer-events-none z-10" />
             )}
+            */}
           </div>
         </div>
 
