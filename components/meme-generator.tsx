@@ -6,10 +6,21 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 
+// 定义类型以解决索引签名问题
+type TabKey = "sentiment" | "intention" | "style";
+type SentimentKey = "happiness" | "love" | "anger" | "sorrow" | "fear" | "hate";
+type IntentionKey = "humor" | "sarcasm" | "rant" | "encourage" | "self-mockery" | "expressive";
+type StyleKey = "motivational" | "funny" | "wholesome" | "dark" | "romantic" | "sarcastic";
+type ItemKey = SentimentKey | IntentionKey | StyleKey;
+
 export default function MemeGenerator() {
   const router = useRouter()
   const [selectedTab, setSelectedTab] = useState("sentiment")
-  const [waterLevels, setWaterLevels] = useState({
+  const [waterLevels, setWaterLevels] = useState<{
+    sentiment: Record<SentimentKey, number>;
+    intention: Record<IntentionKey, number>;
+    style: Record<StyleKey, number>;
+  }>({
     sentiment: { happiness: 3, love: 3, anger: 3, sorrow: 3, fear: 3, hate: 3 },
     intention: { humor: 3, sarcasm: 3, rant: 3, encourage: 3, "self-mockery": 3, expressive: 3 },
     style: { motivational: 3, funny: 3, wholesome: 3, dark: 3, romantic: 3, sarcastic: 3 }
@@ -55,44 +66,11 @@ export default function MemeGenerator() {
 
   const currentTabContent = tabContent[selectedTab as keyof typeof tabContent]
 
-  const toggleWaterLevel = (item: keyof typeof waterLevels.sentiment | keyof typeof waterLevels.intention | keyof typeof waterLevels.style) => {
-    // Don't allow toggling if an animation is already playing
-    if (isAnimationPlaying) return;
-    
-    setWaterLevels(prev => {
-      const currentLevel = prev[selectedTab][item]
-      // only increase the level if it's not already at the max
-      if (currentLevel === 3) {
-        return prev
-      }
-      
-      // Show remove animation when clicking to change water level
-      setShowRemoveAnimation(true)
-      // Make sure add animation is not showing
-      setShowAddAnimation(false)
-      // Set animation playing state
-      setIsAnimationPlaying(true)
-      
-      setTimeout(() => {
-        setShowRemoveAnimation(false)
-        setIsAnimationPlaying(false)
-      }, 1500) // Animation duration
-      
-      const newLevel = currentLevel % 3 + 1
-      
-      return {
-        ...prev,
-        [selectedTab]: {
-          ...prev[selectedTab as keyof typeof waterLevels],
-          [item]: newLevel
-        }
-      }
-    })
-  }
-
   const getWaterLevel = (item: string) => {
-    return waterLevels[selectedTab as keyof typeof waterLevels][item as any] || 0
-  }
+    const tab = selectedTab as TabKey;
+    const itemKey = item as ItemKey;
+    return waterLevels[tab][itemKey] || 0;
+  };
 
   const handleDragStart = (item: string) => {
     setDraggedItem(item)
@@ -115,28 +93,31 @@ export default function MemeGenerator() {
     ) {
       // Dragged to god area, decrease water level
       setWaterLevels(prev => {
-        const currentLevel = prev[selectedTab as keyof typeof waterLevels][draggedItem as any]
+        const tab = selectedTab as TabKey;
+        const item = draggedItem as ItemKey;
+        const currentLevel = prev[tab][item];
         if (currentLevel > 0) {
           // Show add animation
-          setShowAddAnimation(true)
+          setShowAddAnimation(true);
+          setShowRemoveAnimation(false);
           // Set animation playing state
-          setIsAnimationPlaying(true)
+          setIsAnimationPlaying(true);
           
           setTimeout(() => {
-            setShowAddAnimation(false)
-            setIsAnimationPlaying(false)
-          }, 1500) // Animation duration
+            setShowAddAnimation(false);
+            setIsAnimationPlaying(false);
+          }, 1500); // Animation duration
           
           return {
             ...prev,
-            [selectedTab]: {
-              ...prev[selectedTab as keyof typeof waterLevels],
-              [draggedItem]: currentLevel - 1
+            [tab]: {
+              ...prev[tab],
+              [item]: currentLevel - 1
             }
-          }
+          };
         }
-        return prev
-      })
+        return prev;
+      });
     }
     
     setDraggedItem(null)
@@ -165,26 +146,29 @@ export default function MemeGenerator() {
 
   // Modified handleItemTouchStart to always record start time
   const handleItemTouchStart = (e: React.TouchEvent, item: string) => {
+    // 如果动画正在播放，不允许开始新的拖拽
+    if (isAnimationPlaying) return;
+    
     // Always record the start time of the touch, regardless of water level
-    touchStartTimeRef.current = Date.now()
-    isDragOperationRef.current = false
+    touchStartTimeRef.current = Date.now();
+    isDragOperationRef.current = false;
     
     // Only proceed with drag setup if there's water to drag
     if (getWaterLevel(item) === 0) return;
     
     // Set dragging state immediately
-    setIsDragging(true)
+    setIsDragging(true);
     
-    const touch = e.touches[0]
-    initialTouchRef.current = { x: touch.clientX, y: touch.clientY }
+    const touch = e.touches[0];
+    initialTouchRef.current = { x: touch.clientX, y: touch.clientY };
     
     if (dragItemRef.current) {
-      const rect = dragItemRef.current.getBoundingClientRect()
-      initialElementPosRef.current = { x: rect.left, y: rect.top }
+      const rect = dragItemRef.current.getBoundingClientRect();
+      initialElementPosRef.current = { x: rect.left, y: rect.top };
     }
     
-    setDraggedItem(item)
-  }
+    setDraggedItem(item);
+  };
 
   // Modified handleItemTouchMove to set drag operation flag
   const handleItemTouchMove = (e: React.TouchEvent) => {
@@ -221,28 +205,30 @@ export default function MemeGenerator() {
     ) {
       // Dragged to god area, decrease water level
       setWaterLevels(prev => {
-        const currentLevel = prev[selectedTab as keyof typeof waterLevels][draggedItem as any]
+        const tab = selectedTab as TabKey;
+        const item = draggedItem as ItemKey;
+        const currentLevel = prev[tab][item];
         if (currentLevel > 0) {
-          // Show add animation
-          setShowAddAnimation(true)
-          // Set animation playing state
-          setIsAnimationPlaying(true)
+          // 确保触发添加动画
+          setShowAddAnimation(true);
+          setShowRemoveAnimation(false); // 确保移除动画不会同时触发
+          setIsAnimationPlaying(true);
           
           setTimeout(() => {
-            setShowAddAnimation(false)
-            setIsAnimationPlaying(false)
-          }, 1500) // Animation duration
+            setShowAddAnimation(false);
+            setIsAnimationPlaying(false);
+          }, 1500); // Animation duration
           
           return {
             ...prev,
-            [selectedTab]: {
-              ...prev[selectedTab as keyof typeof waterLevels],
-              [draggedItem]: currentLevel - 1
+            [tab]: {
+              ...prev[tab],
+              [item]: currentLevel - 1
             }
-          }
+          };
         }
-        return prev
-      })
+        return prev;
+      });
     }
     
     setIsDragging(false)
@@ -250,35 +236,44 @@ export default function MemeGenerator() {
   }
 
   // Find the handleWaterGlassClick function and optimize it
-  const handleWaterGlassClick = (item: keyof typeof waterLevels.sentiment | keyof typeof waterLevels.intention | keyof typeof waterLevels.style) => {
+  const handleWaterGlassClick = (item: ItemKey) => {
     // Prevent multiple rapid clicks from causing issues
     if (isUpdatingWaterLevel) return;
     
     setIsUpdatingWaterLevel(true);
     
     setWaterLevels(prev => {
-      const currentLevel = prev[selectedTab][item as any]
+      const tab = selectedTab as TabKey;
+      const currentLevel = prev[tab][item];
       // only increase the level if it's not already at the max
       if (currentLevel === 3) {
-        return prev
+        return prev;
       }
       
-      const newLevels = {
+      // 添加动画触发逻辑
+      setShowRemoveAnimation(true);
+      setShowAddAnimation(false);
+      setIsAnimationPlaying(true);
+      
+      setTimeout(() => {
+        setShowRemoveAnimation(false);
+        setIsAnimationPlaying(false);
+      }, 1500);
+      
+      return {
         ...prev,
-        [selectedTab]: {
-          ...prev[selectedTab],
+        [tab]: {
+          ...prev[tab],
           [item]: currentLevel + 1
         }
-      }
-      
-      return newLevels
-    })
+      };
+    });
     
     // Reset the flag after a short delay
     setTimeout(() => {
       setIsUpdatingWaterLevel(false);
     }, 50);
-  }
+  };
 
   const handleBlendClick = () => {
     setIsBlending(true)
@@ -495,7 +490,7 @@ export default function MemeGenerator() {
                         onClick={(e) => {
                           // Stop event propagation to prevent affecting adjacent cups
                           e.stopPropagation();
-                          handleWaterGlassClick(item as keyof typeof waterLevels.sentiment | keyof typeof waterLevels.intention | keyof typeof waterLevels.style);
+                          handleWaterGlassClick(item as ItemKey);
                         }}
                       />
                       

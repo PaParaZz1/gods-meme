@@ -99,13 +99,10 @@ export default function TemplateEditor() {
     
     setTimeout(() => {
       setCurrentTemplate(nextIndex)
-      
-      setTimeout(() => {
-        setIsTransitioning(false)
-        setExitingTemplate(null)
-        setNextTemplateIndex(null)
-      }, 200) // Faster transition
-    }, 200) // Faster transition
+      setIsTransitioning(false)
+      setExitingTemplate(null)
+      setNextTemplateIndex(null)
+    }, 600)
   }
 
   // Navigate to previous template with transition
@@ -120,13 +117,10 @@ export default function TemplateEditor() {
     
     setTimeout(() => {
       setCurrentTemplate(prevIndex)
-      
-      setTimeout(() => {
-        setIsTransitioning(false)
-        setExitingTemplate(null)
-        setNextTemplateIndex(null)
-      }, 200) // Faster transition
-    }, 200) // Faster transition
+      setIsTransitioning(false)
+      setExitingTemplate(null)
+      setNextTemplateIndex(null)
+    }, 600)
   }
 
   // Reset scroll position of similar memes container
@@ -217,7 +211,7 @@ export default function TemplateEditor() {
                 ? 'opacity-0 transform scale-90 translate-z-[-100px]'
                 : isTransitioning && transitionDirection === 'right'
                 ? 'opacity-0 transform translate-x-[-120%] translate-y-[30%] rotate-[-15deg]'
-                : 'opacity-100 transform scale-100 translate-z-0 animate-popIn'
+                : 'opacity-100 transform scale-100 translate-z-0'
             }`}
             style={{ 
               transformStyle: 'preserve-3d',
@@ -281,7 +275,7 @@ export default function TemplateEditor() {
               style={{
                 animation: transitionDirection === 'left' 
                   ? 'slideLeftOut 600ms forwards' 
-                  : 'scaleOut 600ms forwards',
+                  : 'slideRightOut 600ms forwards',
                 transformStyle: 'preserve-3d',
                 backfaceVisibility: 'hidden'
               }}
@@ -338,9 +332,9 @@ export default function TemplateEditor() {
             <div 
               className="absolute top-0 left-0 w-full h-full"
               style={{
-                animation: transitionDirection === 'left' 
-                  ? 'scaleIn 600ms forwards'
-                  : 'slideLeftIn 600ms forwards',
+                // animation: transitionDirection === 'left' 
+                //   ? 'slideRightIn 600ms forwards'
+                //   : 'slideLeftIn 600ms forwards',
                 transformStyle: 'preserve-3d',
                 backfaceVisibility: 'hidden',
                 opacity: 0
@@ -496,13 +490,13 @@ export default function TemplateEditor() {
           }
         }
         
-        @keyframes scaleOut {
+        @keyframes slideRightOut {
           0% {
-            transform: scale(1) translateZ(0);
+            transform: translateX(0) translateY(0) rotate(0deg);
             opacity: 1;
           }
           100% {
-            transform: scale(0.9) translateZ(-100px);
+            transform: translateX(120%) translateY(30%) rotate(15deg);
             opacity: 0;
           }
         }
@@ -518,13 +512,13 @@ export default function TemplateEditor() {
           }
         }
         
-        @keyframes scaleIn {
+        @keyframes slideRightIn {
           0% {
-            transform: scale(0.9) translateZ(-100px);
+            transform: translateX(120%) translateY(30%) rotate(15deg);
             opacity: 0;
           }
           100% {
-            transform: scale(1) translateZ(0);
+            transform: translateX(0) translateY(0) rotate(0deg);
             opacity: 1;
           }
         }
@@ -533,10 +527,6 @@ export default function TemplateEditor() {
           0% {
             transform: scale(0.8) translateZ(-100px);
             opacity: 0;
-          }
-          40% {
-            transform: scale(1.05) translateZ(0);
-            opacity: 1;
           }
           100% {
             transform: scale(1) translateZ(0);
