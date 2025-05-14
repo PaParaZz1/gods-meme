@@ -98,7 +98,7 @@ export default function GenerationResult() {
           </button>
           
           <Link
-            href="/"
+            href="/final-result"
             className="block w-full bg-[#333333] text-white py-3 rounded-full text-center font-phudu text-lg"
           >
             NEXT
