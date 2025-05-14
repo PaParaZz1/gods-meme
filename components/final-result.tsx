@@ -3,7 +3,6 @@
 import Image from "next/image"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Download, Edit, Upload, Share2 } from "lucide-react"
 
 export default function FinalResult() {
   const router = useRouter()
@@ -45,7 +44,7 @@ export default function FinalResult() {
   return (
     <div className="flex flex-col min-h-screen opacity-100">
       {/* Header with title and help button */}
-      <div className="flex items-center justify-between p-8 px-6 pb-12">
+      <div className="flex items-center justify-between p-8 px-6 pb-12 xs:p-6 xs:px-4 xs:pb-4">
         <div className="flex-1"></div>
         <h1 className="text-xl font-inika font-bold flex-1 text-center whitespace-nowrap">MEME Creation</h1>
         <div className="flex-1 flex justify-end">
@@ -57,13 +56,13 @@ export default function FinalResult() {
 
       {/* Dark background container for image and buttons with shadow */}
       <div 
-        className={`bg-[#333333] mx-2 rounded-xl p-2 mb-8 shadow-[0_8px_30px_rgb(0,0,0,0.3)] transition-all duration-500 ease-out transform ${
+        className={`bg-[#333333] mx-2 rounded-xl p-2 mb-8 xs:mb-6 shadow-[0_8px_30px_rgb(0,0,0,0.3)] transition-all duration-500 ease-out transform ${
           showMeme ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-10'
         }`}
       >
         {/* Meme Display */}
         <div className="w-full bg-[#FFFFFF] rounded-xl shadow-md mb-4 overflow-hidden border border-[#333333]">
-          <div className="relative w-full aspect-[4/3] bg-[#FFFFFF] max-h-[220px]">
+          <div className="relative w-full aspect-[4/3] bg-[#FFFFFF] max-h-[220px] xs:max-h-[180px]">
             <Image
               src="/template1.jpg"
               alt="Meme"
@@ -150,7 +149,7 @@ export default function FinalResult() {
       <div className="w-full flex-1 overflow-auto mb-0 px-4">
         {/* Keywords with image */}
         <div 
-          className={`w-full mb-6 relative transition-all duration-500 ease-out transform ${
+          className={`w-full mb-6 xs:mb-4 relative transition-all duration-500 ease-out transform ${
             showKeywords ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-10'
           }`}
         >
@@ -205,10 +204,10 @@ export default function FinalResult() {
       </div>
 
       {/* Finish Button - thinner with whitespace on sides */}
-      <div className="px-6 mb-16">
+      <div className="px-6 mb-16 xs:mb-12 xs:px-8">
         <button 
           onClick={handleFinishCreation}
-          className="w-full bg-[#333333] text-white py-4 px-8 rounded-full text-2xl font-phudu hover:bg-[#444444] transition-colors duration-300 transform hover:scale-[0.98] active:scale-[0.95] shadow-md"
+          className="w-full bg-[#333333] text-white py-4 px-8 rounded-full text-2xl xs:text-xl font-phudu hover:bg-[#444444] transition-colors duration-300 transform hover:scale-[0.98] active:scale-[0.95] shadow-md"
         >
           FINISH CREATION
         </button>

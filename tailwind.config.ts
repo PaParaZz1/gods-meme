@@ -11,6 +11,9 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      screens: {
+        xs: {'max': '375px'},
+      },
       scale: {
         '160': '1.6',
         '180': '1.8',

@@ -35,7 +35,15 @@ export default function MemeGenerator() {
   const dragItemRef = useRef<HTMLDivElement>(null)
   const initialTouchRef = useRef({ x: 0, y: 0 })
   const initialElementPosRef = useRef({ x: 0, y: 0 })
-  
+  const [isSmallMobile, setIsSmallMobile] = useState(false)
+
+  useEffect(() => {
+    const checkSmallMobile = () => {
+      setIsSmallMobile(window.innerWidth <= 375)
+    }
+    checkSmallMobile()
+  }, [])
+
   // New state for character animations
   const [showAddAnimation, setShowAddAnimation] = useState(false)
   const [showRemoveAnimation, setShowRemoveAnimation] = useState(false)
@@ -302,7 +310,7 @@ export default function MemeGenerator() {
       onTouchEnd={handleItemTouchEnd}
     >
       {/* Header */}
-      <div className="w-full flex flex-col items-center relative px-6 pt-8">
+      <div className="w-full flex flex-col items-center relative px-6 pt-8 xs:pt-4">
         {/* Question mark button positioned absolutely to the right */}
         <div className="absolute right-6 top-10">
           <button className="w-6 h-6 bg-[#333333] rounded-full flex items-center justify-center text-white text-xl">
@@ -315,12 +323,12 @@ export default function MemeGenerator() {
           <div className="bg-[#333333] rounded-full w-16 h-16 flex items-center justify-center mb-2">
             <Image src="/logo_head.png" alt="God's Meme Logo" width={96} height={96} />
           </div>
-          <h1 className="text-3xl font-inika text-[#333333]">GOD'S MEME</h1>
+          <h1 className="text-3xl xs:text-2xl font-inika text-[#333333]">GOD'S MEME</h1>
         </div>
       </div>
 
         {/* Search Input with curved lines */}
-        <div className="w-full mt-4 relative">
+        <div className="w-full mt-4 xs:mt-2 relative">
           <div className="relative px-8">
             <input
               type="text"
@@ -352,7 +360,7 @@ export default function MemeGenerator() {
         </div>
 
         {/* Category Tabs */}
-        <div className="w-full px-16 mt-6 mb-2">
+        <div className="w-full px-16 mt-6 xs:mt-2 mb-2 xs:mb-1">
           <div className="flex space-x-2 items-center justify-center">
             <button
               className={`flex items-center rounded-full relative overflow-hidden transform transition-all duration-300 ease-in-out active:scale-95 ${
@@ -418,7 +426,7 @@ export default function MemeGenerator() {
         </div>
         
         {/* Arrow indicator that points to the selected tab */}
-        <div className="w-full relative h-4">
+        <div className="w-full relative h-4 xs:h-2">
           <motion.div 
             className="absolute w-6 h-6 transform -translate-x-1/2"
             animate={{ left: selectedTab === "sentiment" ? "33.3%" : selectedTab === "intention" ? "50%" : "66.7%" }}
@@ -432,7 +440,7 @@ export default function MemeGenerator() {
         
       {/* Dynamic Content Grid based on selected tab */}
         <div className="w-full px-2">
-          <div className="bg-[#EEEEEE] rounded-lg p-4 mx-2">
+          <div className="bg-[#EEEEEE] rounded-lg p-4 xs:p-2 mx-2">
             <AnimatePresence mode="wait">
               <motion.div
                 key={selectedTab}
@@ -483,8 +491,8 @@ export default function MemeGenerator() {
                       <Image 
                         src={`/glass_base.png`} 
                         alt={item} 
-                        width={48} 
-                        height={72} 
+                        width={isSmallMobile ? 32 : 48} 
+                        height={isSmallMobile ? 48 : 72} 
                         className={`object-contain relative z-10 ${draggedItem === item && isDragging ? 'opacity-30' : draggedItem === item ? 'opacity-50' : ''}`}
                         onTouchStart={(e) => handleItemTouchStart(e, item)}
                         onClick={(e) => {
@@ -499,8 +507,8 @@ export default function MemeGenerator() {
                           <Image 
                             src={`/water_level${getWaterLevel(item)}.png`}
                             alt={`Water level ${getWaterLevel(item)}`}
-                            width={48}
-                            height={72}
+                            width={isSmallMobile ? 32 : 48}
+                            height={isSmallMobile ? 48 : 72}
                             className={`object-contain transition-all duration-300 ease-out ${draggedItem === item && isDragging ? 'opacity-30' : draggedItem === item ? 'opacity-50' : ''}`}
                           />
                         </div>
@@ -519,14 +527,14 @@ export default function MemeGenerator() {
           ref={godAreaRef}
           className={"w-full flex justify-center mt-4 relative"}
         >
-          <div className="relative w-[390px] h-[230px]">
+          <div className="relative w-[390px] h-[230px] xs:w-[280px] xs:h-[160px]">
             {/* Static image (always visible as base) */}
             <div className="absolute inset-0">
               <Image 
                 src="/meme_god_static.png" 
                 alt="Meme God" 
-                width={390} 
-                height={230} 
+                width={isSmallMobile ? 280 : 390} 
+                height={isSmallMobile ? 160 : 230} 
                 className={`${showAddAnimation || showRemoveAnimation ? 'opacity-0' : 'opacity-100'} transition-opacity duration-0`}
               />
             </div>
@@ -537,8 +545,8 @@ export default function MemeGenerator() {
                 <Image 
                   src="/god_add_elem.gif" 
                   alt="Adding Element" 
-                  width={390} 
-                  height={230} 
+                  width={isSmallMobile ? 280 : 390} 
+                  height={isSmallMobile ? 160 : 230} 
                   priority 
                 />
               </div>
@@ -550,8 +558,8 @@ export default function MemeGenerator() {
                 <Image 
                   src="/god_remove_elem.gif" 
                   alt="Removing Element" 
-                  width={390} 
-                  height={230} 
+                  width={isSmallMobile ? 280 : 390} 
+                  height={isSmallMobile ? 160 : 230} 
                   priority 
                 />
               </div>
@@ -568,18 +576,18 @@ export default function MemeGenerator() {
         </div>
 
         {/* Blend Button */}
-        <div className="w-full px-6 mt-6 mb-4">
+        <div className="w-full px-6 mt-6 mb-4 xs:mt-5 xs:mb-3">
           <button 
             onClick={handleBlendClick}
             disabled={isBlending}
             onTouchStart={handleButtonTouchStart}
             onTouchEnd={handleButtonTouchEnd}
-            className={`w-full bg-[#333333] text-white py-4 rounded-full font-phudu text-2xl 
+            className={`w-full bg-[#333333] text-white py-4 xs:py-2 rounded-full font-phudu text-2xl
               transform transition-all duration-300 relative overflow-hidden group
               ${isBlending ? 'scale-[0.98] shadow-inner' : 'hover:shadow-lg active:scale-[0.98]'}`}
           >
             {/* Button text that disappears when loading */}
-            <span className={`relative z-10 transition-all duration-300 ${isBlending ? 'opacity-0' : 'opacity-100 group-hover:tracking-wider'}`}>
+            <span className={`relative z-10 xs:text-md transition-all duration-300 ${isBlending ? 'opacity-0' : 'opacity-100 group-hover:tracking-wider'}`}>
               BLEND IT
             </span>
             

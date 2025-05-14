@@ -31,7 +31,7 @@ export default function LandingPage() {
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768)
-      setIsSmallMobile(window.innerWidth < 375)
+      setIsSmallMobile(window.innerWidth <= 375)
     }
     
     checkMobile()
@@ -129,7 +129,7 @@ export default function LandingPage() {
         <h1 className={`font-inika text-[#333333] mb-6 ${isSmallMobile ? 'text-3xl' : 'text-4xl'} transition-all duration-300 ease-in-out transform ${showTitle ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
           GOD'S MEME
         </h1>
-        <p className={`text-[#333333] leading-relaxed font-['Lexend'] ${isSmallMobile ? 'text-base' : 'text-lg'} transition-all duration-300 ease-in-out transform ${showText ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
+        <p className={`text-[#333333] leading-relaxed font-['Lexend'] ${isSmallMobile ? 'text-md' : 'text-lg'} transition-all duration-300 ease-in-out transform ${showText ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
           Type in a keyword, and boom! 
           <br />
           God's MEME will deliver a meme so perfect, you'll question free will itself. 

@@ -12,7 +12,7 @@ interface HeaderProps {
 
 function Header({ onBack }: HeaderProps) {
     return (
-      <div className="flex items-center justify-between p-6 px-6">
+      <div className="flex items-center justify-between p-6 px-6 xs:p-4 xs:px-4">
         <button 
           onClick={onBack}
           className="flex items-center text-[#333333]"
@@ -185,7 +185,7 @@ export default function TemplateEditor() {
       <Header onBack={() => router.push("/meme-generator")} />
 
       {/* Template Preview with navigation arrows */}
-      <div className="px-6 py-4 flex justify-center relative">
+      <div className="px-6 py-4 xs:px-4 xs:py-3 flex justify-center relative">
         {/* Left navigation arrow */}
         <button 
           onClick={prevTemplate}
@@ -422,7 +422,7 @@ export default function TemplateEditor() {
       </div>
 
       {/* Similar memes section with horizontal scrolling */}
-      <div className="px-6 mt-8">
+      <div className="px-6 mt-8 xs:mt-6">
         <h2 className="text-lg font-inika uppercase text-[#666666] mb-2">MEME USING THE SAME TEMPLATE</h2>
         
         {/* Horizontally scrollable container */}
@@ -431,7 +431,7 @@ export default function TemplateEditor() {
           className="overflow-x-auto hide-scrollbar pb-4"
           style={{ scrollbarWidth: 'none' }}
         >
-          <div className="grid grid-rows-2 grid-flow-col gap-2 w-max">
+          <div className="grid grid-rows-2 xs:grid-rows-1 grid-flow-col gap-2 w-max">
             {/* Generate random number of similar memes for the current template */}
             {Array.from({ length: getCurrentSimilarMemesCount() }).map((_, index) => (
               <div 
