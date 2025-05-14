@@ -532,7 +532,7 @@ export default function MemeGenerator() {
                 alt="Meme God" 
                 width={390} 
                 height={230} 
-                className={`${showAddAnimation || showRemoveAnimation ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
+                className={`${showAddAnimation || showRemoveAnimation ? 'opacity-0' : 'opacity-100'} transition-opacity duration-0`}
               />
             </div>
             

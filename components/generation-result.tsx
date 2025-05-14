@@ -29,6 +29,10 @@ export default function GenerationResult() {
 
   // Handle option selection
   const handleOptionSelect = (option: string) => {
+    if (option === "CHANGE STYLE") {
+      router.push("/generating")
+      return
+    }
     // Close the modal
     setIsModalOpen(false)
     
