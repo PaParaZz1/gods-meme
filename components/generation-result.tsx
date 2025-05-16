@@ -10,6 +10,10 @@ export default function GenerationResult() {
   const [generatedImage, setGeneratedImage] = useState("/template1.jpg") // Default to template1 as example
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [showEntryAnimation, setShowEntryAnimation] = useState(true)
+  const [showElementInput, setShowElementInput] = useState(false)
+  const [showRemoveInput, setShowRemoveInput] = useState(false)
+  const [elementInput, setElementInput] = useState("")
+  const [isFocused, setIsFocused] = useState(false)
 
   // Entry animation effect
   useEffect(() => {
@@ -33,14 +37,40 @@ export default function GenerationResult() {
       router.push("/generating")
       return
     }
+    
     // Close the modal
     setIsModalOpen(false)
+    
+    if (option === "ADD ELEMENTS") {
+      setShowElementInput(true)
+      setShowRemoveInput(false)
+      return
+    }
+    
+    if (option === "REMOVE ELEMENTS") {
+      setShowRemoveInput(true)
+      setShowElementInput(false)
+      return
+    }
     
     // Logic for regeneration based on selected option
     // For demo, just toggle between templates
     setGeneratedImage(prev => 
       prev === "/template1.jpg" ? "/template2.jpg" : "/template1.jpg"
     )
+  }
+
+  // Handle element input submission
+  const handleElementSubmit = () => {
+    if (elementInput.trim()) {
+      // Logic to regenerate with new elements
+      setGeneratedImage(prev => 
+        prev === "/template1.jpg" ? "/template2.jpg" : "/template1.jpg"
+      )
+      setElementInput("")
+      setShowElementInput(false)
+      setShowRemoveInput(false)
+    }
   }
 
   return (
@@ -88,22 +118,64 @@ export default function GenerationResult() {
           </div>
         </div>
 
-        {/* Action buttons */}
-        <div className="px-8 pb-8 space-y-4">
-          <button
-            onClick={handleRegenerate}
-            className="block w-full bg-white text-[#333333] py-3 rounded-full text-center font-phudu text-lg border-2 border-[#333333]"
-          >
-            REGENERATE
-          </button>
-          
-          <Link
-            href="/final-result"
-            className="block w-full bg-[#333333] text-white py-3 rounded-full text-center font-phudu text-lg"
-          >
-            NEXT
-          </Link>
-        </div>
+        {/* Action buttons or Element input */}
+        {!showElementInput && !showRemoveInput ? (
+          <div className="px-8 pb-8 space-y-4">
+            <button
+              onClick={handleRegenerate}
+              className="block w-full bg-white text-[#333333] py-3 rounded-full text-center font-phudu text-lg border-2 border-[#333333]"
+            >
+              REGENERATE
+            </button>
+            
+            <Link
+              href="/final-result"
+              className="block w-full bg-[#333333] text-white py-3 rounded-full text-center font-phudu text-lg"
+            >
+              NEXT
+            </Link>
+          </div>
+        ) : (
+          <div className="px-8 pb-8 space-y-4 animate-fadeIn">
+            <h2 className="text-[#333333] text-center mt-4 mb-2 font-phudu text-xl">
+              {showElementInput ? "Add Elements" : "Remove Elements"}
+            </h2>
+            
+            <textarea
+              value={elementInput}
+              onChange={(e) => setElementInput(e.target.value)}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              placeholder={showElementInput 
+                ? "Describe elements to add..." 
+                : "Describe elements to remove..."}
+              className={`w-full p-4 rounded-xl border border-gray-400 min-h-[120px] font-phudu mb-2 focus:outline-none focus:ring-2 focus:ring-[#333333] transition-colors duration-200 ${
+                isFocused 
+                  ? "bg-[#444444] text-white" 
+                  : "bg-[#f5f5f5] text-[#333333]"
+              }`}
+            />
+            
+            <div className="flex space-x-3">
+              <button
+                onClick={() => {
+                  setShowElementInput(false)
+                  setShowRemoveInput(false)
+                }}
+                className="flex-1 bg-white text-[#333333] py-3 rounded-full text-center font-phudu text-lg border-2 border-[#333333]"
+              >
+                CANCEL
+              </button>
+              
+              <button
+                onClick={handleElementSubmit}
+                className="flex-1 bg-[#333333] text-white py-3 rounded-full text-center font-phudu text-lg"
+              >
+                REGENERATE
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Regeneration options modal */}

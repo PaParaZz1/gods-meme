@@ -41,6 +41,22 @@ export default function FinalResult() {
     router.push("/")
   }
 
+  // 添加下载 meme 图片的函数
+  const handleDownloadMeme = () => {
+    // 创建一个链接元素
+    const link = document.createElement('a')
+    // 设置下载的图片路径
+    link.href = '/template1.jpg'
+    // 设置下载的文件名
+    link.download = 'my-meme.jpg'
+    // 将链接添加到文档
+    document.body.appendChild(link)
+    // 模拟点击链接
+    link.click()
+    // 从文档中移除链接
+    document.body.removeChild(link)
+  }
+
   return (
     <div className="flex flex-col min-h-screen opacity-100">
       {/* Header with title and help button */}
@@ -76,7 +92,10 @@ export default function FinalResult() {
         <div className="flex justify-between w-full pb-2 px-4">
           {/* Left buttons group */}
           <div className="flex space-x-6">
-            <button className="flex flex-col items-center">
+            <button 
+              className="flex flex-col items-center"
+              onClick={handleDownloadMeme}
+            >
               <div className="w-10 h-10 bg-[#FFFFFF] rounded-md shadow-md flex items-center justify-center">
                 <Image 
                   src="/final_result_save.png" 
