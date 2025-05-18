@@ -71,6 +71,8 @@ export default function GenerationResult() {
       setShowElementInput(false)
       setShowRemoveInput(false)
     }
+    router.push("/generating")
+    return
   }
 
   return (
