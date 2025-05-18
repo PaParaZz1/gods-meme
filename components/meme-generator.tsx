@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { ChevronsDown } from "lucide-react"
+import { ChevronsDown, ChevronsUp } from "lucide-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
@@ -36,6 +36,23 @@ export default function MemeGenerator() {
   const initialTouchRef = useRef({ x: 0, y: 0 })
   const initialElementPosRef = useRef({ x: 0, y: 0 })
   const [isSmallMobile, setIsSmallMobile] = useState(false)
+
+  // New states for advanced gallery transition
+  const [galleryPosition, setGalleryPosition] = useState<'closed' | 'partial' | 'full'>('closed')
+  const [scrollY, setScrollY] = useState(0)
+  const galleryRef = useRef<HTMLDivElement>(null)
+  const scrollThreshold = 100 // Threshold in pixels for showing header in full screen mode
+  const [dragConstraints, setDragConstraints] = useState<{ top: number; bottom: number }>({ top: 0, bottom: 0 })
+  const [isDraggingGallery, setIsDraggingGallery] = useState(false)
+  const [lastGalleryPosition, setLastGalleryPosition] = useState<'partial' | 'full'>('partial')
+
+  // Calculate drag constraints when gallery position changes
+  useEffect(() => {
+    if (galleryPosition === 'partial' || galleryPosition === 'full') {
+      // Only allow dragging down to close the gallery since both states are full screen
+      setDragConstraints({ top: 0, bottom: window.innerHeight / 2 })
+    }
+  }, [galleryPosition])
 
   useEffect(() => {
     const checkSmallMobile = () => {
@@ -77,7 +94,15 @@ export default function MemeGenerator() {
   const getWaterLevel = (item: string) => {
     const tab = selectedTab as TabKey;
     const itemKey = item as ItemKey;
-    return waterLevels[tab][itemKey] || 0;
+    
+    // 修复：使用类型断言确保正确的键类型匹配
+    if (tab === "sentiment") {
+      return waterLevels[tab][itemKey as SentimentKey] || 0;
+    } else if (tab === "intention") {
+      return waterLevels[tab][itemKey as IntentionKey] || 0;
+    } else {
+      return waterLevels[tab][itemKey as StyleKey] || 0;
+    }
   };
 
   const handleDragStart = (item: string) => {
@@ -103,7 +128,17 @@ export default function MemeGenerator() {
       setWaterLevels(prev => {
         const tab = selectedTab as TabKey;
         const item = draggedItem as ItemKey;
-        const currentLevel = prev[tab][item];
+        
+        // 修复：使用类型断言确保正确的键类型匹配
+        let currentLevel = 0;
+        if (tab === "sentiment") {
+          currentLevel = prev[tab][item as SentimentKey];
+        } else if (tab === "intention") {
+          currentLevel = prev[tab][item as IntentionKey];
+        } else {
+          currentLevel = prev[tab][item as StyleKey];
+        }
+        
         if (currentLevel > 0) {
           // Show add animation
           setShowAddAnimation(true);
@@ -116,6 +151,7 @@ export default function MemeGenerator() {
             setIsAnimationPlaying(false);
           }, 1500); // Animation duration
           
+          // 更新水位时也需要使用正确的类型断言
           return {
             ...prev,
             [tab]: {
@@ -215,7 +251,17 @@ export default function MemeGenerator() {
       setWaterLevels(prev => {
         const tab = selectedTab as TabKey;
         const item = draggedItem as ItemKey;
-        const currentLevel = prev[tab][item];
+        
+        // 修复：使用类型断言确保正确的键类型匹配
+        let currentLevel = 0;
+        if (tab === "sentiment") {
+          currentLevel = prev[tab][item as SentimentKey];
+        } else if (tab === "intention") {
+          currentLevel = prev[tab][item as IntentionKey];
+        } else {
+          currentLevel = prev[tab][item as StyleKey];
+        }
+        
         if (currentLevel > 0) {
           // 确保触发添加动画
           setShowAddAnimation(true);
@@ -227,6 +273,7 @@ export default function MemeGenerator() {
             setIsAnimationPlaying(false);
           }, 1500); // Animation duration
           
+          // 更新水位时也需要使用正确的类型断言
           return {
             ...prev,
             [tab]: {
@@ -252,7 +299,17 @@ export default function MemeGenerator() {
     
     setWaterLevels(prev => {
       const tab = selectedTab as TabKey;
-      const currentLevel = prev[tab][item];
+      
+      // 使用类型断言确保正确的键类型匹配
+      let currentLevel = 0;
+      if (tab === "sentiment") {
+        currentLevel = prev[tab][item as SentimentKey];
+      } else if (tab === "intention") {
+        currentLevel = prev[tab][item as IntentionKey];
+      } else {
+        currentLevel = prev[tab][item as StyleKey];
+      }
+      
       // only increase the level if it's not already at the max
       if (currentLevel === 3) {
         return prev;
@@ -268,6 +325,7 @@ export default function MemeGenerator() {
         setIsAnimationPlaying(false);
       }, 1500);
       
+      // 更新水位时也需要使用正确的类型断言
       return {
         ...prev,
         [tab]: {
@@ -301,6 +359,101 @@ export default function MemeGenerator() {
     setTimeout(() => {
       setIsTouchActive(false)
     }, 300)
+  }
+
+  // New state for gallery
+  const [showGallery, setShowGallery] = useState(false)
+  const [galleryImages, setGalleryImages] = useState([
+    { id: 1, src: "/template1.jpg", likes: 120, height: 320 },
+    { id: 2, src: "/template2.jpg", likes: 85, height: 280 },
+    { id: 3, src: "/template3.jpg", likes: 230, height: 350 },
+    { id: 4, src: "/template4.jpg", likes: 67, height: 300 },
+    { id: 5, src: "/template5.jpg", likes: 192, height: 270 },
+    { id: 6, src: "/template1.jpg", likes: 145, height: 330 },
+    { id: 7, src: "/template2.jpg", likes: 78, height: 290 },
+    { id: 8, src: "/template3.jpg", likes: 210, height: 310 },
+    { id: 9, src: "/template5.jpg", likes: 142, height: 280 },
+    { id: 10, src: "/template1.jpg", likes: 245, height: 340 },
+    { id: 11, src: "/template2.jpg", likes: 178, height: 270 },
+    { id: 12, src: "/template3.jpg", likes: 110, height: 330 },
+  ])
+  const [likedImages, setLikedImages] = useState<number[]>([])
+
+  // New function to handle like
+  const handleLikeImage = (id: number) => {
+    if (likedImages.includes(id)) {
+      // 取消点赞
+      setLikedImages(prev => prev.filter(imageId => imageId !== id))
+      setGalleryImages(prev => 
+        prev.map(img => img.id === id ? {...img, likes: img.likes - 1} : img)
+      )
+    } else {
+      // 添加点赞
+      setLikedImages(prev => [...prev, id])
+      setGalleryImages(prev => 
+        prev.map(img => img.id === id ? {...img, likes: img.likes + 1} : img)
+      )
+    }
+  }
+
+  // New function to toggle gallery with partial expansion
+  const toggleGallery = () => {
+    if (galleryPosition === 'closed') {
+      // Restore the last position when reopening
+      setGalleryPosition(lastGalleryPosition)
+      setShowGallery(true)
+    } else {
+      // Remember the current position before closing
+      if (galleryPosition === 'partial' || galleryPosition === 'full') {
+        setLastGalleryPosition(galleryPosition)
+      }
+      setGalleryPosition('closed')
+      setShowGallery(false)
+    }
+  }
+
+  // New function to handle gallery scroll
+  const handleGalleryScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const scrollPosition = e.currentTarget.scrollTop
+    setScrollY(scrollPosition)
+    
+    // Don't change modes while dragging
+    if (isDraggingGallery) return
+    
+    // Switch from partial to full based on scroll
+    if (galleryPosition === 'partial' && scrollPosition > 150) {
+      setGalleryPosition('full')
+    } 
+    // Switch from full to partial when scrolling back up to threshold
+    else if (galleryPosition === 'full' && scrollPosition < 50) {
+      setGalleryPosition('partial')
+    }
+  }
+
+  // Handle drag end for the gallery
+  const handleGalleryDragEnd = (info: any) => {
+    setIsDraggingGallery(false)
+    
+    // If user dragged up in partial mode (header visible)
+    if (galleryPosition === 'partial' && info.offset.y < -100) {
+      setGalleryPosition('full') // Switch to header hidden
+      setLastGalleryPosition('full')
+    } 
+    // If user dragged down in full mode (header hidden)
+    else if (galleryPosition === 'full' && info.offset.y > 100) {
+      setGalleryPosition('partial') // Switch to header visible
+      setLastGalleryPosition('partial')
+    }
+    // If user dragged down significantly, close the gallery
+    else if (info.offset.y > 150) {
+      // Remember the position before closing
+      setLastGalleryPosition(galleryPosition === 'full' ? 'full' : 'partial')
+      setGalleryPosition('closed')
+      // Short delay to allow animation to start
+      setTimeout(() => {
+        setShowGallery(false)
+      }, 100)
+    }
   }
 
   return (
@@ -623,11 +776,147 @@ export default function MemeGenerator() {
           </button>
         </div>
 
-        {/* Scroll Indicator */}
-        <div className="flex flex-col items-center">
+        {/* Scroll Indicator - 添加点击事件 */}
+        <div 
+          className="flex flex-col items-center cursor-pointer" 
+          onClick={toggleGallery}
+        >
           <ChevronsDown className="w-4 h-4" />
           <span className="text-xs text-[#666666]">Scroll down to view gallery</span>
         </div>
+
+        {/* Gallery Section - Full screen in both states, with header visibility toggling on scroll */}
+        <AnimatePresence>
+          {showGallery && (
+            <motion.div 
+              ref={galleryRef}
+              className="fixed inset-0 bg-[#333333] z-50 overflow-auto shadow-lg"
+              initial={{ y: "100%" }}
+              animate={{ 
+                y: galleryPosition === 'partial' ? '0%' : galleryPosition === 'full' ? '0%' : '100%'
+              }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              onScroll={handleGalleryScroll}
+              drag="y"
+              dragConstraints={dragConstraints}
+              dragElastic={0.2}
+              onDragStart={() => setIsDraggingGallery(true)}
+              onDragEnd={handleGalleryDragEnd}
+              style={{ overflow: isDraggingGallery ? 'hidden' : 'auto' }}
+            >
+              {/* Drag indicator */}
+              <div className="absolute top-0 left-0 right-0 flex justify-center pt-2">
+                <div className="w-10 h-1 bg-white/30 rounded-full"></div>
+              </div>
+              {/* Gallery Header */}
+              <motion.div 
+                className="sticky top-0 bg-[#333333] shadow-sm z-10 p-4 mt-6 flex flex-col items-center"
+                animate={{ 
+                  opacity: galleryPosition === 'full' && scrollY > scrollThreshold ? 0 : 1,
+                  height: galleryPosition === 'full' && scrollY > scrollThreshold ? 0 : 'auto'
+                }}
+                transition={{ duration: 0.3 }}
+              >
+                <div 
+                  className="flex flex-col items-center cursor-pointer" 
+                  onClick={toggleGallery}
+                >
+                  <motion.div
+                    animate={{ y: [0, -5, 0] }}
+                    transition={{ repeat: Infinity, duration: 1.5 }}
+                  >
+                    <ChevronsUp className="w-4 h-4" color="#808080"/>
+                  </motion.div>
+                  <span className="text-sm text-[#808080]">Scroll up to the home</span>
+                </div>
+
+                {/* Position indicator dots */}
+                <div className="flex space-x-1 mt-2">
+                  <div className="flex items-center">
+                    <div className={`w-2 h-2 rounded-full ${galleryPosition === 'partial' ? 'bg-white' : 'bg-white/30'}`}></div>
+                    <span className="text-xs text-white/50 ml-1">Header visible</span>
+                  </div>
+                  <div className="flex items-center ml-2">
+                    <div className={`w-2 h-2 rounded-full ${galleryPosition === 'full' ? 'bg-white' : 'bg-white/30'}`}></div>
+                    <span className="text-xs text-white/50 ml-1">Header hidden</span>
+                  </div>
+                </div>
+              </motion.div>
+              
+              {/* Scroll to top button - only visible in full mode when scrolled down */}
+              {galleryPosition === 'full' && scrollY > scrollThreshold && (
+                <motion.div 
+                  className="fixed top-4 left-1/2 transform -translate-x-1/2 z-20 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg cursor-pointer"
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  onClick={() => {
+                    if (galleryRef.current) {
+                      galleryRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+                    }
+                  }}
+                >
+                  <ChevronsUp className="w-4 h-4" color="white" />
+                </motion.div>
+              )}
+              
+              {/* Gallery Grid with dark background */}
+              <div className="p-4 bg-[#f8f8f8] min-h-screen rounded-t-[30px]">
+                <div className="flex justify-center mb-6">
+                  <h2 className="text-xl font-inika text-[#333333] mt-2 bg-[#f5f5f5] px-6 py-1 rounded-full">MEME GALLERY</h2>
+                </div>
+                <div className="columns-2 gap-5 mx-2">
+                  {galleryImages.map((image) => (
+                    <div 
+                      key={image.id} 
+                      className="mb-4 break-inside-avoid relative group"
+                      style={{ 
+                        height: `${image.height}px`,
+                        borderRadius: "12px",
+                        overflow: "hidden"
+                      }}
+                    >
+                      {/* 使用真实图片替换占位符 */}
+                      <div className="absolute inset-0">
+                        <Image 
+                          src={image.src} 
+                          alt={`Meme template ${image.id}`}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      
+                      {/* Like Button */}
+                      <div className="absolute bottom-2 right-2">
+                        <button 
+                          onClick={() => handleLikeImage(image.id)}
+                          className={`flex items-center space-x-1 px-2 py-1 rounded-full ${
+                            likedImages.includes(image.id) 
+                              ? 'bg-[#333333] text-white' 
+                              : 'bg-white/80 text-gray-700 hover:bg-gray-100'
+                          } transition-colors duration-200 shadow-md`}
+                        >
+                          <svg 
+                            width="16" 
+                            height="16" 
+                            viewBox="0 0 24 24" 
+                            fill={likedImages.includes(image.id) ? "white" : "none"} 
+                            stroke={likedImages.includes(image.id) ? "white" : "currentColor"} 
+                            strokeWidth="2"
+                          >
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                          </svg>
+                          <span className="text-xs">{image.likes}</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Floating drag element */}
         {isDragging && draggedItem && (
