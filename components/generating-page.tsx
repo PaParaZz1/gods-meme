@@ -25,7 +25,7 @@ export default function GeneratingPage() {
     
     const imageInterval = setInterval(() => {
       setImageIndex(prev => (prev + 1) % animationImages.length);
-    }, 400);
+    }, 800);
     
     return () => clearInterval(imageInterval);
   }, [showMeme, animationImages.length]);

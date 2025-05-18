@@ -67,9 +67,12 @@ export default function LandingPage() {
     }
   }, [])
 
-  const handleClick = (e) => {
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
     setIsClicking(true)
+    
+    // Clear all localStorage items
+    localStorage.clear()
     
     // Delay navigation to show the animation
     setTimeout(() => {

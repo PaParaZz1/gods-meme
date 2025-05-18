@@ -346,6 +346,7 @@ export default function MemeGenerator() {
     // Simulate processing time, reset state after 3 seconds
     setTimeout(() => {
       setIsBlending(false)
+      saveWaterLevel()
       router.push("/template-selection")
     }, 1500)
   }
@@ -454,6 +455,83 @@ export default function MemeGenerator() {
         setShowGallery(false)
       }, 100)
     }
+  }
+
+  // Add this to your component's useEffect
+  useEffect(() => {
+    // Retrieve the saved water level from localStorage
+    const savedWaterLevel = localStorage.getItem('waterLevel')
+    
+    if (savedWaterLevel) {
+      // Parse the saved values
+      const values = savedWaterLevel.split(',').map(val => parseInt(val, 10))
+      
+      // Only update if we have valid values
+      if (values.length === 18 && !values.some(isNaN)) {
+        setWaterLevels(prev => ({
+          ...prev,
+          sentiment: {
+            ...prev.sentiment,
+            happiness: values[0],
+            love: values[1],
+            anger: values[2],
+            sorrow: values[3],
+            fear: values[4],
+            hate: values[5]
+          },
+          intention: {
+            ...prev.intention,
+            humor: values[6],
+            sarcasm: values[7],
+            rant: values[8],
+            encourage: values[9],
+            "self-mockery": values[10],
+            expressive: values[11]
+          },
+          style: {
+            ...prev.style,
+            motivational: values[12],
+            funny: values[13],
+            wholesome: values[14],
+            dark: values[15],
+            romantic: values[16],
+            sarcastic: values[17]
+          }
+        }))
+      }
+    }
+    // If no saved water level or invalid data, the default values from useState will be used
+  }, [])
+
+  // When water level changes, save it to localStorage
+  const saveWaterLevel = () => {
+    // Flatten the nested object into an array of values
+    const values = [
+      // Sentiment values
+      waterLevels.sentiment.happiness,
+      waterLevels.sentiment.love,
+      waterLevels.sentiment.anger,
+      waterLevels.sentiment.sorrow,
+      waterLevels.sentiment.fear,
+      waterLevels.sentiment.hate,
+      // Intention values
+      waterLevels.intention.humor,
+      waterLevels.intention.sarcasm,
+      waterLevels.intention.rant,
+      waterLevels.intention.encourage,
+      waterLevels.intention["self-mockery"],
+      waterLevels.intention.expressive,
+      // Style values
+      waterLevels.style.motivational,
+      waterLevels.style.funny,
+      waterLevels.style.wholesome,
+      waterLevels.style.dark,
+      waterLevels.style.romantic,
+      waterLevels.style.sarcastic
+    ]
+    
+    // Save the current water level to localStorage whenever it changes
+    localStorage.setItem('waterLevel', values.join(','))
   }
 
   return (
@@ -626,19 +704,25 @@ export default function MemeGenerator() {
                       damping: 20
                     }}
                     whileHover={{ 
-                      scale: 1.1,
+                      scale: isAnimationPlaying ? 1.0 : 1.1,  // 动画播放时禁用悬停效果
                       transition: { duration: 0.15 }
                     }}
-                    whileTap={{ scale: 0.95 }}
+                    whileTap={{ scale: isAnimationPlaying ? 1.0 : 0.95 }}  // 动画播放时禁用点击效果
                   >
                     {/* Add an invisible larger click area */}
                     <div className="absolute inset-0 z-10" />
                     
                     <div 
                       ref={draggedItem === item ? dragItemRef : null}
-                      className={`h-[78px] flex items-center justify-center relative ${getWaterLevel(item) > 0 ? 'cursor-grab active:cursor-grabbing' : ''}`}
-                      draggable={getWaterLevel(item) > 0}
-                      onDragStart={() => handleDragStart(item)}
+                      className={`h-[78px] flex items-center justify-center relative ${
+                        getWaterLevel(item) > 0 && !isAnimationPlaying 
+                          ? 'cursor-grab active:cursor-grabbing' 
+                          : isAnimationPlaying && getWaterLevel(item) > 0 
+                            ? 'cursor-not-allowed' 
+                            : ''
+                      }`}
+                      draggable={getWaterLevel(item) > 0 && !isAnimationPlaying}
+                      onDragStart={() => !isAnimationPlaying && handleDragStart(item)}
                       onDragEnd={handleDragEnd}
                     >
                       <Image 
@@ -646,12 +730,22 @@ export default function MemeGenerator() {
                         alt={item} 
                         width={isSmallMobile ? 32 : 48} 
                         height={isSmallMobile ? 48 : 72} 
-                        className={`object-contain relative z-10 ${draggedItem === item && isDragging ? 'opacity-30' : draggedItem === item ? 'opacity-50' : ''}`}
-                        onTouchStart={(e) => handleItemTouchStart(e, item)}
+                        className={`object-contain relative z-10 ${
+                          draggedItem === item && isDragging 
+                            ? 'opacity-30' 
+                            : draggedItem === item 
+                              ? 'opacity-50' 
+                              : isAnimationPlaying 
+                                ? 'opacity-50 filter grayscale'
+                                : ''
+                        }`}
+                        onTouchStart={(e) => !isAnimationPlaying && handleItemTouchStart(e, item)}
                         onClick={(e) => {
                           // Stop event propagation to prevent affecting adjacent cups
                           e.stopPropagation();
-                          handleWaterGlassClick(item as ItemKey);
+                          if (!isAnimationPlaying) {
+                            handleWaterGlassClick(item as ItemKey);
+                          }
                         }}
                       />
                       
@@ -662,12 +756,21 @@ export default function MemeGenerator() {
                             alt={`Water level ${getWaterLevel(item)}`}
                             width={isSmallMobile ? 32 : 48}
                             height={isSmallMobile ? 48 : 72}
-                            className={`object-contain transition-all duration-300 ease-out ${draggedItem === item && isDragging ? 'opacity-30' : draggedItem === item ? 'opacity-50' : ''}`}
+                            className={`object-contain transition-all duration-300 ease-out ${
+                              draggedItem === item && isDragging 
+                                ? 'opacity-30' 
+                                : draggedItem === item 
+                                  ? 'opacity-50' 
+                                  : isAnimationPlaying 
+                                    ? 'opacity-50 filter grayscale'
+                                    : ''
+                            }`}
                           />
                         </div>
                       )}
+                      
                     </div>
-                    <span className="text-xs font-inika text-center mt-1">{item}</span>
+                    <span className={`text-xs font-inika text-center mt-1 ${isAnimationPlaying ? 'opacity-50' : ''}`}>{item}</span>
                   </motion.div>
                 ))}
               </motion.div>

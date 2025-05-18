@@ -72,6 +72,9 @@ export default function TemplateEditor() {
     4: Math.floor(Math.random() * 3) + 5,
   })
 
+  // 添加防抖功能的引用，防止快速多次触发
+  const isProcessingSwipeRef = useRef(false);
+
   // Open full image
   const openFullImage = (src: string) => {
     setFullImageSrc(src)
@@ -87,41 +90,39 @@ export default function TemplateEditor() {
     document.body.style.overflow = 'auto'
   }
 
-  // Navigate to next template with transition
-  const nextTemplate = () => {
-    if (isTransitioning) return
+  // 统一的模板切换动画函数
+  const changeTemplate = (direction: 'left' | 'right') => {
+    // 如果正在进行动画，则不重复触发
+    if (isTransitioning || isProcessingSwipeRef.current) return;
     
-    const nextIndex = currentTemplate === templates.length - 1 ? 0 : currentTemplate + 1
-    setNextTemplateIndex(nextIndex)
-    setIsTransitioning(true)
-    setTransitionDirection('left')
-    setExitingTemplate(currentTemplate)
+    isProcessingSwipeRef.current = true;
     
+    // 计算下一个/上一个模板的索引
+    const newIndex = direction === 'left'
+      ? (currentTemplate === templates.length - 1 ? 0 : currentTemplate + 1)
+      : (currentTemplate === 0 ? templates.length - 1 : currentTemplate - 1);
+    
+    // 设置转场状态
+    setExitingTemplate(currentTemplate);
+    setIsTransitioning(true);
+    setTransitionDirection(direction);
+    setNextTemplateIndex(newIndex);
+    
+    // 等待动画完成后更新状态
     setTimeout(() => {
-      setCurrentTemplate(nextIndex)
-      setIsTransitioning(false)
-      setExitingTemplate(null)
-      setNextTemplateIndex(null)
-    }, 600)
-  }
-
-  // Navigate to previous template with transition
-  const prevTemplate = () => {
-    if (isTransitioning) return
-    
-    const prevIndex = currentTemplate === 0 ? templates.length - 1 : currentTemplate - 1
-    setNextTemplateIndex(prevIndex)
-    setIsTransitioning(true)
-    setTransitionDirection('right')
-    setExitingTemplate(currentTemplate)
-    
-    setTimeout(() => {
-      setCurrentTemplate(prevIndex)
-      setIsTransitioning(false)
-      setExitingTemplate(null)
-      setNextTemplateIndex(null)
-    }, 600)
-  }
+      setCurrentTemplate(newIndex);
+      
+      // 延迟清除动画元素，确保无缝过渡
+      setTimeout(() => {
+        setIsTransitioning(false);
+        setExitingTemplate(null);
+        setNextTemplateIndex(null);
+        
+        // 重置处理标志
+        isProcessingSwipeRef.current = false;
+      }, 50);
+    }, 550); // 稍微长于动画时间
+  };
 
   // Reset scroll position of similar memes container
   const resetScrollPosition = () => {
@@ -148,18 +149,17 @@ export default function TemplateEditor() {
 
   // Handle touch end
   const handleTouchEnd = () => {
-    if (!touchStart || !touchEnd) return
+    if (!touchStart || !touchEnd || isProcessingSwipeRef.current) return
     
     const distance = touchStart - touchEnd
     const isLeftSwipe = distance > minSwipeDistance
     const isRightSwipe = distance < -minSwipeDistance
     
-    // 直接调用翻页函数，不再使用setTimeout
+    // 直接调用统一的动画函数
     if (isLeftSwipe) {
-      nextTemplate()
-    }
-    if (isRightSwipe) {
-      prevTemplate()
+      changeTemplate('left');
+    } else if (isRightSwipe) {
+      changeTemplate('right');
     }
     
     // Reset values
@@ -188,7 +188,7 @@ export default function TemplateEditor() {
       <div className="px-6 py-4 xs:px-4 xs:py-3 flex justify-center relative">
         {/* Left navigation arrow */}
         <button 
-          onClick={prevTemplate}
+          onClick={() => changeTemplate('right')}
           className="absolute left-2 top-1/2 transform -translate-y-1/2 z-50 w-8 h-8 bg-[#333333] rounded-full flex items-center justify-center text-white"
         >
           <ChevronLeft size={20} />
@@ -201,17 +201,13 @@ export default function TemplateEditor() {
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          style={{ perspective: '1000px' }}
+          style={{ perspective: '800px' }}
         >
           {/* Current template */}
           <div 
             ref={currentFrameRef}
-            className={`relative transition-all duration-200 ease-in-out ${
-              isTransitioning && transitionDirection === 'left'
-                ? 'opacity-0 transform scale-90 translate-z-[-100px]'
-                : isTransitioning && transitionDirection === 'right'
-                ? 'opacity-0 transform translate-x-[-120%] translate-y-[30%] rotate-[-15deg]'
-                : 'opacity-100 transform scale-100 translate-z-0'
+            className={`relative transition-opacity duration-500 ease-out ${
+              isTransitioning ? 'pointer-events-none opacity-0' : 'opacity-100'
             }`}
             style={{ 
               transformStyle: 'preserve-3d',
@@ -274,10 +270,12 @@ export default function TemplateEditor() {
               className="absolute top-0 left-0 w-full h-full"
               style={{
                 animation: transitionDirection === 'left' 
-                  ? 'slideLeftOut 600ms forwards' 
-                  : 'slideRightOut 600ms forwards',
+                  ? 'flipPageLeft 550ms cubic-bezier(0.4, 0.0, 0.2, 1) forwards' 
+                  : 'flipPageRight 550ms cubic-bezier(0.4, 0.0, 0.2, 1) forwards',
                 transformStyle: 'preserve-3d',
-                backfaceVisibility: 'hidden'
+                transformOrigin: transitionDirection === 'left' ? 'left center' : 'right center',
+                backfaceVisibility: 'hidden',
+                zIndex: 20
               }}
             >
               {/* Frame 1 (background) */}
@@ -324,6 +322,17 @@ export default function TemplateEditor() {
               <div className="absolute bottom-0 left-0 right-0 bg-[#666666] text-white text-center py-1 rounded-b-lg z-40">
                 <span className="text-sm"><i>Meme Template Tags</i></span>
               </div>
+              
+              {/* 阴影效果增强翻页感 */}
+              <div 
+                className="absolute inset-0 z-30 pointer-events-none"
+                style={{
+                  background: transitionDirection === 'left' 
+                    ? 'linear-gradient(to right, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 70%)' 
+                    : 'linear-gradient(to left, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 70%)',
+                  opacity: 0.8
+                }}
+              />
             </div>
           )}
           
@@ -332,12 +341,13 @@ export default function TemplateEditor() {
             <div 
               className="absolute top-0 left-0 w-full h-full"
               style={{
-                // animation: transitionDirection === 'left' 
-                //   ? 'slideRightIn 600ms forwards'
-                //   : 'slideLeftIn 600ms forwards',
+                animation: transitionDirection === 'left' 
+                  ? 'revealPageLeft 550ms cubic-bezier(0.4, 0.0, 0.2, 1) forwards'
+                  : 'revealPageRight 550ms cubic-bezier(0.4, 0.0, 0.2, 1) forwards',
                 transformStyle: 'preserve-3d',
+                transformOrigin: transitionDirection === 'left' ? 'right center' : 'left center',
                 backfaceVisibility: 'hidden',
-                opacity: 0
+                zIndex: 10
               }}
             >
               {/* Frame 1 (background) */}
@@ -384,13 +394,24 @@ export default function TemplateEditor() {
               <div className="absolute bottom-0 left-0 right-0 bg-[#666666] text-white text-center py-1 rounded-b-lg z-40">
                 <span className="text-sm"><i>Meme Template Tags</i></span>
               </div>
+              
+              {/* 阴影效果增强翻页感 */}
+              <div 
+                className="absolute inset-0 z-30 pointer-events-none"
+                style={{
+                  background: transitionDirection === 'left' 
+                    ? 'linear-gradient(to left, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0) 70%)' 
+                    : 'linear-gradient(to right, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0) 70%)',
+                  opacity: 0.6
+                }}
+              />
             </div>
           )}
         </div>
 
         {/* Right navigation arrow */}
         <button 
-          onClick={nextTemplate}
+          onClick={() => changeTemplate('left')}
           className="absolute right-2 top-1/2 transform -translate-y-1/2 z-50 w-8 h-8 bg-[#333333] rounded-full flex items-center justify-center text-white"
         >
           <ChevronRight size={20} />
@@ -479,63 +500,48 @@ export default function TemplateEditor() {
 
       {/* Custom animations */}
       <style jsx global>{`
-        @keyframes slideLeftOut {
+        @keyframes flipPageLeft {
           0% {
-            transform: translateX(0) translateY(0) rotate(0deg);
+            transform: rotateY(0deg) translateZ(0);
             opacity: 1;
           }
           100% {
-            transform: translateX(-120%) translateY(30%) rotate(-15deg);
+            transform: rotateY(-75deg) translateZ(-100px);
             opacity: 0;
           }
         }
         
-        @keyframes slideRightOut {
+        @keyframes flipPageRight {
           0% {
-            transform: translateX(0) translateY(0) rotate(0deg);
+            transform: rotateY(0deg) translateZ(0);
             opacity: 1;
           }
           100% {
-            transform: translateX(120%) translateY(30%) rotate(15deg);
+            transform: rotateY(75deg) translateZ(-100px);
             opacity: 0;
           }
         }
         
-        @keyframes slideLeftIn {
+        @keyframes revealPageLeft {
           0% {
-            transform: translateX(-120%) translateY(30%) rotate(-15deg);
+            transform: rotateY(45deg) translateZ(-50px);
             opacity: 0;
           }
           100% {
-            transform: translateX(0) translateY(0) rotate(0deg);
+            transform: rotateY(0deg) translateZ(0);
             opacity: 1;
           }
         }
         
-        @keyframes slideRightIn {
+        @keyframes revealPageRight {
           0% {
-            transform: translateX(120%) translateY(30%) rotate(15deg);
+            transform: rotateY(-45deg) translateZ(-50px);
             opacity: 0;
           }
           100% {
-            transform: translateX(0) translateY(0) rotate(0deg);
+            transform: rotateY(0deg) translateZ(0);
             opacity: 1;
           }
-        }
-        
-        @keyframes popIn {
-          0% {
-            transform: scale(0.8) translateZ(-100px);
-            opacity: 0;
-          }
-          100% {
-            transform: scale(1) translateZ(0);
-            opacity: 1;
-          }
-        }
-        
-        .animate-popIn {
-          animation: popIn 0.25s ease-out forwards;
         }
         
         .hide-scrollbar::-webkit-scrollbar {
