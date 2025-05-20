@@ -45,6 +45,12 @@ export default function MemeGenerator() {
   const [dragConstraints, setDragConstraints] = useState<{ top: number; bottom: number }>({ top: 0, bottom: 0 })
   const [isDraggingGallery, setIsDraggingGallery] = useState(false)
   const [lastGalleryPosition, setLastGalleryPosition] = useState<'partial' | 'full'>('partial')
+  
+  // 添加滑动触摸相关的状态
+  const [touchStartY, setTouchStartY] = useState(0)
+  const [touchEndY, setTouchEndY] = useState(0)
+  const mainAreaRef = useRef<HTMLDivElement>(null)
+  const [isSwipeAction, setIsSwipeAction] = useState(false)
 
   // Calculate drag constraints when gallery position changes
   useEffect(() => {
@@ -413,6 +419,38 @@ export default function MemeGenerator() {
     }
   }
 
+  // 处理主页滑动手势的函数
+  const handleMainTouchStart = (e: React.TouchEvent) => {
+    setTouchStartY(e.touches[0].clientY)
+    setIsSwipeAction(false)
+  }
+  
+  const handleMainTouchMove = (e: React.TouchEvent) => {
+    if (isDragging) return; // 避免与水杯拖拽冲突
+    
+    setTouchEndY(e.touches[0].clientY)
+    
+    // 检测是否是明显的垂直滑动
+    if (Math.abs(e.touches[0].clientY - touchStartY) > 10) {
+      setIsSwipeAction(true)
+    }
+  }
+  
+  const handleMainTouchEnd = () => {
+    if (!isSwipeAction) return; // 如果不是有意义的滑动，则忽略
+    
+    // 向上滑动超过50px并且Gallery当前是关闭状态，打开Gallery
+    if (galleryPosition === 'closed' && touchStartY - touchEndY > 50) {
+      setGalleryPosition(lastGalleryPosition)
+      setShowGallery(true)
+    }
+    
+    // 重置状态
+    setTouchStartY(0)
+    setTouchEndY(0)
+    setIsSwipeAction(false)
+  }
+
   // New function to handle gallery scroll
   const handleGalleryScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const scrollPosition = e.currentTarget.scrollTop
@@ -435,6 +473,8 @@ export default function MemeGenerator() {
   const handleGalleryDragEnd = (info: any) => {
     setIsDraggingGallery(false)
     
+    // 支持通过拖拽和滑动手势处理 Gallery 状态变化
+    
     // If user dragged up in partial mode (header visible)
     if (galleryPosition === 'partial' && info.offset.y < -100) {
       setGalleryPosition('full') // Switch to header hidden
@@ -455,6 +495,43 @@ export default function MemeGenerator() {
         setShowGallery(false)
       }, 100)
     }
+  }
+
+  // 处理 Gallery 区域的触摸滑动手势
+  const handleGalleryTouchStart = (e: React.TouchEvent) => {
+    setTouchStartY(e.touches[0].clientY)
+    setIsSwipeAction(false)
+  }
+  
+  const handleGalleryTouchMove = (e: React.TouchEvent) => {
+    if (isDraggingGallery) return;
+    
+    setTouchEndY(e.touches[0].clientY)
+    
+    // 检测是否是明显的垂直滑动
+    if (Math.abs(e.touches[0].clientY - touchStartY) > 10) {
+      setIsSwipeAction(true)
+    }
+  }
+  
+  const handleGalleryTouchEnd = () => {
+    if (!isSwipeAction) return;
+    
+    // 在 Gallery 区域向下滑动超过50px，关闭 Gallery
+    if (touchEndY - touchStartY > 50) {
+      // Remember the position before closing
+      setLastGalleryPosition(galleryPosition === 'full' ? 'full' : 'partial')
+      setGalleryPosition('closed')
+      // Short delay to allow animation to start
+      setTimeout(() => {
+        setShowGallery(false)
+      }, 100)
+    }
+    
+    // 重置状态
+    setTouchStartY(0)
+    setTouchEndY(0)
+    setIsSwipeAction(false)
   }
 
   // Add this to your component's useEffect
@@ -539,6 +616,8 @@ export default function MemeGenerator() {
       className="flex flex-col items-center max-w-md mx-auto min-h-screen overscroll-none"
       onTouchMove={handleItemTouchMove}
       onTouchEnd={handleItemTouchEnd}
+      ref={mainAreaRef}
+      onTouchStart={handleMainTouchStart}
     >
       {/* Header */}
       <div className="w-full flex flex-col items-center relative px-6 pt-8 xs:pt-4">
@@ -879,13 +958,16 @@ export default function MemeGenerator() {
           </button>
         </div>
 
-        {/* Scroll Indicator - 添加点击事件 */}
+        {/* Scroll Indicator - 更新显示为滑动手势提示 */}
         <div 
           className="flex flex-col items-center cursor-pointer" 
           onClick={toggleGallery}
+          onTouchStart={handleMainTouchStart}
+          onTouchMove={handleMainTouchMove}
+          onTouchEnd={handleMainTouchEnd}
         >
           <ChevronsDown className="w-4 h-4" />
-          <span className="text-xs text-[#666666]">Scroll down to view gallery</span>
+          <span className="text-xs text-[#666666]">Swipe up to view gallery</span>
         </div>
 
         {/* Gallery Section - Full screen in both states, with header visibility toggling on scroll */}
@@ -906,6 +988,9 @@ export default function MemeGenerator() {
               dragElastic={0.2}
               onDragStart={() => setIsDraggingGallery(true)}
               onDragEnd={handleGalleryDragEnd}
+              onTouchStart={handleGalleryTouchStart}
+              onTouchMove={handleGalleryTouchMove}
+              onTouchEnd={handleGalleryTouchEnd}
               style={{ overflow: isDraggingGallery ? 'hidden' : 'auto' }}
             >
               {/* Drag indicator */}
@@ -931,7 +1016,7 @@ export default function MemeGenerator() {
                   >
                     <ChevronsUp className="w-4 h-4" color="#808080"/>
                   </motion.div>
-                  <span className="text-sm text-[#808080]">Scroll up to the home</span>
+                  <span className="text-sm text-[#808080]">Swipe down to the home</span>
                 </div>
 
               </motion.div>
