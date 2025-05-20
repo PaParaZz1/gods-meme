@@ -37,8 +37,10 @@ export default function FinalResult() {
   }, [])
   
   const handleFinishCreation = () => {
+    // Clear all localStorage items
+    localStorage.clear()
     // Navigate to home or another page when finished
-    router.push("/")
+    router.push("/meme-generator")
   }
 
   // 添加下载 meme 图片的函数

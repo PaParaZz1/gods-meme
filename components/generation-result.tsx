@@ -9,6 +9,7 @@ export default function GenerationResult() {
   const router = useRouter()
   const [generatedImage, setGeneratedImage] = useState("/template1.jpg") // Default to template1 as example
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isModalClosing, setIsModalClosing] = useState(false)
   const [showEntryAnimation, setShowEntryAnimation] = useState(true)
   const [showElementInput, setShowElementInput] = useState(false)
   const [showRemoveInput, setShowRemoveInput] = useState(false)
@@ -31,33 +32,51 @@ export default function GenerationResult() {
     setIsModalOpen(true)
   }
 
+  // Handle modal close with animation
+  const closeModalWithAnimation = () => {
+    setIsModalClosing(true)
+    setTimeout(() => {
+      setIsModalOpen(false)
+      setIsModalClosing(false)
+    }, 300) // Match this with the animation duration
+  }
+
   // Handle option selection
   const handleOptionSelect = (option: string) => {
     if (option === "CHANGE STYLE") {
-      router.push("/generating")
+      closeModalWithAnimation()
+      setTimeout(() => {
+        router.push("/generating")
+      }, 300)
       return
     }
     
     // Close the modal
-    setIsModalOpen(false)
+    closeModalWithAnimation()
     
     if (option === "ADD ELEMENTS") {
-      setShowElementInput(true)
-      setShowRemoveInput(false)
+      setTimeout(() => {
+        setShowElementInput(true)
+        setShowRemoveInput(false)
+      }, 300)
       return
     }
     
     if (option === "REMOVE ELEMENTS") {
-      setShowRemoveInput(true)
-      setShowElementInput(false)
+      setTimeout(() => {
+        setShowRemoveInput(true)
+        setShowElementInput(false)
+      }, 300)
       return
     }
     
     // Logic for regeneration based on selected option
     // For demo, just toggle between templates
-    setGeneratedImage(prev => 
-      prev === "/template1.jpg" ? "/template2.jpg" : "/template1.jpg"
-    )
+    setTimeout(() => {
+      setGeneratedImage(prev => 
+        prev === "/template1.jpg" ? "/template2.jpg" : "/template1.jpg"
+      )
+    }, 300)
   }
 
   // Handle element input submission
@@ -98,7 +117,7 @@ export default function GenerationResult() {
       {/* Main content */}
       <div className={`flex flex-col min-h-screen transition-opacity duration-500 ${showEntryAnimation ? 'opacity-0' : 'opacity-100'}`}>
         {/* Header with title and help button */}
-        <div className="flex items-center justify-between p-8 px-6">
+        <div className="flex items-center justify-between p-8 px-6 pb-32 xs:pb-16">
           <div className="flex-1"></div>
           <h1 className="text-xl font-inika font-bold flex-1 text-center whitespace-nowrap">MEME Creation</h1>
           <div className="flex-1 flex justify-end">
@@ -109,7 +128,7 @@ export default function GenerationResult() {
         </div>
 
         {/* Generated meme result */}
-        <div className="flex-1 flex items-center justify-center px-10">
+        <div className="flex-1 flex items-center justify-center px-10 max-h-[400px]">
           <div className="relative w-full aspect-square max-w-[350px] rounded-lg overflow-hidden border-2 border-[#333333] animate-fadeIn">
             <Image
               src={generatedImage}
@@ -122,7 +141,7 @@ export default function GenerationResult() {
 
         {/* Action buttons or Element input */}
         {!showElementInput && !showRemoveInput ? (
-          <div className="px-8 pb-8 space-y-4">
+          <div className="px-8 pb-8 mt-24 space-y-4">
             <button
               onClick={handleRegenerate}
               className="block w-full bg-white text-[#333333] py-3 rounded-full text-center font-phudu text-lg border-2 border-[#333333]"
@@ -138,8 +157,8 @@ export default function GenerationResult() {
             </Link>
           </div>
         ) : (
-          <div className="px-8 pb-8 space-y-4 animate-fadeIn">
-            <h2 className="text-[#333333] text-center mt-4 mb-2 font-phudu text-xl">
+          <div className="px-8 pb-8 animate-fadeIn">
+            <h2 className="text-[#333333] text-center mt-4 mb-4 xs:mt-3 xs:mb-3 font-phudu text-xl">
               {showElementInput ? "Add Elements" : "Remove Elements"}
             </h2>
             
@@ -151,14 +170,14 @@ export default function GenerationResult() {
               placeholder={showElementInput 
                 ? "Describe elements to add..." 
                 : "Describe elements to remove..."}
-              className={`w-full p-4 rounded-xl border border-gray-400 min-h-[120px] font-phudu mb-2 focus:outline-none focus:ring-2 focus:ring-[#333333] transition-colors duration-200 ${
+              className={`w-full p-4 mt-0 rounded-xl border border-gray-400 min-h-[140px] xs:min-h-[100px] font-phudu focus:outline-none focus:ring-2 focus:ring-[#333333] transition-colors duration-200 ${
                 isFocused 
                   ? "bg-[#444444] text-white" 
                   : "bg-[#f5f5f5] text-[#333333]"
               }`}
             />
             
-            <div className="flex space-x-3">
+            <div className="flex pt-4 space-x-3">
               <button
                 onClick={() => {
                   setShowElementInput(false)
@@ -186,15 +205,15 @@ export default function GenerationResult() {
           {/* Backdrop overlay */}
           <div 
             className="absolute inset-0 bg-black/60" 
-            onClick={() => setIsModalOpen(false)}
+            onClick={closeModalWithAnimation}
           ></div>
           
           {/* Modal content */}
-          <div className="bg-[#333333] rounded-t-3xl p-6 w-full max-w-md relative z-10 animate-slideUp">
+          <div className={`bg-[#333333] rounded-t-3xl p-6 w-full max-w-md relative z-10 ${isModalClosing ? 'animate-slideDown' : 'animate-slideUp'}`}>
             <div className="w-12 h-1 bg-gray-400 rounded-full mx-auto mb-4"></div>
             <h2 className="text-white text-center mb-4 font-phudu text-2xl">Regeneration Option</h2>
             
-            <div className="space-y-3 pb-4">
+            <div className="space-y-3 pb-3">
               {["CHANGE STYLE", "ADD ELEMENTS", "REMOVE ELEMENTS"].map((option) => (
                 <button
                   key={option}
@@ -222,6 +241,19 @@ export default function GenerationResult() {
         
         .animate-slideUp {
           animation: slideUp 0.3s ease-out forwards;
+        }
+        
+        @keyframes slideDown {
+          from {
+            transform: translateY(0);
+          }
+          to {
+            transform: translateY(100%);
+          }
+        }
+        
+        .animate-slideDown {
+          animation: slideDown 0.3s ease-out forwards;
         }
         
         @keyframes fadeIn {

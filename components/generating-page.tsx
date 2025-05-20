@@ -43,7 +43,9 @@ export default function GeneratingPage() {
           return 100
         }
         // Randomly increase progress to make it look more natural
-        return prev + Math.random() * 2 + 1
+        prev = prev + Math.random() * 2 + 1
+        prev = prev > 100 ? 100 : prev
+        return prev
       })
     }, 100)
 

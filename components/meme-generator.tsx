@@ -934,23 +934,12 @@ export default function MemeGenerator() {
                   <span className="text-sm text-[#808080]">Scroll up to the home</span>
                 </div>
 
-                {/* Position indicator dots */}
-                <div className="flex space-x-1 mt-2">
-                  <div className="flex items-center">
-                    <div className={`w-2 h-2 rounded-full ${galleryPosition === 'partial' ? 'bg-white' : 'bg-white/30'}`}></div>
-                    <span className="text-xs text-white/50 ml-1">Header visible</span>
-                  </div>
-                  <div className="flex items-center ml-2">
-                    <div className={`w-2 h-2 rounded-full ${galleryPosition === 'full' ? 'bg-white' : 'bg-white/30'}`}></div>
-                    <span className="text-xs text-white/50 ml-1">Header hidden</span>
-                  </div>
-                </div>
               </motion.div>
               
               {/* Scroll to top button - only visible in full mode when scrolled down */}
               {galleryPosition === 'full' && scrollY > scrollThreshold && (
                 <motion.div 
-                  className="fixed top-4 left-1/2 transform -translate-x-1/2 z-20 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg cursor-pointer"
+                  className="fixed top-4 inset-x-0 mx-auto w-fit z-20 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg cursor-pointer flex items-center justify-center"
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
