@@ -79,6 +79,9 @@ export default function MemeGenerator() {
 
   // Add this state at the top of your component
   const [isUpdatingWaterLevel, setIsUpdatingWaterLevel] = useState(false)
+  
+  // Add state for input keywords
+  const [inputValue, setInputValue] = useState("")
 
   // 添加新的动画状态
   const [showBlendAnimation, setShowBlendAnimation] = useState(false)
@@ -366,13 +369,45 @@ export default function MemeGenerator() {
     }, 50);
   };
 
-  const handleBlendClick = () => {
+  const handleBlendClick = async () => {
     setIsBlending(true)
     // Add logic to play blend animation
     setShowBlendAnimation(true)
     setShowAddAnimation(false)
     setShowRemoveAnimation(false)
     setIsAnimationPlaying(true)
+    
+    // Process the keywords from the input field
+    if (inputValue.trim()) {
+      try {
+        // Split input value by commas or spaces
+        const keywordsList = inputValue
+          .split(/,|\s+/)
+          .map(word => word.trim())
+          .filter(word => word.length > 0);
+        console.log('key', keywordsList)
+        
+        // Only proceed if we have keywords
+        if (keywordsList.length > 0) {
+          // Call the API endpoint
+          const response = await fetch('/api/process_keywords', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              keywords: keywordsList
+            }),
+          });
+          
+          if (!response.ok) {
+            throw new Error('Failed to process keywords');
+          }
+        }
+      } catch (error) {
+        console.error('Error processing keywords:', error);
+      }
+    }
     
     // Simulate processing time, reset state after animation completes
     setTimeout(() => {
@@ -724,6 +759,8 @@ export default function MemeGenerator() {
                   : "bg-white text-[#333333] placeholder-[#666666]"
               }`}
               style={{ textAlign: 'left' }}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
               onFocus={() => setIsInputFocused(true)}
               onBlur={() => setIsInputFocused(false)}
             />
