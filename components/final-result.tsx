@@ -39,11 +39,11 @@ export default function FinalResult() {
   const handleFinishCreation = () => {
     // Clear all localStorage items
     localStorage.clear()
-    // Navigate to home or another page when finished
+    // Navigate to meme-generator page when finished
     router.push("/meme-generator")
   }
 
-  // 添加下载 meme 图片的函数
+  // Add function to download meme image
   const handleDownloadMeme = () => {
     // 创建一个链接元素
     const link = document.createElement('a')

@@ -72,7 +72,7 @@ export default function TemplateEditor() {
     4: Math.floor(Math.random() * 3) + 5,
   })
 
-  // 添加防抖功能的引用，防止快速多次触发
+  // Add debounce reference to prevent rapid multiple triggers
   const isProcessingSwipeRef = useRef(false);
 
   // Open full image
@@ -90,46 +90,46 @@ export default function TemplateEditor() {
     document.body.style.overflow = 'auto'
   }
 
-  // 统一的模板切换动画函数
+  // Unified template switching animation function
   const changeTemplate = (direction: 'left' | 'right') => {
-    // 如果正在进行动画，则不重复触发
+    // If animation is in progress, don't trigger again
     if (isTransitioning || isProcessingSwipeRef.current) return;
     
     isProcessingSwipeRef.current = true;
     
-    // 计算下一个/上一个模板的索引
+    // Calculate the index of the next/previous template
     const newIndex = direction === 'left'
       ? (currentTemplate === templates.length - 1 ? 0 : currentTemplate + 1)
       : (currentTemplate === 0 ? templates.length - 1 : currentTemplate - 1);
     
-    // 设置转场状态
+    // Set transition states
     setExitingTemplate(currentTemplate);
     setIsTransitioning(true);
     setTransitionDirection(direction);
     setNextTemplateIndex(newIndex);
     
-    // 使用分阶段动画来避免闪烁
+    // Use phased animation to avoid flickering
     const animationDuration = 550;
     
-    // 第一步：更新当前模板（在动画结束前）
+    // Step 1: Update current template (before animation ends)
     setTimeout(() => {
       setCurrentTemplate(newIndex);
-      // 先取消过渡状态，让主模板可见
+      // First cancel transition state to make main template visible
       setIsTransitioning(false);
       
-      // 添加淡出效果到动画元素
+      // Add fade out effect to animation elements
       if (exitingFrameRef.current) {
         exitingFrameRef.current.style.opacity = '0';
         exitingFrameRef.current.style.transition = 'opacity 300ms ease-out';
       }
     }, animationDuration - 50);
     
-    // 第二步：等待主模板显示并且动画元素淡出后，再移除动画元素
+    // Step 2: Wait for main template to display and animation elements to fade out, then remove animation elements
     setTimeout(() => {
       setExitingTemplate(null);
       setNextTemplateIndex(null);
       isProcessingSwipeRef.current = false;
-    }, animationDuration + 250); // 给主模板一点时间先显示出来
+    }, animationDuration + 250); // Give the main template some time to display first
   };
 
   // Reset scroll position of similar memes container
@@ -163,7 +163,7 @@ export default function TemplateEditor() {
     const isLeftSwipe = distance > minSwipeDistance
     const isRightSwipe = distance < -minSwipeDistance
     
-    // 直接调用统一的动画函数
+    // Directly call the unified animation function
     if (isLeftSwipe) {
       changeTemplate('left');
     } else if (isRightSwipe) {
@@ -331,7 +331,7 @@ export default function TemplateEditor() {
                 <span className="text-sm"><i>Meme Template Tags</i></span>
               </div>
               
-              {/* 阴影效果增强翻页感 */}
+              {/* Shadow effect enhances page-turning feel */}
               <div 
                 className="absolute inset-0 z-30 pointer-events-none"
                 style={{
@@ -403,7 +403,7 @@ export default function TemplateEditor() {
                 <span className="text-sm"><i>Meme Template Tags</i></span>
               </div>
               
-              {/* 阴影效果增强翻页感 */}
+              {/* Shadow effect enhances page-turning feel */}
               <div 
                 className="absolute inset-0 z-30 pointer-events-none"
                 style={{

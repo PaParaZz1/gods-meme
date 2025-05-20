@@ -6,7 +6,7 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 
-// 定义类型以解决索引签名问题
+// Define types to solve index signature problems
 type TabKey = "sentiment" | "intention" | "style";
 type SentimentKey = "happiness" | "love" | "anger" | "sorrow" | "fear" | "hate";
 type IntentionKey = "humor" | "sarcasm" | "rant" | "encourage" | "self-mockery" | "expressive";
@@ -83,7 +83,7 @@ export default function MemeGenerator() {
   // 添加新的动画状态
   const [showBlendAnimation, setShowBlendAnimation] = useState(false)
 
-  // 添加上帝碗里水量状态，初始为0，最高为8
+  // Add water level state for the god bowl, initial 0, max 8
   const [godWaterLevel, setGodWaterLevel] = useState(0)
 
   const tabContent = {
@@ -107,7 +107,7 @@ export default function MemeGenerator() {
     const tab = selectedTab as TabKey;
     const itemKey = item as ItemKey;
     
-    // 修复：使用类型断言确保正确的键类型匹配
+    // Fix: Use type assertion to ensure correct key type matching
     if (tab === "sentiment") {
       return waterLevels[tab][itemKey as SentimentKey] || 0;
     } else if (tab === "intention") {
@@ -141,7 +141,7 @@ export default function MemeGenerator() {
         const tab = selectedTab as TabKey;
         const item = draggedItem as ItemKey;
         
-        // 修复：使用类型断言确保正确的键类型匹配
+        // Fix: Use type assertion to ensure correct key type matching
         let currentLevel = 0;
         if (tab === "sentiment") {
           currentLevel = prev[tab][item as SentimentKey];
@@ -165,7 +165,7 @@ export default function MemeGenerator() {
             setIsAnimationPlaying(false);
           }, 1500); // Animation duration
           
-          // 更新水位时也需要使用正确的类型断言
+          // When updating water level, also need to use correct type assertion
           return {
             ...prev,
             [tab]: {
@@ -204,7 +204,7 @@ export default function MemeGenerator() {
 
   // Modified handleItemTouchStart to always record start time
   const handleItemTouchStart = (e: React.TouchEvent, item: string) => {
-    // 如果动画正在播放，不允许开始新的拖拽
+    // If animation is playing, do not start new drag
     if (isAnimationPlaying) return;
     
     // Always record the start time of the touch, regardless of water level
@@ -232,7 +232,7 @@ export default function MemeGenerator() {
   const handleItemTouchMove = (e: React.TouchEvent) => {
     if (!isDragging || !draggedItem) return;
     
-    // 如果正在拖拽水杯，禁止滑动操作
+    // If dragging water glass, prohibit swipe operation
     setIsSwipeAction(false);
     
     // If the user has moved their finger, it's a drag operation
@@ -255,7 +255,7 @@ export default function MemeGenerator() {
       return;
     }
     
-    // 完成拖拽后，重置滑动状态
+    // Reset swipe state after drag is complete
     setIsSwipeAction(false);
     
     const godRect = godAreaRef.current.getBoundingClientRect()
@@ -272,7 +272,7 @@ export default function MemeGenerator() {
         const tab = selectedTab as TabKey;
         const item = draggedItem as ItemKey;
         
-        // 修复：使用类型断言确保正确的键类型匹配
+        // Fix: Use type assertion to ensure correct key type matching
         let currentLevel = 0;
         if (tab === "sentiment") {
           currentLevel = prev[tab][item as SentimentKey];
@@ -283,9 +283,9 @@ export default function MemeGenerator() {
         }
         
         if (currentLevel > 0) {
-          // 确保触发添加动画
+          // Ensure add animation is triggered
           setShowAddAnimation(true);
-          setShowRemoveAnimation(false); // 确保移除动画不会同时触发
+          setShowRemoveAnimation(false); // Ensure remove animation is not triggered simultaneously
           setIsAnimationPlaying(true);
           
           setGodWaterLevel(prevLevel => Math.min(prevLevel + 1, 16));
@@ -295,7 +295,7 @@ export default function MemeGenerator() {
             setIsAnimationPlaying(false);
           }, 1500); // Animation duration
           
-          // 更新水位时也需要使用正确的类型断言
+          // When updating water level, also need to use correct type assertion
           return {
             ...prev,
             [tab]: {
@@ -322,7 +322,7 @@ export default function MemeGenerator() {
     setWaterLevels(prev => {
       const tab = selectedTab as TabKey;
       
-      // 使用类型断言确保正确的键类型匹配
+      // Use type assertion to ensure correct key type matching
       let currentLevel = 0;
       if (tab === "sentiment") {
         currentLevel = prev[tab][item as SentimentKey];
@@ -337,12 +337,12 @@ export default function MemeGenerator() {
         return prev;
       }
       
-      // 添加动画触发逻辑
+      // Add animation trigger logic
       setShowRemoveAnimation(true);
       setShowAddAnimation(false);
       setIsAnimationPlaying(true);
       
-      // 当点击水杯增加水位时，碗里的水应该减少
+      // When clicking the water glass to increase water level, the bowl's water should decrease
       setGodWaterLevel(prevLevel => Math.max(prevLevel - 1, 0));
       
       setTimeout(() => {
@@ -350,7 +350,7 @@ export default function MemeGenerator() {
         setIsAnimationPlaying(false);
       }, 1500);
       
-      // 更新水位时也需要使用正确的类型断言
+      // When updating water level, also need to use correct type assertion
       return {
         ...prev,
         [tab]: {
@@ -368,7 +368,7 @@ export default function MemeGenerator() {
 
   const handleBlendClick = () => {
     setIsBlending(true)
-    // 添加播放blend动画的逻辑
+    // Add logic to play blend animation
     setShowBlendAnimation(true)
     setShowAddAnimation(false)
     setShowRemoveAnimation(false)
@@ -379,7 +379,7 @@ export default function MemeGenerator() {
       setIsBlending(false)
       setShowBlendAnimation(false)
       setIsAnimationPlaying(false)
-      // 重置上帝碗里的水量
+      // Reset god's bowl water level
       setGodWaterLevel(0)
       saveWaterLevel()
       router.push("/template-selection")
@@ -418,13 +418,13 @@ export default function MemeGenerator() {
   // New function to handle like
   const handleLikeImage = (id: number) => {
     if (likedImages.includes(id)) {
-      // 取消点赞
+      // Cancel like
       setLikedImages(prev => prev.filter(imageId => imageId !== id))
       setGalleryImages(prev => 
         prev.map(img => img.id === id ? {...img, likes: img.likes - 1} : img)
       )
     } else {
-      // 添加点赞
+      // Add like
       setLikedImages(prev => [...prev, id])
       setGalleryImages(prev => 
         prev.map(img => img.id === id ? {...img, likes: img.likes + 1} : img)
@@ -444,28 +444,28 @@ export default function MemeGenerator() {
         setLastGalleryPosition(galleryPosition)
       }
       
-      // 确保立即设置为closed状态
+      // Ensure closed state is set immediately
       setGalleryPosition('closed')
       
-      // 减少延迟时间，使关闭更立即
+      // Reduce delay time to make closing more immediate
       setTimeout(() => {
         setShowGallery(false)
-      }, 250) // 与其他地方保持一致的延迟时间
+      }, 250) // Consistent delay time with other places
     }
   }
 
-  // 处理主页滑动手势的函数
+  // Function to handle main page swipe gestures
   const handleMainTouchStart = (e: React.TouchEvent) => {
     setTouchStartY(e.touches[0].clientY)
     setIsSwipeAction(false)
   }
   
   const handleMainTouchMove = (e: React.TouchEvent) => {
-    if (isDragging) return; // 避免与水杯拖拽冲突
+    if (isDragging) return; // Avoid conflict with water glass dragging
     
     setTouchEndY(e.touches[0].clientY)
     
-    // 检测是否是明显的垂直滑动
+    // Detect if it's a clear vertical swipe
     if (Math.abs(e.touches[0].clientY - touchStartY) > 10) {
       setIsSwipeAction(true)
     }
@@ -473,20 +473,20 @@ export default function MemeGenerator() {
   
   const handleMainTouchEnd = () => {
     if (!isSwipeAction) {
-      // 重置状态，即使不是有效滑动也要重置
+      // Reset states even if not a valid swipe
       setTouchStartY(0)
       setTouchEndY(0)
       setIsSwipeAction(false)
       return;
     }
     
-    // 向上滑动超过50px并且Gallery当前是关闭状态，打开Gallery
+    // If swiping up more than 50px and Gallery is currently closed, open Gallery
     if (galleryPosition === 'closed' && touchStartY - touchEndY > 50) {
       setGalleryPosition(lastGalleryPosition)
       setShowGallery(true)
     }
     
-    // 确保在任何情况下都重置状态
+    // Ensure states are reset in any case
     setTouchStartY(0)
     setTouchEndY(0)
     setIsSwipeAction(false)
@@ -514,7 +514,7 @@ export default function MemeGenerator() {
   const handleGalleryDragEnd = (info: any) => {
     setIsDraggingGallery(false)
     
-    // 支持通过拖拽和滑动手势处理 Gallery 状态变化
+    // Support handling Gallery state changes through drag and swipe gestures
     
     // If user dragged up in partial mode (header visible)
     if (galleryPosition === 'partial' && info.offset && info.offset.y < -100) {
@@ -526,22 +526,22 @@ export default function MemeGenerator() {
       setGalleryPosition('full') // Switch to header visible
       setLastGalleryPosition('full')
     }
-    // If user dragged down significantly, close the gallery - 降低关闭阈值
+    // If user dragged down significantly, close the gallery - lower close threshold
     else if (info.offset && info.offset.y > 100) {
       // Remember the position before closing
       setLastGalleryPosition('full')
       
-      // 确保立即设置为closed状态
+      // Ensure closed state is set immediately
       setGalleryPosition('closed')
       
-      // 减少延迟时间，使关闭更立即
+      // Reduce delay time to make closing more immediate
       setTimeout(() => {
         setShowGallery(false)
       }, 250)
     }
   }
 
-  // 处理 Gallery 区域的触摸滑动手势
+  // Handle Gallery area touch swipe gestures
   const handleGalleryTouchStart = (e: React.TouchEvent) => {
     setTouchStartY(e.touches[0].clientY)
     setIsSwipeAction(false)
@@ -552,7 +552,7 @@ export default function MemeGenerator() {
     
     setTouchEndY(e.touches[0].clientY)
     
-    // 检测是否是明显的垂直滑动 - 降低检测阈值，提高灵敏度
+    // Detect if it's a clear vertical swipe - lower detection threshold, increase sensitivity
     if (Math.abs(e.touches[0].clientY - touchStartY) > 5) {
       setIsSwipeAction(true)
     }
@@ -560,28 +560,28 @@ export default function MemeGenerator() {
   
   const handleGalleryTouchEnd = () => {
     if (!isSwipeAction) {
-      // 重置状态，即使不是有效滑动也要重置
+      // Reset states even if not a valid swipe
       setTouchStartY(0)
       setTouchEndY(0)
       setIsSwipeAction(false)
       return;
     }
     
-    // 在 Gallery 区域向下滑动超过30px，关闭 Gallery - 降低关闭阈值
+    // In Gallery area, swiping down more than 30px closes Gallery - lower close threshold
     if (touchEndY - touchStartY > 30) {
       // Remember the position before closing
       setLastGalleryPosition('full')
       
-      // 确保立即设置为closed状态
+      // Ensure closed state is set immediately
       setGalleryPosition('closed')
       
-      // 减少延迟时间，使关闭更立即
+      // Reduce delay time to make closing more immediate
       setTimeout(() => {
         setShowGallery(false)
       }, 250)
     }
     
-    // 确保在任何情况下都重置状态
+    // Ensure states are reset in any case
     setTouchStartY(0)
     setTouchEndY(0)
     setIsSwipeAction(false)
@@ -664,19 +664,19 @@ export default function MemeGenerator() {
     localStorage.setItem('waterLevel', values.join(','))
   }
 
-  // 添加清理useEffect，确保触摸状态总是被正确重置
+  // Add cleanup useEffect to ensure touch states are always correctly reset
   useEffect(() => {
-    // 清理触摸状态，防止状态残留
+    // Clean up touch states to prevent state residue
     const resetTouchStates = () => {
       setTouchStartY(0)
       setTouchEndY(0)
       setIsSwipeAction(false)
     };
 
-    // 监听滑动结束
+    // Listen for touch end
     document.addEventListener('touchend', resetTouchStates);
     
-    // 当gallery状态改变时也重置
+    // Also reset when gallery state changes
     if (galleryPosition === 'closed') {
       resetTouchStates();
     }
@@ -1239,165 +1239,14 @@ export default function MemeGenerator() {
                     alt={`Water level ${getWaterLevel(draggedItem)}`}
                     width={48}
                     height={72}
-                    className="object-contain opacity-80"
+                    className="object-contain"
                   />
                 </div>
               )}
+              
             </div>
           </div>
         )}
-
-      {/* Updated animations */}
-      <style jsx global>{`
-        @keyframes fadeIn {
-          0% { opacity: 0; transform: translateY(10px) scale(0.95); }
-          60% { transform: translateY(-3px) scale(1.02); }
-          80% { transform: translateY(1px) scale(0.98); }
-          100% { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        
-        @keyframes bounce {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
-        }
-        
-        @keyframes wiggle {
-          0%, 100% { transform: rotate(0deg); }
-          25% { transform: rotate(-5deg); }
-          75% { transform: rotate(5deg); }
-        }
-        
-        @keyframes pop {
-          0% { transform: scale(0.8); opacity: 0; }
-          50% { transform: scale(1.1); }
-          70% { transform: scale(0.95); }
-          100% { transform: scale(1); opacity: 1; }
-        }
-        
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-        
-        @keyframes wave {
-          0%, 100% { transform: translateX(-100%); }
-          50% { transform: translateX(100%); }
-        }
-        
-        @keyframes scanning {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(400%); }
-        }
-        
-        @keyframes pulse-border {
-          0%, 100% { border-color: rgba(255, 255, 255, 0); }
-          50% { border-color: rgba(255, 255, 255, 0.3); }
-        }
-        
-        @keyframes pulse-dot1 {
-          0%, 100% { opacity: 0.4; }
-          25% { opacity: 1; }
-        }
-        
-        @keyframes pulse-dot2 {
-          0%, 100% { opacity: 0.4; }
-          50% { opacity: 1; }
-        }
-        
-        @keyframes pulse-dot3 {
-          0%, 100% { opacity: 0.4; }
-          75% { opacity: 1; }
-        }
-        
-        @keyframes float-particle1 {
-          0%, 100% { transform: translate(0, 0); }
-          50% { transform: translate(10px, -15px); }
-        }
-        
-        @keyframes float-particle2 {
-          0%, 100% { transform: translate(0, 0); }
-          50% { transform: translate(-8px, -12px); }
-        }
-        
-        @keyframes float-particle3 {
-          0%, 100% { transform: translate(0, 0); }
-          50% { transform: translate(12px, -10px); }
-        }
-        
-        @keyframes float-particle4 {
-          0%, 100% { transform: translate(0, 0); }
-          50% { transform: translate(-15px, -8px); }
-        }
-        
-        @keyframes float-particle5 {
-          0%, 100% { transform: translate(0, 0); }
-          50% { transform: translate(10px, -20px); }
-        }
-        
-        .animate-fadeIn {
-          animation: fadeIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-        
-        .animate-bounce {
-          animation: bounce 0.6s ease-in-out infinite;
-        }
-        
-        .animate-wiggle {
-          animation: wiggle 0.5s ease-in-out;
-        }
-        
-        .animate-pop {
-          animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-        
-        .animate-shimmer {
-          animation: shimmer 2s infinite;
-        }
-        
-        .animate-wave {
-          animation: wave 2s ease-in-out infinite;
-        }
-        
-        .animate-scanning {
-          animation: scanning 2s linear infinite;
-        }
-        
-        .animate-pulse-border {
-          animation: pulse-border 2s ease-in-out infinite;
-        }
-        
-        .animate-pulse-dot1 {
-          animation: pulse-dot1 1.5s infinite;
-        }
-        
-        .animate-pulse-dot2 {
-          animation: pulse-dot2 1.5s infinite;
-        }
-        
-        .animate-pulse-dot3 {
-          animation: pulse-dot3 1.5s infinite;
-        }
-        
-        .animate-float-particle1 {
-          animation: float-particle1 3s ease-in-out infinite;
-        }
-        
-        .animate-float-particle2 {
-          animation: float-particle2 4s ease-in-out infinite;
-        }
-        
-        .animate-float-particle3 {
-          animation: float-particle3 3.5s ease-in-out infinite;
-        }
-        
-        .animate-float-particle4 {
-          animation: float-particle4 4.5s ease-in-out infinite;
-        }
-        
-        .animate-float-particle5 {
-          animation: float-particle5 5s ease-in-out infinite;
-        }
-      `}</style>
     </div>
   )
 }
