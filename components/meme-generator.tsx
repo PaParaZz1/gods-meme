@@ -80,6 +80,12 @@ export default function MemeGenerator() {
   // Add this state at the top of your component
   const [isUpdatingWaterLevel, setIsUpdatingWaterLevel] = useState(false)
 
+  // 添加新的动画状态
+  const [showBlendAnimation, setShowBlendAnimation] = useState(false)
+
+  // 添加上帝碗里水量状态，初始为0，最高为8
+  const [godWaterLevel, setGodWaterLevel] = useState(0)
+
   const tabContent = {
     sentiment: {
       title: "Sentiment",
@@ -151,6 +157,8 @@ export default function MemeGenerator() {
           setShowRemoveAnimation(false);
           // Set animation playing state
           setIsAnimationPlaying(true);
+          
+          setGodWaterLevel(prevLevel => Math.min(prevLevel + 1, 16));
           
           setTimeout(() => {
             setShowAddAnimation(false);
@@ -280,6 +288,8 @@ export default function MemeGenerator() {
           setShowRemoveAnimation(false); // 确保移除动画不会同时触发
           setIsAnimationPlaying(true);
           
+          setGodWaterLevel(prevLevel => Math.min(prevLevel + 1, 16));
+          
           setTimeout(() => {
             setShowAddAnimation(false);
             setIsAnimationPlaying(false);
@@ -332,6 +342,9 @@ export default function MemeGenerator() {
       setShowAddAnimation(false);
       setIsAnimationPlaying(true);
       
+      // 当点击水杯增加水位时，碗里的水应该减少
+      setGodWaterLevel(prevLevel => Math.max(prevLevel - 1, 0));
+      
       setTimeout(() => {
         setShowRemoveAnimation(false);
         setIsAnimationPlaying(false);
@@ -355,9 +368,19 @@ export default function MemeGenerator() {
 
   const handleBlendClick = () => {
     setIsBlending(true)
-    // Simulate processing time, reset state after 3 seconds
+    // 添加播放blend动画的逻辑
+    setShowBlendAnimation(true)
+    setShowAddAnimation(false)
+    setShowRemoveAnimation(false)
+    setIsAnimationPlaying(true)
+    
+    // Simulate processing time, reset state after animation completes
     setTimeout(() => {
       setIsBlending(false)
+      setShowBlendAnimation(false)
+      setIsAnimationPlaying(false)
+      // 重置上帝碗里的水量
+      setGodWaterLevel(0)
       saveWaterLevel()
       router.push("/template-selection")
     }, 1500)
@@ -922,9 +945,22 @@ export default function MemeGenerator() {
                 alt="Meme God" 
                 width={isSmallMobile ? 280 : 390} 
                 height={isSmallMobile ? 160 : 230} 
-                className={`${showAddAnimation || showRemoveAnimation ? 'opacity-0' : 'opacity-100'} transition-opacity duration-0`}
+                className={`${showAddAnimation || showRemoveAnimation || showBlendAnimation ? 'opacity-0' : 'opacity-100'} transition-opacity duration-0`}
               />
             </div>
+            
+            {/* God's bowl water level - 显示在静态图像上 */}
+            {godWaterLevel > 0 && !showAddAnimation && !showRemoveAnimation && !showBlendAnimation && (
+              <div className="absolute inset-0">
+                <Image 
+                  src={`/water_level_${godWaterLevel / 2}.png`}
+                  alt={`God's bowl water level ${godWaterLevel / 2}`}
+                  width={isSmallMobile ? 280 : 390} 
+                  height={isSmallMobile ? 160 : 230}
+                  className="object-contain"
+                />
+              </div>
+            )}
             
             {/* Add animation */}
             {showAddAnimation && (
@@ -939,12 +975,38 @@ export default function MemeGenerator() {
               </div>
             )}
             
+            {/* 在动画播放时也显示碗里的水 */}
+            {godWaterLevel > 0 && (showAddAnimation || showRemoveAnimation) && (
+              <div className="absolute inset-0 pointer-events-none">
+                <Image 
+                  src={`/water_level_${godWaterLevel / 2}.png`}
+                  alt={`God's bowl water level ${godWaterLevel / 2}`}
+                  width={isSmallMobile ? 280 : 390} 
+                  height={isSmallMobile ? 160 : 230}
+                  className="object-contain opacity-70"
+                />
+              </div>
+            )}
+            
             {/* Remove animation */}
             {showRemoveAnimation && (
               <div className="absolute inset-0">
                 <Image 
                   src="/god_remove_elem.gif" 
                   alt="Removing Element" 
+                  width={isSmallMobile ? 280 : 390} 
+                  height={isSmallMobile ? 160 : 230} 
+                  priority 
+                />
+              </div>
+            )}
+            
+            {/* Blend animation */}
+            {showBlendAnimation && (
+              <div className="absolute inset-0">
+                <Image 
+                  src="/blend.gif" 
+                  alt="Blending Elements" 
                   width={isSmallMobile ? 280 : 390} 
                   height={isSmallMobile ? 160 : 230} 
                   priority 
