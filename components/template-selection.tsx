@@ -108,20 +108,28 @@ export default function TemplateEditor() {
     setTransitionDirection(direction);
     setNextTemplateIndex(newIndex);
     
-    // 等待动画完成后更新状态
+    // 使用分阶段动画来避免闪烁
+    const animationDuration = 550;
+    
+    // 第一步：更新当前模板（在动画结束前）
     setTimeout(() => {
       setCurrentTemplate(newIndex);
+      // 先取消过渡状态，让主模板可见
+      setIsTransitioning(false);
       
-      // 延迟清除动画元素，确保无缝过渡
-      setTimeout(() => {
-        setIsTransitioning(false);
-        setExitingTemplate(null);
-        setNextTemplateIndex(null);
-        
-        // 重置处理标志
-        isProcessingSwipeRef.current = false;
-      }, 50);
-    }, 550); // 稍微长于动画时间
+      // 添加淡出效果到动画元素
+      if (exitingFrameRef.current) {
+        exitingFrameRef.current.style.opacity = '0';
+        exitingFrameRef.current.style.transition = 'opacity 300ms ease-out';
+      }
+    }, animationDuration - 50);
+    
+    // 第二步：等待主模板显示并且动画元素淡出后，再移除动画元素
+    setTimeout(() => {
+      setExitingTemplate(null);
+      setNextTemplateIndex(null);
+      isProcessingSwipeRef.current = false;
+    }, animationDuration + 250); // 给主模板一点时间先显示出来
   };
 
   // Reset scroll position of similar memes container

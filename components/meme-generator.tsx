@@ -224,6 +224,9 @@ export default function MemeGenerator() {
   const handleItemTouchMove = (e: React.TouchEvent) => {
     if (!isDragging || !draggedItem) return;
     
+    // 如果正在拖拽水杯，禁止滑动操作
+    setIsSwipeAction(false);
+    
     // If the user has moved their finger, it's a drag operation
     isDragOperationRef.current = true
     
@@ -243,6 +246,9 @@ export default function MemeGenerator() {
       setDraggedItem(null)
       return;
     }
+    
+    // 完成拖拽后，重置滑动状态
+    setIsSwipeAction(false);
     
     const godRect = godAreaRef.current.getBoundingClientRect()
     const touch = e.changedTouches[0]
@@ -414,8 +420,14 @@ export default function MemeGenerator() {
       if (galleryPosition === 'partial' || galleryPosition === 'full') {
         setLastGalleryPosition(galleryPosition)
       }
+      
+      // 确保立即设置为closed状态
       setGalleryPosition('closed')
-      setShowGallery(false)
+      
+      // 减少延迟时间，使关闭更立即
+      setTimeout(() => {
+        setShowGallery(false)
+      }, 250) // 与其他地方保持一致的延迟时间
     }
   }
 
@@ -437,7 +449,13 @@ export default function MemeGenerator() {
   }
   
   const handleMainTouchEnd = () => {
-    if (!isSwipeAction) return; // 如果不是有意义的滑动，则忽略
+    if (!isSwipeAction) {
+      // 重置状态，即使不是有效滑动也要重置
+      setTouchStartY(0)
+      setTouchEndY(0)
+      setIsSwipeAction(false)
+      return;
+    }
     
     // 向上滑动超过50px并且Gallery当前是关闭状态，打开Gallery
     if (galleryPosition === 'closed' && touchStartY - touchEndY > 50) {
@@ -445,7 +463,7 @@ export default function MemeGenerator() {
       setShowGallery(true)
     }
     
-    // 重置状态
+    // 确保在任何情况下都重置状态
     setTouchStartY(0)
     setTouchEndY(0)
     setIsSwipeAction(false)
@@ -476,24 +494,27 @@ export default function MemeGenerator() {
     // 支持通过拖拽和滑动手势处理 Gallery 状态变化
     
     // If user dragged up in partial mode (header visible)
-    if (galleryPosition === 'partial' && info.offset.y < -100) {
+    if (galleryPosition === 'partial' && info.offset && info.offset.y < -100) {
       setGalleryPosition('full') // Switch to header hidden
       setLastGalleryPosition('full')
     } 
     // If user dragged down in full mode (header hidden)
-    else if (galleryPosition === 'full' && info.offset.y > 100) {
-      setGalleryPosition('partial') // Switch to header visible
-      setLastGalleryPosition('partial')
+    else if (galleryPosition === 'full' && info.offset && info.offset.y > 100) {
+      setGalleryPosition('full') // Switch to header visible
+      setLastGalleryPosition('full')
     }
-    // If user dragged down significantly, close the gallery
-    else if (info.offset.y > 150) {
+    // If user dragged down significantly, close the gallery - 降低关闭阈值
+    else if (info.offset && info.offset.y > 100) {
       // Remember the position before closing
-      setLastGalleryPosition(galleryPosition === 'full' ? 'full' : 'partial')
+      setLastGalleryPosition('full')
+      
+      // 确保立即设置为closed状态
       setGalleryPosition('closed')
-      // Short delay to allow animation to start
+      
+      // 减少延迟时间，使关闭更立即
       setTimeout(() => {
         setShowGallery(false)
-      }, 100)
+      }, 250)
     }
   }
 
@@ -508,27 +529,36 @@ export default function MemeGenerator() {
     
     setTouchEndY(e.touches[0].clientY)
     
-    // 检测是否是明显的垂直滑动
-    if (Math.abs(e.touches[0].clientY - touchStartY) > 10) {
+    // 检测是否是明显的垂直滑动 - 降低检测阈值，提高灵敏度
+    if (Math.abs(e.touches[0].clientY - touchStartY) > 5) {
       setIsSwipeAction(true)
     }
   }
   
   const handleGalleryTouchEnd = () => {
-    if (!isSwipeAction) return;
-    
-    // 在 Gallery 区域向下滑动超过50px，关闭 Gallery
-    if (touchEndY - touchStartY > 50) {
-      // Remember the position before closing
-      setLastGalleryPosition(galleryPosition === 'full' ? 'full' : 'partial')
-      setGalleryPosition('closed')
-      // Short delay to allow animation to start
-      setTimeout(() => {
-        setShowGallery(false)
-      }, 100)
+    if (!isSwipeAction) {
+      // 重置状态，即使不是有效滑动也要重置
+      setTouchStartY(0)
+      setTouchEndY(0)
+      setIsSwipeAction(false)
+      return;
     }
     
-    // 重置状态
+    // 在 Gallery 区域向下滑动超过30px，关闭 Gallery - 降低关闭阈值
+    if (touchEndY - touchStartY > 30) {
+      // Remember the position before closing
+      setLastGalleryPosition('full')
+      
+      // 确保立即设置为closed状态
+      setGalleryPosition('closed')
+      
+      // 减少延迟时间，使关闭更立即
+      setTimeout(() => {
+        setShowGallery(false)
+      }, 250)
+    }
+    
+    // 确保在任何情况下都重置状态
     setTouchStartY(0)
     setTouchEndY(0)
     setIsSwipeAction(false)
@@ -610,6 +640,28 @@ export default function MemeGenerator() {
     // Save the current water level to localStorage whenever it changes
     localStorage.setItem('waterLevel', values.join(','))
   }
+
+  // 添加清理useEffect，确保触摸状态总是被正确重置
+  useEffect(() => {
+    // 清理触摸状态，防止状态残留
+    const resetTouchStates = () => {
+      setTouchStartY(0)
+      setTouchEndY(0)
+      setIsSwipeAction(false)
+    };
+
+    // 监听滑动结束
+    document.addEventListener('touchend', resetTouchStates);
+    
+    // 当gallery状态改变时也重置
+    if (galleryPosition === 'closed') {
+      resetTouchStates();
+    }
+    
+    return () => {
+      document.removeEventListener('touchend', resetTouchStates);
+    };
+  }, [galleryPosition]);
 
   return (
     <div 
@@ -981,7 +1033,11 @@ export default function MemeGenerator() {
                 y: galleryPosition === 'partial' ? '0%' : galleryPosition === 'full' ? '0%' : '100%'
               }}
               exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              transition={{ 
+                type: "tween", 
+                ease: "easeOut", 
+                duration: 0.3 
+              }}
               onScroll={handleGalleryScroll}
               drag="y"
               dragConstraints={dragConstraints}
