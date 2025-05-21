@@ -5,6 +5,7 @@ import { ChevronsDown, ChevronsUp } from "lucide-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
+import ErrorToast from "./error-toast"
 
 // Define types to solve index signature problems
 type TabKey = "sentiment" | "intention" | "style";
@@ -87,6 +88,49 @@ export default function MemeGenerator() {
 
   // Add water level state for the god bowl, initial 0, max 8
   const [godWaterLevel, setGodWaterLevel] = useState(0)
+
+  // Add state for error toast notification
+  const [showErrorToast, setShowErrorToast] = useState(false)
+  const [errorMessage, setErrorMessage] = useState("")
+
+  // Button touch states for error toast
+  const [isErrorButtonTouchActive, setIsErrorButtonTouchActive] = useState(false);
+  
+  const handleErrorButtonTouchStart = () => {
+    setIsErrorButtonTouchActive(true);
+  };
+  
+  const handleErrorButtonTouchEnd = () => {
+    setTimeout(() => {
+      setIsErrorButtonTouchActive(false);
+    }, 300);
+    handleCloseErrorToast();
+  };
+
+  // Utility function to show error toast
+  const showError = (message: string) => {
+    setShowErrorToast(false);
+    
+    setErrorMessage(message);
+    
+    setTimeout(() => {
+      setShowErrorToast(true);
+    }, 50);
+    
+    setIsBlending(false);
+    setShowBlendAnimation(false);
+    setIsAnimationPlaying(false);
+  };
+
+  // Function to handle error toast closing
+  const handleCloseErrorToast = () => {
+    setShowErrorToast(false);
+    setErrorMessage("");
+    
+    setIsBlending(false);
+    setShowBlendAnimation(false);
+    setIsAnimationPlaying(false);
+  };
 
   const tabContent = {
     sentiment: {
@@ -190,20 +234,6 @@ export default function MemeGenerator() {
     }
   }
 
-  // Add and remove event listeners for scroll prevention
-  useEffect(() => {
-    if (isDragging) {
-      // Add passive: false to override default browser behavior
-      document.addEventListener('touchmove', preventScroll, { passive: false });
-    } else {
-      document.removeEventListener('touchmove', preventScroll);
-    }
-    
-    return () => {
-      document.removeEventListener('touchmove', preventScroll);
-    };
-  }, [isDragging]);
-
   // Modified handleItemTouchStart to always record start time
   const handleItemTouchStart = (e: React.TouchEvent, item: string) => {
     // If animation is playing, do not start new drag
@@ -297,14 +327,27 @@ export default function MemeGenerator() {
             setIsAnimationPlaying(false);
           }, 1500); // Animation duration
           
-          // When updating water level, also need to use correct type assertion
-          return {
+          const updatedWaterLevels = {
             ...prev,
             [tab]: {
               ...prev[tab],
               [item]: currentLevel - 1
             }
           };
+          
+          setTimeout(() => {
+            const hasSelectedSentiment = Object.values(updatedWaterLevels.sentiment).some(level => level < 3);
+            const hasSelectedIntention = Object.values(updatedWaterLevels.intention).some(level => level < 3);
+            const hasSelectedStyle = Object.values(updatedWaterLevels.style).some(level => level < 3);
+            
+            setHighlightCategories(prev => ({
+              sentiment: !hasSelectedSentiment && prev.sentiment,
+              intention: !hasSelectedIntention && prev.intention,
+              style: !hasSelectedStyle && prev.style
+            }));
+          }, 100);
+          
+          return updatedWaterLevels;
         }
         return prev;
       });
@@ -365,10 +408,56 @@ export default function MemeGenerator() {
     // Reset the flag after a short delay
     setTimeout(() => {
       setIsUpdatingWaterLevel(false);
-    }, 50);
+      
+      const hasSelectedSentiment = Object.values(waterLevels.sentiment).some(level => level < 3);
+      const hasSelectedIntention = Object.values(waterLevels.intention).some(level => level < 3);
+      const hasSelectedStyle = Object.values(waterLevels.style).some(level => level < 3);
+      
+      setHighlightCategories(prev => ({
+        sentiment: !hasSelectedSentiment && prev.sentiment,
+        intention: !hasSelectedIntention && prev.intention,
+        style: !hasSelectedStyle && prev.style
+      }));
+    }, 100);
   };
 
+  const [highlightCategories, setHighlightCategories] = useState<{
+    sentiment: boolean;
+    intention: boolean;
+    style: boolean;
+  }>({
+    sentiment: false,
+    intention: false,
+    style: false
+  });
+
   const handleBlendClick = async () => {
+    if (inputValue.trim() === '') {
+      showError('Please enter at least one keyword');
+      return;
+    }
+    
+    const hasSelectedSentiment = Object.values(waterLevels.sentiment).some(level => level < 3);
+    const hasSelectedIntention = Object.values(waterLevels.intention).some(level => level < 3);
+    const hasSelectedStyle = Object.values(waterLevels.style).some(level => level < 3);
+    
+    setHighlightCategories({
+      sentiment: !hasSelectedSentiment,
+      intention: !hasSelectedIntention,
+      style: !hasSelectedStyle
+    });
+    
+    if (!hasSelectedSentiment || !hasSelectedIntention || !hasSelectedStyle) {
+      showError('Please select at least one tag from each category');
+      return;
+    }
+
+    setHighlightCategories({
+      sentiment: false,
+      intention: false,
+      style: false
+    });
+
     setIsBlending(true)
     // Add logic to play blend animation
     setShowBlendAnimation(true)
@@ -433,14 +522,19 @@ export default function MemeGenerator() {
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`Failed to process data: ${errorData.error_msg || 'Unknown error'}`);
+        console.log(`Failed to process data: ${errorData.error_msg || 'Unknown error'}`);
+        
+        // Show error toast with the error message
+        showError(errorData.error_msg || 'Something went wrong. Please try again.');
+        return;
       }
-      
-      const result = await response.json();
-      console.log('API response:', result);
-      
     } catch (error) {
       console.error('Error processing data:', error);
+      
+      // Show error toast
+      showError('Network error. Please check your connection and try again.');
+      
+      return;
     }
     
     // Simulate processing time, reset state after animation completes
@@ -733,9 +827,8 @@ export default function MemeGenerator() {
     localStorage.setItem('waterLevel', values.join(','))
   }
 
-  // Add cleanup useEffect to ensure touch states are always correctly reset
+  // Clean up touch states to prevent state residue
   useEffect(() => {
-    // Clean up touch states to prevent state residue
     const resetTouchStates = () => {
       setTouchStartY(0)
       setTouchEndY(0)
@@ -754,6 +847,26 @@ export default function MemeGenerator() {
       document.removeEventListener('touchend', resetTouchStates);
     };
   }, [galleryPosition]);
+
+  // Prevent body scrolling when error toast is shown
+  useEffect(() => {
+    if (showErrorToast) {
+      // Disable scrolling on body
+      document.body.style.overflow = 'hidden';
+      
+      // Add passive: false to override default browser behavior
+      document.addEventListener('touchmove', preventScroll, { passive: false });
+    } else {
+      // Re-enable scrolling when toast is hidden
+      document.body.style.overflow = 'auto';
+      document.removeEventListener('touchmove', preventScroll);
+    }
+    
+    return () => {
+      document.body.style.overflow = 'auto';
+      document.removeEventListener('touchmove', preventScroll);
+    };
+  }, [showErrorToast]);
 
   return (
     <div 
@@ -821,13 +934,13 @@ export default function MemeGenerator() {
             <button
               className={`flex items-center rounded-full relative overflow-hidden transform transition-all duration-300 ease-in-out active:scale-95 ${
                 selectedTab === "sentiment" 
-                  ? "pr-3 bg-[#EEEEEE] shadow-inner" 
-                  : "bg-white hover:bg-gray-50 hover:shadow-sm"
+                  ? `pr-3 bg-[#EEEEEE] shadow-inner ${highlightCategories.sentiment ? 'bg-[#FFE4E4] text-[#B72E2E]' : ''}` 
+                  : `hover:bg-gray-50 hover:shadow-sm ${highlightCategories.sentiment ? 'bg-[#FFE4E4] text-[#B72E2E]' : 'bg-white'}`
               }`}
               onClick={() => setSelectedTab("sentiment")}
             >
               <div className={`relative z-10 transition-transform duration-300 ${selectedTab === "sentiment" ? "scale-100" : ""}`}>
-                <Image src="/sentiment.png" alt="Sentiment" width={49} height={49} className="mr-1" />
+                <Image src={highlightCategories.sentiment ? "/unfinished.png" : "/sentiment.png"} alt="Sentiment" width={49} height={49} className="mr-1" />
               </div>
               {selectedTab === "sentiment" && (
                 <span className="font-inika text-sm relative z-10 animate-fadeIn">
@@ -841,13 +954,13 @@ export default function MemeGenerator() {
             <button
               className={`flex items-center rounded-full relative overflow-hidden transform transition-all duration-300 ease-in-out active:scale-95 ${
                 selectedTab === "intention" 
-                  ? "pr-3 bg-[#EEEEEE] shadow-inner" 
-                  : "bg-white hover:bg-gray-50 hover:shadow-sm"
+                  ? `pr-3 bg-[#EEEEEE] shadow-inner ${highlightCategories.intention ? 'bg-[#FFE4E4] text-[#B72E2E]' : ''}` 
+                  : `hover:bg-gray-50 hover:shadow-sm ${highlightCategories.intention ? 'bg-[#FFE4E4] text-[#B72E2E]' : 'bg-white'}`
               }`}
               onClick={() => setSelectedTab("intention")}
             >
               <div className={`relative z-10 transition-transform duration-300 ${selectedTab === "intention" ? "scale-100" : ""}`}>
-                <Image src="/intention.png" alt="Intention" width={49} height={49} className="mr-1" />
+                <Image src={highlightCategories.intention ? "/unfinished.png" : "/intention.png"} alt="Intention" width={49} height={49} className="mr-1" />
               </div>
               {selectedTab === "intention" && (
                 <span className="font-inika text-sm relative z-10 animate-fadeIn">
@@ -861,13 +974,13 @@ export default function MemeGenerator() {
             <button
               className={`flex items-center rounded-full relative overflow-hidden transform transition-all duration-300 ease-in-out active:scale-95 ${
                 selectedTab === "style" 
-                  ? "pr-3 bg-[#EEEEEE] shadow-inner" 
-                  : "bg-white hover:bg-gray-50 hover:shadow-sm"
+                  ? `pr-3 bg-[#EEEEEE] shadow-inner ${highlightCategories.style ? 'bg-[#FFE4E4] text-[#B72E2E]' : ''}` 
+                  : `hover:bg-gray-50 hover:shadow-sm ${highlightCategories.style ? 'bg-[#FFE4E4] text-[#B72E2E]' : 'bg-white'}`
               }`}
               onClick={() => setSelectedTab("style")}
             >
               <div className={`relative z-10 transition-transform duration-300 ${selectedTab === "style" ? "scale-100" : ""}`}>
-                <Image src="/style.png" alt="Style" width={49} height={49} className="mr-1" />
+                <Image src={highlightCategories.style ? "/unfinished.png" : "/style.png"} alt="Style" width={49} height={49} className="mr-1" />
               </div>
               {selectedTab === "style" && (
                 <span className="font-inika text-sm relative z-10 animate-fadeIn">
@@ -1318,6 +1431,18 @@ export default function MemeGenerator() {
             </div>
           </div>
         )}
+
+        {/* Error Toast Notification */}
+        <AnimatePresence>
+          {showErrorToast && (
+            <ErrorToast 
+              message={errorMessage}
+              isVisible={showErrorToast}
+              onClose={handleCloseErrorToast}
+              autoHideDuration={5000}
+            />
+          )}
+        </AnimatePresence>
     </div>
   )
 }
