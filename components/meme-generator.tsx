@@ -83,7 +83,6 @@ export default function MemeGenerator() {
   // Add state for input keywords
   const [inputValue, setInputValue] = useState("")
 
-  // 添加新的动画状态
   const [showBlendAnimation, setShowBlendAnimation] = useState(false)
 
   // Add water level state for the god bowl, initial 0, max 8
@@ -377,36 +376,71 @@ export default function MemeGenerator() {
     setShowRemoveAnimation(false)
     setIsAnimationPlaying(true)
     
-    // Process the keywords from the input field
-    if (inputValue.trim()) {
-      try {
+    try {
+      // Process the keywords from the input field
+      let keywordsList: string[] = [];
+      if (inputValue.trim()) {
         // Split input value by commas or spaces
-        const keywordsList = inputValue
+        keywordsList = inputValue
           .split(/,|\s+/)
           .map(word => word.trim())
           .filter(word => word.length > 0);
-        console.log('key', keywordsList)
-        
-        // Only proceed if we have keywords
-        if (keywordsList.length > 0) {
-          // Call the API endpoint
-          const response = await fetch('/api/process_keywords', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              keywords: keywordsList
-            }),
-          });
-          
-          if (!response.ok) {
-            throw new Error('Failed to process keywords');
-          }
-        }
-      } catch (error) {
-        console.error('Error processing keywords:', error);
       }
+      
+      // Prepare the tags data with water levels in the required format
+      const number2degree = (value: number) => {
+        if (value === 0) return "very";
+        if (value === 1) return "moderate";
+        if (value === 2) return "slightly";
+      }
+      const tagsData = {
+        "Emotion Category": 
+          Object.entries(waterLevels.sentiment)
+            .filter(([_, value]) => value < 3)  // Only include items with water level < 3
+            .map(([key, value]) => ({
+              "content": key, 
+              "degree": number2degree(value)
+            })),
+        "Intention Category": 
+          Object.entries(waterLevels.intention)
+            .filter(([_, value]) => value < 3)  // Only include items with water level < 3
+            .map(([key, value]) => ({
+              "content": key, 
+              "degree": number2degree(value)
+            })),
+        "Style Preference": 
+          Object.entries(waterLevels.style)
+            .filter(([_, value]) => value < 3)  // Only include items with water level < 3
+            .map(([key, value]) => ({
+              "content": key, 
+              "degree": number2degree(value)
+            }))
+      };
+      
+      console.log('Processing data:', { keywords: keywordsList, tags: tagsData });
+      
+      // Make a single API call with both keywords and tags data
+      const response = await fetch('/api/process_keywords', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          keywords: keywordsList,
+          tags: tagsData
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Failed to process data: ${errorData.error_msg || 'Unknown error'}`);
+      }
+      
+      const result = await response.json();
+      console.log('API response:', result);
+      
+    } catch (error) {
+      console.error('Error processing data:', error);
     }
     
     // Simulate processing time, reset state after animation completes

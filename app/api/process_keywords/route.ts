@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 interface KeywordsRequest {
   keywords: string[];
+  tags?: Record<string, any>;
 }
 
 interface BackendResponse {
@@ -11,28 +12,30 @@ interface BackendResponse {
 }
 
 /**
- * API endpoint to process keywords for meme generation
+ * API endpoint to process both keywords and tags for meme generation
  * 
- * @param request The incoming request with keywords data
+ * @param request The incoming request with keywords and tags data
  * @returns JSON response with processing results
  */
 export async function POST(request: Request) {
   try {
     // Parse the request body
-    const oldBody: KeywordsRequest = await request.json();
-    const body = {
-      ...oldBody,
-      user_id: process.env.DEFAULT_UID
-    }
+    const requestBody: KeywordsRequest = await request.json();
     
-    // Validate the request body
-    if (!body.user_id || !Array.isArray(body.keywords) || body.keywords.length === 0) {
-      return NextResponse.json(
-        { code: 400, ret: "", error_msg: 'Invalid request body. Required: user_id and non-empty keywords array' },
-        { status: 400 }
-      );
-    }
-
+    // Add user_id to the request
+    const body = {
+      ...requestBody,
+      user_id: process.env.DEFAULT_UID
+    };
+    
+    // Log the received data for debugging
+    console.log('Received combined request with:', {
+      hasKeywords: !!body.keywords && Array.isArray(body.keywords),
+      keywordsCount: body.keywords?.length || 0,
+      hasTags: !!body.tags,
+      tags: body.tags ? JSON.stringify(body.tags) : 'No tags provided',
+    });
+    
     // Get the backend URL from environment variables
     const backendUrl = process.env.BACKEND_URL;
     
@@ -43,41 +46,109 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
-
-    console.log(`Forwarding keywords request to backend: ${backendUrl}`);
-    console.log(`Request data:`, JSON.stringify(body));
     
-    // Forward the request to the actual backend
-    const backendResponse = await fetch(`${backendUrl}/process_keywords`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    });
+    // Results from both API calls
+    let keywordsResult: BackendResponse | null = null;
+    let tagsResult: BackendResponse | null = null;
     
-    // Parse the backend response
-    const responseData: BackendResponse = await backendResponse.json();
-    
-    // Log the response for debugging
-    console.log('Backend response:', responseData);
-    
-    // Check if the backend request was successful
-    if (!backendResponse.ok) {
-      console.error('Backend request failed:', responseData.error_msg);
+    // Step 1: Process keywords if provided
+    if (body.keywords && Array.isArray(body.keywords) && body.keywords.length > 0) {
+      console.log(`Forwarding keywords request to backend: ${backendUrl}/process_keywords`);
       
-      // Forward the error from the backend
+      const keywordsRequestBody = {
+        user_id: body.user_id,
+        keywords: body.keywords
+      };
+      
+      console.log(`Keywords request data:`, JSON.stringify(keywordsRequestBody));
+      
+      try {
+        // Call the keywords API on the backend
+        const keywordsResponse = await fetch(`${backendUrl}/process_keywords`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(keywordsRequestBody),
+        });
+        
+        // Parse the keywords response
+        keywordsResult = await keywordsResponse.json();
+        
+        console.log('Backend keywords response status:', keywordsResponse.status);
+        console.log('Backend keywords response body:', keywordsResult);
+        
+        // If the keywords request failed, return the error immediately
+        if (!keywordsResponse.ok) {
+          console.error('Backend keywords request failed:', keywordsResult!.error_msg);
+          return NextResponse.json(keywordsResult, { status: keywordsResponse.status });
+        }
+      } catch (error) {
+        console.error('Error processing keywords:', error);
+        return NextResponse.json(
+          { code: 500, ret: "", error_msg: `Keywords API error: ${(error as Error).message}` },
+          { status: 500 }
+        );
+      }
+    }
+    
+    // Step 2: Process tags if provided
+    if (body.tags && Object.keys(body.tags).length > 0) {
+      console.log(`Forwarding tags request to backend: ${backendUrl}/process_tags`);
+      
+      const tagsRequestBody = {
+        user_id: body.user_id,
+        tags: body.tags
+      };
+      
+      
+      try {
+        // Call the tags API on the backend
+        const tagsResponse = await fetch(`${backendUrl}/process_tags`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(tagsRequestBody),
+        });
+        
+        // Parse the tags response
+        tagsResult = await tagsResponse.json();
+        
+        console.log('Backend tags response status:', tagsResponse.status);
+        console.log('Backend tags response body:', tagsResult);
+        
+        // If the tags request failed, return the error immediately
+        if (!tagsResponse.ok) {
+          console.error('Backend tags request failed:', tagsResult!.error_msg);
+          return NextResponse.json(tagsResult, { status: tagsResponse.status });
+        }
+      } catch (error) {
+        console.error('Error processing tags:', error);
+        return NextResponse.json(
+          { code: 500, ret: "", error_msg: `Tags API error: ${(error as Error).message}` },
+          { status: 500 }
+        );
+      }
+    }
+    
+    // If neither keywords nor tags were provided or processed
+    if (!keywordsResult && !tagsResult) {
       return NextResponse.json(
-        responseData,
-        { status: backendResponse.status }
+        { code: 400, ret: "", error_msg: 'Invalid request. Provide at least keywords or tags.' },
+        { status: 400 }
       );
     }
     
-    // Return the backend response directly to maintain schema consistency
-    return NextResponse.json(responseData);
+    // Return the result from the last successful API call
+    // Prioritize tags result if both were successful
+    const finalResult = tagsResult || keywordsResult;
+    
+    // Return the backend response
+    return NextResponse.json(finalResult);
     
   } catch (error) {
-    console.error('Error processing keywords:', error);
+    console.error('Error processing request:', error);
     
     // Return an error response following the required schema
     return NextResponse.json(
