@@ -503,7 +503,8 @@ export default function MemeGenerator() {
             .map(([key, value]) => ({
               "content": key, 
               "degree": number2degree(value)
-            }))
+            })),
+        "Scene or Theme": []
       };
       
       console.log('Processing data:', { keywords: keywordsList, tags: tagsData });

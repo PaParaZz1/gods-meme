@@ -44,6 +44,8 @@ export default function TemplateEditor() {
   const [transitionDirection, setTransitionDirection] = useState<'left' | 'right' | null>(null)
   const [exitingTemplate, setExitingTemplate] = useState<number | null>(null)
   const [nextTemplateIndex, setNextTemplateIndex] = useState<number | null>(null)
+  const [templates, setTemplates] = useState<string[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   
   const imageRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -53,15 +55,6 @@ export default function TemplateEditor() {
 
   // Minimum swipe distance (in px)
   const minSwipeDistance = 50
-
-  // Templates - in a real app, these would come from an API
-  const templates = [
-    "/template1.jpg",
-    "/template2.jpg",
-    "/template3.jpg",
-    "/template4.jpg",
-    "/template5.jpg",
-  ]
 
   // Random number of similar memes for each template
   const [similarMemesCount] = useState<Record<number, number>>({
@@ -74,6 +67,35 @@ export default function TemplateEditor() {
 
   // Add debounce reference to prevent rapid multiple triggers
   const isProcessingSwipeRef = useRef(false);
+
+  // Fetch template images from API
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch('/api/get_base_images');
+        if (!response.ok) {
+          throw new Error('Failed to fetch templates');
+        }
+        const data = await response.json();
+        setTemplates(data.images || []);
+      } catch (error) {
+        console.error('Error fetching templates:', error);
+        // Fallback to default templates if API fails
+        setTemplates([
+          "/template1.jpg",
+          "/template2.jpg",
+          "/template3.jpg",
+          "/template4.jpg",
+          "/template5.jpg",
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTemplates();
+  }, []);
 
   // Open full image
   const openFullImage = (src: string) => {
@@ -198,6 +220,7 @@ export default function TemplateEditor() {
         <button 
           onClick={() => changeTemplate('right')}
           className="absolute left-2 top-1/2 transform -translate-y-1/2 z-50 w-8 h-8 bg-[#333333] rounded-full flex items-center justify-center text-white"
+          disabled={isLoading || templates.length === 0}
         >
           <ChevronLeft size={20} />
         </button>
@@ -211,209 +234,221 @@ export default function TemplateEditor() {
           onTouchEnd={handleTouchEnd}
           style={{ perspective: '800px' }}
         >
-          {/* Current template */}
-          <div 
-            ref={currentFrameRef}
-            className={`relative transition-opacity duration-500 ease-out ${
-              isTransitioning ? 'pointer-events-none opacity-0' : 'opacity-100'
-            }`}
-            style={{ 
-              transformStyle: 'preserve-3d',
-              backfaceVisibility: 'hidden'
-            }}
-          >
-            {/* Frame 1 (background) */}
-            <div className="relative w-[240px] h-[250px]">
-              <Image
-                src="/template_frame1.png"
-                alt="Template frame background"
-                fill
-                className="object-contain"
-              />
+          {isLoading ? (
+            <div className="w-[240px] h-[250px] flex items-center justify-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#333333]"></div>
             </div>
-            
-            {/* Template image */}
-            <div 
-              className="absolute inset-0 rounded-lg overflow-hidden"
-              style={{ 
-                top: '10%', 
-                left: '10%', 
-                right: '10%', 
-                bottom: '20%' 
-              }}
-              onClick={() => {
-                openFullImage(templates[currentTemplate])
-              }}
-            >
-              <Image
-                src={templates[currentTemplate] || "/placeholder.svg"}
-                alt="Meme template"
-                fill
-                className="object-cover z-20 rounded-lg"
-                draggable={false}
-              />
+          ) : templates.length === 0 ? (
+            <div className="w-[240px] h-[250px] flex items-center justify-center text-center p-4">
+              <p>No templates available. Please try again later.</p>
             </div>
-            
-            {/* Frame 2 (overlay) */}
-            <div className="absolute inset-0 pointer-events-none">
-              <Image
-                src="/template_frame2.png"
-                alt="Template frame overlay"
-                fill
-                className="object-contain z-10"
-                draggable={false}
-              />
-            </div>
-
-            {/* Dimensions label - changed to gray */}
-            <div className="absolute bottom-0 left-0 right-0 bg-[#666666] text-white text-center py-1 rounded-b-lg z-40">
-              <span className="text-sm"><i>Meme Template Tags</i></span>
-            </div>
-          </div>
-          
-          {/* Exiting template */}
-          {exitingTemplate !== null && (
-            <div 
-              ref={exitingFrameRef}
-              className="absolute top-0 left-0 w-full h-full"
-              style={{
-                animation: transitionDirection === 'left' 
-                  ? 'flipPageLeft 550ms cubic-bezier(0.4, 0.0, 0.2, 1) forwards' 
-                  : 'flipPageRight 550ms cubic-bezier(0.4, 0.0, 0.2, 1) forwards',
-                transformStyle: 'preserve-3d',
-                transformOrigin: transitionDirection === 'left' ? 'left center' : 'right center',
-                backfaceVisibility: 'hidden',
-                zIndex: 20
-              }}
-            >
-              {/* Frame 1 (background) */}
-              <div className="relative w-[240px] h-[250px]">
-                <Image
-                  src="/template_frame1.png"
-                  alt="Template frame background"
-                  fill
-                  className="object-contain"
-                />
-              </div>
-              
-              {/* Template image */}
+          ) : (
+            <>
+              {/* Current template */}
               <div 
-                className="absolute inset-0 rounded-lg overflow-hidden"
+                ref={currentFrameRef}
+                className={`relative transition-opacity duration-500 ease-out ${
+                  isTransitioning ? 'pointer-events-none opacity-0' : 'opacity-100'
+                }`}
                 style={{ 
-                  top: '10%', 
-                  left: '10%', 
-                  right: '10%', 
-                  bottom: '20%' 
+                  transformStyle: 'preserve-3d',
+                  backfaceVisibility: 'hidden'
                 }}
               >
-                <Image
-                  src={templates[exitingTemplate] || "/placeholder.svg"}
-                  alt="Previous meme template"
-                  fill
-                  className="object-cover z-20 rounded-lg"
-                  draggable={false}
-                />
-              </div>
-              
-              {/* Frame 2 (overlay) */}
-              <div className="absolute inset-0 pointer-events-none">
-                <Image
-                  src="/template_frame2.png"
-                  alt="Template frame overlay"
-                  fill
-                  className="object-contain z-10"
-                  draggable={false}
-                />
-              </div>
+                {/* Frame 1 (background) */}
+                <div className="relative w-[240px] h-[250px]">
+                  <Image
+                    src="/template_frame1.png"
+                    alt="Template frame background"
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+                
+                {/* Template image */}
+                <div 
+                  className="absolute inset-0 rounded-lg overflow-hidden"
+                  style={{ 
+                    top: '10%', 
+                    left: '10%', 
+                    right: '10%', 
+                    bottom: '20%' 
+                  }}
+                  onClick={() => {
+                    openFullImage(templates[currentTemplate])
+                  }}
+                >
+                  <Image
+                    src={templates[currentTemplate] || "/placeholder.svg"}
+                    alt="Meme template"
+                    fill
+                    className="object-cover z-20 rounded-lg"
+                    draggable={false}
+                  />
+                </div>
+                
+                {/* Frame 2 (overlay) */}
+                <div className="absolute inset-0 pointer-events-none">
+                  <Image
+                    src="/template_frame2.png"
+                    alt="Template frame overlay"
+                    fill
+                    className="object-contain z-10"
+                    draggable={false}
+                  />
+                </div>
 
-              {/* Dimensions label */}
-              <div className="absolute bottom-0 left-0 right-0 bg-[#666666] text-white text-center py-1 rounded-b-lg z-40">
-                <span className="text-sm"><i>Meme Template Tags</i></span>
+                {/* Dimensions label - changed to gray */}
+                <div className="absolute bottom-0 left-0 right-0 bg-[#666666] text-white text-center py-1 rounded-b-lg z-40">
+                  <span className="text-sm"><i>Meme Template Tags</i></span>
+                </div>
               </div>
               
-              {/* Shadow effect enhances page-turning feel */}
-              <div 
-                className="absolute inset-0 z-30 pointer-events-none"
-                style={{
-                  background: transitionDirection === 'left' 
-                    ? 'linear-gradient(to right, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 70%)' 
-                    : 'linear-gradient(to left, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 70%)',
-                  opacity: 0.8
-                }}
-              />
-            </div>
-          )}
-          
-          {/* Next template (entering) */}
-          {nextTemplateIndex !== null && (
-            <div 
-              className="absolute top-0 left-0 w-full h-full"
-              style={{
-                animation: transitionDirection === 'left' 
-                  ? 'revealPageLeft 550ms cubic-bezier(0.4, 0.0, 0.2, 1) forwards'
-                  : 'revealPageRight 550ms cubic-bezier(0.4, 0.0, 0.2, 1) forwards',
-                transformStyle: 'preserve-3d',
-                transformOrigin: transitionDirection === 'left' ? 'right center' : 'left center',
-                backfaceVisibility: 'hidden',
-                zIndex: 10
-              }}
-            >
-              {/* Frame 1 (background) */}
-              <div className="relative w-[240px] h-[250px]">
-                <Image
-                  src="/template_frame1.png"
-                  alt="Template frame background"
-                  fill
-                  className="object-contain"
-                />
-              </div>
-              
-              {/* Template image */}
-              <div 
-                className="absolute inset-0 rounded-lg overflow-hidden"
-                style={{ 
-                  top: '10%', 
-                  left: '10%', 
-                  right: '10%', 
-                  bottom: '20%' 
-                }}
-              >
-                <Image
-                  src={templates[nextTemplateIndex] || "/placeholder.svg"}
-                  alt="Next meme template"
-                  fill
-                  className="object-cover z-20 rounded-lg"
-                  draggable={false}
-                />
-              </div>
-              
-              {/* Frame 2 (overlay) */}
-              <div className="absolute inset-0 pointer-events-none">
-                <Image
-                  src="/template_frame2.png"
-                  alt="Template frame overlay"
-                  fill
-                  className="object-contain z-10"
-                  draggable={false}
-                />
-              </div>
+              {/* Exiting template */}
+              {exitingTemplate !== null && (
+                <div 
+                  ref={exitingFrameRef}
+                  className="absolute top-0 left-0 w-full h-full"
+                  style={{
+                    animation: transitionDirection === 'left' 
+                      ? 'flipPageLeft 550ms cubic-bezier(0.4, 0.0, 0.2, 1) forwards' 
+                      : 'flipPageRight 550ms cubic-bezier(0.4, 0.0, 0.2, 1) forwards',
+                    transformStyle: 'preserve-3d',
+                    transformOrigin: transitionDirection === 'left' ? 'left center' : 'right center',
+                    backfaceVisibility: 'hidden',
+                    zIndex: 20
+                  }}
+                >
+                  {/* Frame 1 (background) */}
+                  <div className="relative w-[240px] h-[250px]">
+                    <Image
+                      src="/template_frame1.png"
+                      alt="Template frame background"
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
+                  
+                  {/* Template image */}
+                  <div 
+                    className="absolute inset-0 rounded-lg overflow-hidden"
+                    style={{ 
+                      top: '10%', 
+                      left: '10%', 
+                      right: '10%', 
+                      bottom: '20%' 
+                    }}
+                  >
+                    <Image
+                      src={templates[exitingTemplate] || "/placeholder.svg"}
+                      alt="Previous meme template"
+                      fill
+                      className="object-cover z-20 rounded-lg"
+                      draggable={false}
+                    />
+                  </div>
+                  
+                  {/* Frame 2 (overlay) */}
+                  <div className="absolute inset-0 pointer-events-none">
+                    <Image
+                      src="/template_frame2.png"
+                      alt="Template frame overlay"
+                      fill
+                      className="object-contain z-10"
+                      draggable={false}
+                    />
+                  </div>
 
-              {/* Dimensions label */}
-              <div className="absolute bottom-0 left-0 right-0 bg-[#666666] text-white text-center py-1 rounded-b-lg z-40">
-                <span className="text-sm"><i>Meme Template Tags</i></span>
-              </div>
+                  {/* Dimensions label */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-[#666666] text-white text-center py-1 rounded-b-lg z-40">
+                    <span className="text-sm"><i>Meme Template Tags</i></span>
+                  </div>
+                  
+                  {/* Shadow effect enhances page-turning feel */}
+                  <div 
+                    className="absolute inset-0 z-30 pointer-events-none"
+                    style={{
+                      background: transitionDirection === 'left' 
+                        ? 'linear-gradient(to right, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 70%)' 
+                        : 'linear-gradient(to left, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 70%)',
+                      opacity: 0.8
+                    }}
+                  />
+                </div>
+              )}
               
-              {/* Shadow effect enhances page-turning feel */}
-              <div 
-                className="absolute inset-0 z-30 pointer-events-none"
-                style={{
-                  background: transitionDirection === 'left' 
-                    ? 'linear-gradient(to left, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0) 70%)' 
-                    : 'linear-gradient(to right, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0) 70%)',
-                  opacity: 0.6
-                }}
-              />
-            </div>
+              {/* Next template (entering) */}
+              {nextTemplateIndex !== null && (
+                <div 
+                  className="absolute top-0 left-0 w-full h-full"
+                  style={{
+                    animation: transitionDirection === 'left' 
+                      ? 'revealPageLeft 550ms cubic-bezier(0.4, 0.0, 0.2, 1) forwards'
+                      : 'revealPageRight 550ms cubic-bezier(0.4, 0.0, 0.2, 1) forwards',
+                    transformStyle: 'preserve-3d',
+                    transformOrigin: transitionDirection === 'left' ? 'right center' : 'left center',
+                    backfaceVisibility: 'hidden',
+                    zIndex: 10
+                  }}
+                >
+                  {/* Frame 1 (background) */}
+                  <div className="relative w-[240px] h-[250px]">
+                    <Image
+                      src="/template_frame1.png"
+                      alt="Template frame background"
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
+                  
+                  {/* Template image */}
+                  <div 
+                    className="absolute inset-0 rounded-lg overflow-hidden"
+                    style={{ 
+                      top: '10%', 
+                      left: '10%', 
+                      right: '10%', 
+                      bottom: '20%' 
+                    }}
+                  >
+                    <Image
+                      src={templates[nextTemplateIndex] || "/placeholder.svg"}
+                      alt="Next meme template"
+                      fill
+                      className="object-cover z-20 rounded-lg"
+                      draggable={false}
+                    />
+                  </div>
+                  
+                  {/* Frame 2 (overlay) */}
+                  <div className="absolute inset-0 pointer-events-none">
+                    <Image
+                      src="/template_frame2.png"
+                      alt="Template frame overlay"
+                      fill
+                      className="object-contain z-10"
+                      draggable={false}
+                    />
+                  </div>
+
+                  {/* Dimensions label */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-[#666666] text-white text-center py-1 rounded-b-lg z-40">
+                    <span className="text-sm"><i>Meme Template Tags</i></span>
+                  </div>
+                  
+                  {/* Shadow effect enhances page-turning feel */}
+                  <div 
+                    className="absolute inset-0 z-30 pointer-events-none"
+                    style={{
+                      background: transitionDirection === 'left' 
+                        ? 'linear-gradient(to left, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0) 70%)' 
+                        : 'linear-gradient(to right, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0) 70%)',
+                      opacity: 0.6
+                    }}
+                  />
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -421,6 +456,7 @@ export default function TemplateEditor() {
         <button 
           onClick={() => changeTemplate('left')}
           className="absolute right-2 top-1/2 transform -translate-y-1/2 z-50 w-8 h-8 bg-[#333333] rounded-full flex items-center justify-center text-white"
+          disabled={isLoading || templates.length === 0}
         >
           <ChevronRight size={20} />
         </button>
@@ -436,6 +472,7 @@ export default function TemplateEditor() {
               setCurrentTemplate(index)
               resetScrollPosition()
             }}
+            disabled={isLoading}
           />
         ))}
       </div>
@@ -444,7 +481,16 @@ export default function TemplateEditor() {
       <div className="px-6 mt-4">
         <Link
           href="/generating"
-          className="block w-full bg-[#333333] text-white py-3 rounded-full text-center font-phudu text-lg"
+          className={`block w-full py-3 rounded-full text-center font-phudu text-lg ${
+            isLoading || templates.length === 0 
+              ? "bg-gray-400 text-gray-200 cursor-not-allowed" 
+              : "bg-[#333333] text-white"
+          }`}
+          onClick={(e) => {
+            if (isLoading || templates.length === 0) {
+              e.preventDefault();
+            }
+          }}
         >
           NEXT
         </Link>
