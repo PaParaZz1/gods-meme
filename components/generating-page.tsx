@@ -26,38 +26,83 @@ export default function GeneratingPage() {
   useEffect(() => {
     const callGenerationAPI = async () => {
       try {
-        // Get generation parameters from localStorage
-        const params = localStorage.getItem('generation_params');
-        if (!params) {
-          setError('Generation parameters not found');
-          return;
-        }
+        // Check if this is a regeneration
+        const regenerationParams = localStorage.getItem('regeneration_params');
         
-        const { user_id, template_image } = JSON.parse(params);
-        
-        // Call get_result API
-        const response = await fetch('/api/get_result', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            user_id,
-            image_url: template_image
-          }),
-        });
-        
-        const result = await response.json();
-        
-        if (response.ok && result.success) {
-          setGeneratedImage(result.generated_image);
-          setIsApiComplete(true);
+        if (regenerationParams) {
+          // This is a regeneration request
+          localStorage.removeItem('regeneration_params'); // Clean up
+          const params = JSON.parse(regenerationParams);
           
-          // Store the generated image for the next page
-          localStorage.setItem('generated_image', result.generated_image);
+          console.log('Starting regeneration with params:', params);
+          
+          // Call regenerate API (which will handle polling internally)
+          const response = await fetch('/api/regenerate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(params),
+          });
+          
+          const result = await response.json();
+          
+          if (response.ok && result.success) {
+            setGeneratedImage(result.generated_image);
+            setIsApiComplete(true);
+            
+            // Store the generated image for the next page
+            localStorage.setItem('generated_image', result.generated_image);
+          } else {
+            console.error('Regeneration failed:', result.error);
+            setError(result.error || 'Regeneration failed');
+          }
         } else {
-          console.error('Generation failed:', result.error);
-          setError(result.error || 'Generation failed');
+          // This is initial generation
+          const params = localStorage.getItem('generation_params');
+          if (!params) {
+            setError('Generation parameters not found');
+            return;
+          }
+          
+          const parsedParams = JSON.parse(params);
+          const { user_id, template_image } = parsedParams;
+          
+          // Generate a user ID if not present
+          let uid = user_id;
+          if (!uid) {
+            uid = 'user_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now().toString(36);
+            localStorage.setItem('user_uid', uid);
+            
+            // Update the generation params with the new user ID
+            parsedParams.user_id = uid;
+            localStorage.setItem('generation_params', JSON.stringify(parsedParams));
+          }
+          
+          // Call get_result API
+          const response = await fetch('/api/get_result', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              user_id: uid,
+              template_image: template_image || ""
+            }),
+          });
+          
+          const result = await response.json();
+          
+          if (response.ok && result.success) {
+            setGeneratedImage(result.generated_image);
+            setIsApiComplete(true);
+            
+            // Store the generated image for the next page
+            localStorage.setItem('generated_image', result.generated_image);
+          } else {
+            console.error('Generation failed:', result.error);
+            setError(result.error || 'Generation failed');
+          }
         }
       } catch (error) {
         console.error('Error calling generation API:', error);

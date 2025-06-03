@@ -16,6 +16,13 @@ type ItemKey = SentimentKey | IntentionKey | StyleKey;
 
 export default function MemeGenerator() {
   const router = useRouter()
+  
+  // Add registration states
+  const [isRegistering, setIsRegistering] = useState(true)
+  const [registrationError, setRegistrationError] = useState("")
+  const [registrationStep, setRegistrationStep] = useState("Generating your divine ID...")
+  
+  // Existing states
   const [selectedTab, setSelectedTab] = useState("sentiment")
   const [waterLevels, setWaterLevels] = useState<{
     sentiment: Record<SentimentKey, number>;
@@ -507,7 +514,12 @@ export default function MemeGenerator() {
         "Scene or Theme": []
       };
       
-      console.log('Processing data:', { keywords: keywordsList, tags: tagsData });
+      // Save meme data to localStorage for later use
+      const memeData = {
+        keywords: keywordsList,
+        tags: tagsData,
+      };
+      localStorage.setItem('meme_data', JSON.stringify(memeData));
       
       // Make a single API call with both keywords and tags data
       const response = await fetch('/api/process_keywords', {
@@ -870,6 +882,111 @@ export default function MemeGenerator() {
     };
   }, [showErrorToast]);
 
+  // Add registration useEffect at the beginning
+  useEffect(() => {
+    const performRegistration = async () => {
+      try {
+        // Check if user already has a UID
+        const existingUID = localStorage.getItem('user_uid')
+        if (existingUID) {
+          console.log('User already registered with UID:', existingUID)
+          setIsRegistering(false)
+          return
+        }
+
+        setRegistrationStep("Generating your divine ID...")
+        
+        // Generate new UID
+        const newUID = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        
+        setRegistrationStep("Registering with the divine realm...")
+        
+        // Call registration API
+        const response = await fetch('/api/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            uid: newUID
+          }),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Registration failed')
+        }
+
+        const data = await response.json()
+        // Store UID in localStorage
+        localStorage.setItem('user_uid', newUID)
+        
+        setRegistrationStep("Welcome to God's Meme!")
+        
+        // Short delay to show success message
+        setTimeout(() => {
+          setIsRegistering(false)
+        }, 1000)
+
+      } catch (error) {
+        console.error('Registration error:', error)
+        setRegistrationError(error instanceof Error ? error.message : 'Registration failed')
+        
+        // Retry after 3 seconds
+        setTimeout(() => {
+          setRegistrationError("")
+          performRegistration()
+        }, 3000)
+      }
+    }
+
+    performRegistration()
+  }, [])
+
+  // Add registration loading component
+  const RegistrationLoading = () => (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-white px-6">
+      {/* Logo */}
+      <div className="mb-8">
+        <div className="bg-[#333333] rounded-full w-20 h-20 flex items-center justify-center mb-4">
+          <Image src="/logo_head.png" alt="God's Meme Logo" width={120} height={120} />
+        </div>
+        <h1 className="text-4xl font-inika text-[#333333] text-center">GOD'S MEME</h1>
+      </div>
+
+      {/* Loading animation */}
+      <div className="mb-6">
+        <div className="flex space-x-2">
+          <div className="w-3 h-3 bg-[#333333] rounded-full animate-pulse-dot1"></div>
+          <div className="w-3 h-3 bg-[#333333] rounded-full animate-pulse-dot2"></div>
+          <div className="w-3 h-3 bg-[#333333] rounded-full animate-pulse-dot3"></div>
+        </div>
+      </div>
+
+      {/* Status message */}
+      <div className="text-center">
+        <p className="text-lg font-lexend text-[#333333] mb-2">
+          {registrationStep}
+        </p>
+        
+        {registrationError && (
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-600 text-sm mb-2">{registrationError}</p>
+            <p className="text-red-500 text-xs">Retrying in 3 seconds...</p>
+          </div>
+        )}
+      </div>
+
+      {/* Floating animation */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[20%] left-[10%] w-2 h-2 bg-[#333333]/20 rounded-full animate-float-particle1"></div>
+        <div className="absolute top-[60%] right-[15%] w-3 h-3 bg-[#333333]/15 rounded-full animate-float-particle2"></div>
+        <div className="absolute bottom-[30%] left-[20%] w-1.5 h-1.5 bg-[#333333]/25 rounded-full animate-float-particle3"></div>
+        <div className="absolute top-[40%] right-[30%] w-2.5 h-2.5 bg-[#333333]/10 rounded-full animate-float-particle4"></div>
+      </div>
+    </div>
+  )
+
   return (
     <div 
       className="flex flex-col items-center max-w-md mx-auto min-h-screen overscroll-none"
@@ -896,555 +1013,555 @@ export default function MemeGenerator() {
         </div>
       </div>
 
-        {/* Search Input with curved lines */}
-        <div className="w-full mt-4 xs:mt-2 relative">
-          <div className="relative px-8">
-            <input
-              type="text"
-              placeholder="Enter your keywords (e.g. cat, funny)"
-              className={`w-full px-6 py-3 rounded-full border-2 border-[#333333] text-left font-lexend transition-colors duration-300 focus:outline-none ${
-                isInputFocused 
-                  ? "bg-[#333333] text-white placeholder-white/70" 
-                  : "bg-white text-[#333333] placeholder-[#666666]"
-              }`}
-              style={{ textAlign: 'left' }}
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onFocus={() => setIsInputFocused(true)}
-              onBlur={() => setIsInputFocused(false)}
+      {/* Search Input with curved lines */}
+      <div className="w-full mt-4 xs:mt-2 relative">
+        <div className="relative px-8">
+          <input
+            type="text"
+            placeholder="Enter your keywords (e.g. cat, funny)"
+            className={`w-full px-6 py-3 rounded-full border-2 border-[#333333] text-left font-lexend transition-colors duration-300 focus:outline-none ${
+              isInputFocused 
+                ? "bg-[#333333] text-white placeholder-white/70" 
+                : "bg-white text-[#333333] placeholder-[#666666]"
+            }`}
+            style={{ textAlign: 'left' }}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onFocus={() => setIsInputFocused(true)}
+            onBlur={() => setIsInputFocused(false)}
+          />
+        </div>
+        
+        {/* Left curved line - flatter curve from edge to padding */}
+        <div className="absolute left-0 top-1/4 -translate-y-1/2 pointer-events-none">
+          <svg width="32" height="20" viewBox="0 0 32 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 5 Q10 15, 32 20" stroke="#333333" strokeWidth="2" />
+          </svg>
+        </div>
+        
+        {/* Right curved line - flatter curve from padding to edge */}
+        <div className="absolute right-0 top-1/4 -translate-y-1/2 pointer-events-none">
+          <svg width="32" height="20" viewBox="0 0 32 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M32 5 Q22 15, 0 20" stroke="#333333" strokeWidth="2" />
+          </svg>
+        </div>
+      </div>
+
+      {/* Category Tabs */}
+      <div className="w-full px-16 mt-6 xs:mt-2 mb-2 xs:mb-1">
+        <div className="flex space-x-2 items-center justify-center">
+          <button
+            className={`flex items-center rounded-full relative overflow-hidden transform transition-all duration-300 ease-in-out active:scale-95 ${
+              selectedTab === "sentiment" 
+                ? `pr-3 bg-[#EEEEEE] shadow-inner ${highlightCategories.sentiment ? 'bg-[#FFE4E4] text-[#B72E2E]' : ''}` 
+                : `hover:bg-gray-50 hover:shadow-sm ${highlightCategories.sentiment ? 'bg-[#FFE4E4] text-[#B72E2E]' : 'bg-white'}`
+            }`}
+            onClick={() => setSelectedTab("sentiment")}
+          >
+            <div className={`relative z-10 transition-transform duration-300 ${selectedTab === "sentiment" ? "scale-100" : ""}`}>
+              <Image src={highlightCategories.sentiment ? "/unfinished.png" : "/sentiment.png"} alt="Sentiment" width={49} height={49} className="mr-1" />
+            </div>
+            {selectedTab === "sentiment" && (
+              <span className="font-inika text-sm relative z-10 animate-fadeIn">
+                Sentiment
+              </span>
+            )}
+            {selectedTab === "sentiment" && (
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
+            )}
+          </button>
+          <button
+            className={`flex items-center rounded-full relative overflow-hidden transform transition-all duration-300 ease-in-out active:scale-95 ${
+              selectedTab === "intention" 
+                ? `pr-3 bg-[#EEEEEE] shadow-inner ${highlightCategories.intention ? 'bg-[#FFE4E4] text-[#B72E2E]' : ''}` 
+                : `hover:bg-gray-50 hover:shadow-sm ${highlightCategories.intention ? 'bg-[#FFE4E4] text-[#B72E2E]' : 'bg-white'}`
+            }`}
+            onClick={() => setSelectedTab("intention")}
+          >
+            <div className={`relative z-10 transition-transform duration-300 ${selectedTab === "intention" ? "scale-100" : ""}`}>
+              <Image src={highlightCategories.intention ? "/unfinished.png" : "/intention.png"} alt="Intention" width={49} height={49} className="mr-1" />
+            </div>
+            {selectedTab === "intention" && (
+              <span className="font-inika text-sm relative z-10 animate-fadeIn">
+                Intention
+              </span>
+            )}
+            {selectedTab === "intention" && (
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
+            )}
+          </button>
+          <button
+            className={`flex items-center rounded-full relative overflow-hidden transform transition-all duration-300 ease-in-out active:scale-95 ${
+              selectedTab === "style" 
+                ? `pr-3 bg-[#EEEEEE] shadow-inner ${highlightCategories.style ? 'bg-[#FFE4E4] text-[#B72E2E]' : ''}` 
+                : `hover:bg-gray-50 hover:shadow-sm ${highlightCategories.style ? 'bg-[#FFE4E4] text-[#B72E2E]' : 'bg-white'}`
+            }`}
+            onClick={() => setSelectedTab("style")}
+          >
+            <div className={`relative z-10 transition-transform duration-300 ${selectedTab === "style" ? "scale-100" : ""}`}>
+              <Image src={highlightCategories.style ? "/unfinished.png" : "/style.png"} alt="Style" width={49} height={49} className="mr-1" />
+            </div>
+            {selectedTab === "style" && (
+              <span className="font-inika text-sm relative z-10 animate-fadeIn">
+                Style
+              </span>
+            )}
+            {selectedTab === "style" && (
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
+            )}
+          </button>
+        </div>
+      </div>
+      
+      {/* Arrow indicator that points to the selected tab */}
+      <div className="w-full relative h-4 xs:h-2">
+        <motion.div 
+          className="absolute w-6 h-6 transform -translate-x-1/2"
+          animate={{ left: selectedTab === "sentiment" ? "33.3%" : selectedTab === "intention" ? "50%" : "66.7%" }}
+          transition={{ type: "spring", stiffness: 300, damping: 25 }}
+        >
+          <svg width="24" height="18" viewBox="0 0 24 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 0L24 18H0L12 0Z" fill="#EEEEEE" />
+          </svg>
+        </motion.div>
+      </div>
+      
+    {/* Dynamic Content Grid based on selected tab */}
+      <div className="w-full px-2">
+        <div className="bg-[#EEEEEE] rounded-lg p-4 xs:p-2 mx-2">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={selectedTab}
+              initial={{ opacity: 0, y: 15, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -15, scale: 0.95 }}
+              transition={{ 
+                duration: 0.0,
+                type: "spring",
+                stiffness: 400,
+                damping: 25
+              }}
+              className="grid grid-cols-6 gap-2"
+            >
+              {currentTabContent.items.map((item, index) => (
+                <motion.div
+                  key={item} 
+                  className="flex flex-col items-center cursor-pointer relative"
+                  // Add a larger invisible click area
+                  style={{ 
+                    touchAction: "manipulation" // Improves touch response
+                  }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.2,
+                    delay: index * 0.03,
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 20
+                  }}
+                  whileHover={{ 
+                    scale: isAnimationPlaying ? 1.0 : 1.1,  // 动画播放时禁用悬停效果
+                    transition: { duration: 0.15 }
+                  }}
+                  whileTap={{ scale: isAnimationPlaying ? 1.0 : 0.95 }}  // 动画播放时禁用点击效果
+                >
+                  {/* Add an invisible larger click area */}
+                  <div className="absolute inset-0 z-10" />
+                  
+                  <div 
+                    ref={draggedItem === item ? dragItemRef : null}
+                    className={`h-[78px] flex items-center justify-center relative ${
+                      getWaterLevel(item) > 0 && !isAnimationPlaying 
+                        ? 'cursor-grab active:cursor-grabbing' 
+                        : isAnimationPlaying && getWaterLevel(item) > 0 
+                          ? 'cursor-not-allowed' 
+                          : ''
+                    }`}
+                    draggable={getWaterLevel(item) > 0 && !isAnimationPlaying}
+                    onDragStart={() => !isAnimationPlaying && handleDragStart(item)}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <Image 
+                      src={`/glass_base.png`} 
+                      alt={item} 
+                      width={isSmallMobile ? 32 : 48} 
+                      height={isSmallMobile ? 48 : 72} 
+                      className={`object-contain relative z-10 ${
+                        draggedItem === item && isDragging 
+                          ? 'opacity-30' 
+                          : draggedItem === item 
+                            ? 'opacity-50' 
+                            : isAnimationPlaying 
+                              ? 'opacity-50 filter grayscale'
+                              : ''
+                      }`}
+                      onTouchStart={(e) => !isAnimationPlaying && handleItemTouchStart(e, item)}
+                      onClick={(e) => {
+                        // Stop event propagation to prevent affecting adjacent cups
+                        e.stopPropagation();
+                        if (!isAnimationPlaying) {
+                          handleWaterGlassClick(item as ItemKey);
+                        }
+                      }}
+                    />
+                    
+                    {getWaterLevel(item) > 0 && (
+                      <div className="absolute inset-0 scale-220 bottom-5 left-[calc(-4px)] flex items-center justify-center z-0">
+                        <Image 
+                          src={`/water_level${getWaterLevel(item)}.png`}
+                          alt={`Water level ${getWaterLevel(item)}`}
+                          width={isSmallMobile ? 32 : 48}
+                          height={isSmallMobile ? 48 : 72}
+                          className={`object-contain transition-all duration-300 ease-out ${
+                            draggedItem === item && isDragging 
+                              ? 'opacity-30' 
+                              : draggedItem === item 
+                                ? 'opacity-50' 
+                                : isAnimationPlaying 
+                                  ? 'opacity-50 filter grayscale'
+                                  : ''
+                          }`}
+                        />
+                      </div>
+                    )}
+                    
+                  </div>
+                  <span className={`text-xs font-inika text-center mt-1 ${isAnimationPlaying ? 'opacity-50' : ''}`}>{item}</span>
+                </motion.div>
+              ))}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* Character Display with fixed animations */}
+      <div 
+        ref={godAreaRef}
+        className={"w-full flex justify-center mt-4 relative"}
+      >
+        <div className="relative w-[390px] h-[230px] xs:w-[280px] xs:h-[160px]">
+          {/* Static image (always visible as base) */}
+          <div className="absolute inset-0">
+            <Image 
+              src="/meme_god_static.png" 
+              alt="Meme God" 
+              width={isSmallMobile ? 280 : 390} 
+              height={isSmallMobile ? 160 : 230} 
+              className={`${showAddAnimation || showRemoveAnimation || showBlendAnimation ? 'opacity-0' : 'opacity-100'} transition-opacity duration-0`}
             />
           </div>
           
-          {/* Left curved line - flatter curve from edge to padding */}
-          <div className="absolute left-0 top-1/4 -translate-y-1/2 pointer-events-none">
-            <svg width="32" height="20" viewBox="0 0 32 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M0 5 Q10 15, 32 20" stroke="#333333" strokeWidth="2" />
-            </svg>
-          </div>
-          
-          {/* Right curved line - flatter curve from padding to edge */}
-          <div className="absolute right-0 top-1/4 -translate-y-1/2 pointer-events-none">
-            <svg width="32" height="20" viewBox="0 0 32 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M32 5 Q22 15, 0 20" stroke="#333333" strokeWidth="2" />
-            </svg>
-          </div>
-        </div>
-
-        {/* Category Tabs */}
-        <div className="w-full px-16 mt-6 xs:mt-2 mb-2 xs:mb-1">
-          <div className="flex space-x-2 items-center justify-center">
-            <button
-              className={`flex items-center rounded-full relative overflow-hidden transform transition-all duration-300 ease-in-out active:scale-95 ${
-                selectedTab === "sentiment" 
-                  ? `pr-3 bg-[#EEEEEE] shadow-inner ${highlightCategories.sentiment ? 'bg-[#FFE4E4] text-[#B72E2E]' : ''}` 
-                  : `hover:bg-gray-50 hover:shadow-sm ${highlightCategories.sentiment ? 'bg-[#FFE4E4] text-[#B72E2E]' : 'bg-white'}`
-              }`}
-              onClick={() => setSelectedTab("sentiment")}
-            >
-              <div className={`relative z-10 transition-transform duration-300 ${selectedTab === "sentiment" ? "scale-100" : ""}`}>
-                <Image src={highlightCategories.sentiment ? "/unfinished.png" : "/sentiment.png"} alt="Sentiment" width={49} height={49} className="mr-1" />
-              </div>
-              {selectedTab === "sentiment" && (
-                <span className="font-inika text-sm relative z-10 animate-fadeIn">
-                  Sentiment
-                </span>
-              )}
-              {selectedTab === "sentiment" && (
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
-              )}
-            </button>
-            <button
-              className={`flex items-center rounded-full relative overflow-hidden transform transition-all duration-300 ease-in-out active:scale-95 ${
-                selectedTab === "intention" 
-                  ? `pr-3 bg-[#EEEEEE] shadow-inner ${highlightCategories.intention ? 'bg-[#FFE4E4] text-[#B72E2E]' : ''}` 
-                  : `hover:bg-gray-50 hover:shadow-sm ${highlightCategories.intention ? 'bg-[#FFE4E4] text-[#B72E2E]' : 'bg-white'}`
-              }`}
-              onClick={() => setSelectedTab("intention")}
-            >
-              <div className={`relative z-10 transition-transform duration-300 ${selectedTab === "intention" ? "scale-100" : ""}`}>
-                <Image src={highlightCategories.intention ? "/unfinished.png" : "/intention.png"} alt="Intention" width={49} height={49} className="mr-1" />
-              </div>
-              {selectedTab === "intention" && (
-                <span className="font-inika text-sm relative z-10 animate-fadeIn">
-                  Intention
-                </span>
-              )}
-              {selectedTab === "intention" && (
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
-              )}
-            </button>
-            <button
-              className={`flex items-center rounded-full relative overflow-hidden transform transition-all duration-300 ease-in-out active:scale-95 ${
-                selectedTab === "style" 
-                  ? `pr-3 bg-[#EEEEEE] shadow-inner ${highlightCategories.style ? 'bg-[#FFE4E4] text-[#B72E2E]' : ''}` 
-                  : `hover:bg-gray-50 hover:shadow-sm ${highlightCategories.style ? 'bg-[#FFE4E4] text-[#B72E2E]' : 'bg-white'}`
-              }`}
-              onClick={() => setSelectedTab("style")}
-            >
-              <div className={`relative z-10 transition-transform duration-300 ${selectedTab === "style" ? "scale-100" : ""}`}>
-                <Image src={highlightCategories.style ? "/unfinished.png" : "/style.png"} alt="Style" width={49} height={49} className="mr-1" />
-              </div>
-              {selectedTab === "style" && (
-                <span className="font-inika text-sm relative z-10 animate-fadeIn">
-                  Style
-                </span>
-              )}
-              {selectedTab === "style" && (
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
-              )}
-            </button>
-          </div>
-        </div>
-        
-        {/* Arrow indicator that points to the selected tab */}
-        <div className="w-full relative h-4 xs:h-2">
-          <motion.div 
-            className="absolute w-6 h-6 transform -translate-x-1/2"
-            animate={{ left: selectedTab === "sentiment" ? "33.3%" : selectedTab === "intention" ? "50%" : "66.7%" }}
-            transition={{ type: "spring", stiffness: 300, damping: 25 }}
-          >
-            <svg width="24" height="18" viewBox="0 0 24 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 0L24 18H0L12 0Z" fill="#EEEEEE" />
-            </svg>
-          </motion.div>
-        </div>
-        
-      {/* Dynamic Content Grid based on selected tab */}
-        <div className="w-full px-2">
-          <div className="bg-[#EEEEEE] rounded-lg p-4 xs:p-2 mx-2">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={selectedTab}
-                initial={{ opacity: 0, y: 15, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -15, scale: 0.95 }}
-                transition={{ 
-                  duration: 0.0,
-                  type: "spring",
-                  stiffness: 400,
-                  damping: 25
-                }}
-                className="grid grid-cols-6 gap-2"
-              >
-                {currentTabContent.items.map((item, index) => (
-                  <motion.div
-                    key={item} 
-                    className="flex flex-col items-center cursor-pointer relative"
-                    // Add a larger invisible click area
-                    style={{ 
-                      touchAction: "manipulation" // Improves touch response
-                    }}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{
-                      duration: 0.2,
-                      delay: index * 0.03,
-                      type: "spring",
-                      stiffness: 400,
-                      damping: 20
-                    }}
-                    whileHover={{ 
-                      scale: isAnimationPlaying ? 1.0 : 1.1,  // 动画播放时禁用悬停效果
-                      transition: { duration: 0.15 }
-                    }}
-                    whileTap={{ scale: isAnimationPlaying ? 1.0 : 0.95 }}  // 动画播放时禁用点击效果
-                  >
-                    {/* Add an invisible larger click area */}
-                    <div className="absolute inset-0 z-10" />
-                    
-                    <div 
-                      ref={draggedItem === item ? dragItemRef : null}
-                      className={`h-[78px] flex items-center justify-center relative ${
-                        getWaterLevel(item) > 0 && !isAnimationPlaying 
-                          ? 'cursor-grab active:cursor-grabbing' 
-                          : isAnimationPlaying && getWaterLevel(item) > 0 
-                            ? 'cursor-not-allowed' 
-                            : ''
-                      }`}
-                      draggable={getWaterLevel(item) > 0 && !isAnimationPlaying}
-                      onDragStart={() => !isAnimationPlaying && handleDragStart(item)}
-                      onDragEnd={handleDragEnd}
-                    >
-                      <Image 
-                        src={`/glass_base.png`} 
-                        alt={item} 
-                        width={isSmallMobile ? 32 : 48} 
-                        height={isSmallMobile ? 48 : 72} 
-                        className={`object-contain relative z-10 ${
-                          draggedItem === item && isDragging 
-                            ? 'opacity-30' 
-                            : draggedItem === item 
-                              ? 'opacity-50' 
-                              : isAnimationPlaying 
-                                ? 'opacity-50 filter grayscale'
-                                : ''
-                        }`}
-                        onTouchStart={(e) => !isAnimationPlaying && handleItemTouchStart(e, item)}
-                        onClick={(e) => {
-                          // Stop event propagation to prevent affecting adjacent cups
-                          e.stopPropagation();
-                          if (!isAnimationPlaying) {
-                            handleWaterGlassClick(item as ItemKey);
-                          }
-                        }}
-                      />
-                      
-                      {getWaterLevel(item) > 0 && (
-                        <div className="absolute inset-0 scale-220 bottom-5 left-[calc(-4px)] flex items-center justify-center z-0">
-                          <Image 
-                            src={`/water_level${getWaterLevel(item)}.png`}
-                            alt={`Water level ${getWaterLevel(item)}`}
-                            width={isSmallMobile ? 32 : 48}
-                            height={isSmallMobile ? 48 : 72}
-                            className={`object-contain transition-all duration-300 ease-out ${
-                              draggedItem === item && isDragging 
-                                ? 'opacity-30' 
-                                : draggedItem === item 
-                                  ? 'opacity-50' 
-                                  : isAnimationPlaying 
-                                    ? 'opacity-50 filter grayscale'
-                                    : ''
-                            }`}
-                          />
-                        </div>
-                      )}
-                      
-                    </div>
-                    <span className={`text-xs font-inika text-center mt-1 ${isAnimationPlaying ? 'opacity-50' : ''}`}>{item}</span>
-                  </motion.div>
-                ))}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        </div>
-
-        {/* Character Display with fixed animations */}
-        <div 
-          ref={godAreaRef}
-          className={"w-full flex justify-center mt-4 relative"}
-        >
-          <div className="relative w-[390px] h-[230px] xs:w-[280px] xs:h-[160px]">
-            {/* Static image (always visible as base) */}
+          {/* God's bowl water level - 显示在静态图像上 */}
+          {godWaterLevel > 0 && !showAddAnimation && !showRemoveAnimation && !showBlendAnimation && (
             <div className="absolute inset-0">
               <Image 
-                src="/meme_god_static.png" 
-                alt="Meme God" 
+                src={`/water_level_${godWaterLevel}.png`}
+                alt={`God's bowl water level ${godWaterLevel}`}
                 width={isSmallMobile ? 280 : 390} 
-                height={isSmallMobile ? 160 : 230} 
-                className={`${showAddAnimation || showRemoveAnimation || showBlendAnimation ? 'opacity-0' : 'opacity-100'} transition-opacity duration-0`}
+                height={isSmallMobile ? 160 : 230}
+                className="object-contain"
               />
             </div>
+          )}
+          
+          {/* Add animation */}
+          {showAddAnimation && (
+            <div className="absolute inset-0">
+              <Image 
+                src="/god_add_elem.gif" 
+                alt="Adding Element" 
+                width={isSmallMobile ? 280 : 390} 
+                height={isSmallMobile ? 160 : 230} 
+                priority 
+              />
+            </div>
+          )}
+          
+          {/* 在动画播放时也显示碗里的水 */}
+          {godWaterLevel > 0 && (showAddAnimation || showRemoveAnimation) && (
+            <div className="absolute inset-0 pointer-events-none">
+              <Image 
+                src={`/water_level_${godWaterLevel}.png`}
+                alt={`God's bowl water level ${godWaterLevel}`}
+                width={isSmallMobile ? 280 : 390} 
+                height={isSmallMobile ? 160 : 230}
+                className="object-contain opacity-70"
+              />
+            </div>
+          )}
+          
+          {/* Remove animation */}
+          {showRemoveAnimation && (
+            <div className="absolute inset-0">
+              <Image 
+                src="/god_remove_elem.gif" 
+                alt="Removing Element" 
+                width={isSmallMobile ? 280 : 390} 
+                height={isSmallMobile ? 160 : 230} 
+                priority 
+              />
+            </div>
+          )}
+          
+          {/* Blend animation */}
+          {showBlendAnimation && (
+            <div className="absolute inset-0">
+              <Image 
+                src="/blend.gif" 
+                alt="Blending Elements" 
+                width={isSmallMobile ? 280 : 390} 
+                height={isSmallMobile ? 160 : 230} 
+                priority 
+              />
+            </div>
+          )}
+          
+          {/* Highlight area when dragging */}
+          {/*
+          <div className="absolute inset-0 rounded-xl border-2 border-dashed border-[#333333]/30 bg-[#EEEEEE]/50 pointer-events-none z-10" />*
+          {draggedItem && (
+            <div className="absolute inset-0 rounded-xl bg-[#EEEEEE]/50 pointer-events-none z-10" />
+          )}
+          */}
+        </div>
+      </div>
+
+      {/* Blend Button */}
+      <div className="w-full px-6 mt-6 mb-4 xs:mt-5 xs:mb-3">
+        <button 
+          onClick={handleBlendClick}
+          disabled={isBlending}
+          onTouchStart={handleButtonTouchStart}
+          onTouchEnd={handleButtonTouchEnd}
+          className={`w-full bg-[#333333] text-white py-4 xs:py-2 rounded-full font-phudu text-2xl
+            transform transition-all duration-300 relative overflow-hidden group
+            ${isBlending ? 'scale-[0.98] shadow-inner' : 'hover:shadow-lg active:scale-[0.98]'}`}
+        >
+          {/* Button text that disappears when loading */}
+          <span className={`relative z-10 xs:text-md transition-all duration-300 ${isBlending ? 'opacity-0' : 'opacity-100 group-hover:tracking-wider'}`}>
+            BLEND IT
+          </span>
+          
+          {/* Loading dots that appear in place of text */}
+          {isBlending && (
+            <div className="absolute inset-0 flex items-center justify-center z-20">
+              <div className="flex space-x-2">
+                <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse-dot1"></div>
+                <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse-dot2"></div>
+                <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse-dot3"></div>
+              </div>
+            </div>
+          )}
+          
+          {/* Hover background effect */}
+          <div className={`absolute inset-0 bg-gradient-to-r from-[#333333] via-[#444444] to-[#333333] transition-opacity duration-300 ${isTouchActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}></div>
+          
+          {/* Hover particle effects */}
+          <div className={`absolute inset-0 overflow-hidden transition-opacity duration-300 ${isTouchActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+            <div className="absolute h-1 w-1 bg-white/40 rounded-full top-[20%] left-[15%] animate-float-particle1"></div>
+            <div className="absolute h-1.5 w-1.5 bg-white/30 rounded-full top-[60%] left-[25%] animate-float-particle2"></div>
+            <div className="absolute h-1 w-1 bg-white/40 rounded-full top-[30%] left-[60%] animate-float-particle3"></div>
+            <div className="absolute h-2 w-2 bg-white/20 rounded-full top-[70%] left-[80%] animate-float-particle4"></div>
+            <div className="absolute h-1.5 w-1.5 bg-white/30 rounded-full top-[40%] left-[40%] animate-float-particle5"></div>
+          </div>
+          
+          {isBlending && (
+            <>
+              {/* Pulse border effect */}
+              <div className="absolute inset-0 rounded-full border-2 border-white/0 animate-pulse-border"></div>
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Scroll Indicator - 更新显示为滑动手势提示 */}
+      <div 
+        className="flex flex-col items-center cursor-pointer" 
+        onClick={toggleGallery}
+        onTouchStart={handleMainTouchStart}
+        onTouchMove={handleMainTouchMove}
+        onTouchEnd={handleMainTouchEnd}
+      >
+        <ChevronsDown className="w-4 h-4" />
+        <span className="text-xs text-[#666666]">Swipe up to view gallery</span>
+      </div>
+
+      {/* Gallery Section - Full screen in both states, with header visibility toggling on scroll */}
+      <AnimatePresence>
+        {showGallery && (
+          <motion.div 
+            ref={galleryRef}
+            className="fixed inset-0 bg-[#333333] z-50 overflow-auto shadow-lg"
+            initial={{ y: "100%" }}
+            animate={{ 
+              y: galleryPosition === 'partial' ? '0%' : galleryPosition === 'full' ? '0%' : '100%'
+            }}
+            exit={{ y: "100%" }}
+            transition={{ 
+              type: "tween", 
+              ease: "easeOut", 
+              duration: 0.3 
+            }}
+            onScroll={handleGalleryScroll}
+            drag="y"
+            dragConstraints={dragConstraints}
+            dragElastic={0.2}
+            onDragStart={() => setIsDraggingGallery(true)}
+            onDragEnd={handleGalleryDragEnd}
+            onTouchStart={handleGalleryTouchStart}
+            onTouchMove={handleGalleryTouchMove}
+            onTouchEnd={handleGalleryTouchEnd}
+            style={{ overflow: isDraggingGallery ? 'hidden' : 'auto' }}
+          >
+            {/* Drag indicator */}
+            <div className="absolute top-0 left-0 right-0 flex justify-center pt-2">
+              <div className="w-10 h-1 bg-white/30 rounded-full"></div>
+            </div>
+            {/* Gallery Header */}
+            <motion.div 
+              className="sticky top-0 bg-[#333333] shadow-sm z-10 p-4 mt-6 flex flex-col items-center"
+              animate={{ 
+                opacity: galleryPosition === 'full' && scrollY > scrollThreshold ? 0 : 1,
+                height: galleryPosition === 'full' && scrollY > scrollThreshold ? 0 : 'auto'
+              }}
+              transition={{ duration: 0.3 }}
+            >
+              <div 
+                className="flex flex-col items-center cursor-pointer" 
+                onClick={toggleGallery}
+              >
+                <motion.div
+                  animate={{ y: [0, -5, 0] }}
+                  transition={{ repeat: Infinity, duration: 1.5 }}
+                >
+                  <ChevronsUp className="w-4 h-4" color="#808080"/>
+                </motion.div>
+                <span className="text-sm text-[#808080]">Swipe down to the home</span>
+              </div>
+
+            </motion.div>
             
-            {/* God's bowl water level - 显示在静态图像上 */}
-            {godWaterLevel > 0 && !showAddAnimation && !showRemoveAnimation && !showBlendAnimation && (
-              <div className="absolute inset-0">
+            {/* Scroll to top button - only visible in full mode when scrolled down */}
+            {galleryPosition === 'full' && scrollY > scrollThreshold && (
+              <motion.div 
+                className="fixed top-4 inset-x-0 mx-auto w-fit z-20 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg cursor-pointer flex items-center justify-center"
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                onClick={() => {
+                  if (galleryRef.current) {
+                    galleryRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+                  }
+                }}
+              >
+                <ChevronsUp className="w-4 h-4" color="white" />
+              </motion.div>
+            )}
+            
+            {/* Gallery Grid with dark background */}
+            <div className="p-4 bg-[#f8f8f8] min-h-screen rounded-t-[30px]">
+              <div className="flex justify-center mb-6">
+                <h2 className="text-xl font-inika text-[#333333] mt-2 bg-[#f5f5f5] px-6 py-1 rounded-full">MEME GALLERY</h2>
+              </div>
+              <div className="columns-2 gap-5 mx-2">
+                {galleryImages.map((image) => (
+                  <div 
+                    key={image.id} 
+                    className="mb-4 break-inside-avoid relative group"
+                    style={{ 
+                      height: `${image.height}px`,
+                      borderRadius: "12px",
+                      overflow: "hidden"
+                    }}
+                  >
+                    {/* 使用真实图片替换占位符 */}
+                    <div className="absolute inset-0">
+                      <Image 
+                        src={image.src} 
+                        alt={`Meme template ${image.id}`}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    
+                    {/* Like Button */}
+                    <div className="absolute bottom-2 right-2">
+                      <button 
+                        onClick={() => handleLikeImage(image.id)}
+                        className={`flex items-center space-x-1 px-2 py-1 rounded-full ${
+                          likedImages.includes(image.id) 
+                            ? 'bg-[#333333] text-white' 
+                            : 'bg-white/80 text-gray-700 hover:bg-gray-100'
+                        } transition-colors duration-200 shadow-md`}
+                      >
+                        <svg 
+                          width="16" 
+                          height="16" 
+                          viewBox="0 0 24 24" 
+                          fill={likedImages.includes(image.id) ? "white" : "none"} 
+                          stroke={likedImages.includes(image.id) ? "white" : "currentColor"} 
+                          strokeWidth="2"
+                        >
+                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                        </svg>
+                        <span className="text-xs">{image.likes}</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Floating drag element */}
+      {isDragging && draggedItem && (
+        <div 
+          className="fixed pointer-events-none z-50"
+          style={{ 
+            left: `${dragPosition.x}px`, 
+            top: `${dragPosition.y}px`,
+            transform: 'translate(-50%, -50%)' // Center the element
+          }}
+        >
+          <div className="relative">
+            <Image 
+              src={`/glass_base.png`} 
+              alt={draggedItem} 
+              width={48} 
+              height={72} 
+              className="object-contain relative z-10 opacity-80"
+            />
+            
+            {getWaterLevel(draggedItem) > 0 && (
+              <div className="absolute inset-0 scale-220 bottom-5 left-[calc(-4px)] flex items-center justify-center z-0">
                 <Image 
-                  src={`/water_level_${godWaterLevel}.png`}
-                  alt={`God's bowl water level ${godWaterLevel}`}
-                  width={isSmallMobile ? 280 : 390} 
-                  height={isSmallMobile ? 160 : 230}
+                  src={`/water_level${getWaterLevel(draggedItem)}.png`}
+                  alt={`Water level ${getWaterLevel(draggedItem)}`}
+                  width={48}
+                  height={72}
                   className="object-contain"
                 />
               </div>
             )}
             
-            {/* Add animation */}
-            {showAddAnimation && (
-              <div className="absolute inset-0">
-                <Image 
-                  src="/god_add_elem.gif" 
-                  alt="Adding Element" 
-                  width={isSmallMobile ? 280 : 390} 
-                  height={isSmallMobile ? 160 : 230} 
-                  priority 
-                />
-              </div>
-            )}
-            
-            {/* 在动画播放时也显示碗里的水 */}
-            {godWaterLevel > 0 && (showAddAnimation || showRemoveAnimation) && (
-              <div className="absolute inset-0 pointer-events-none">
-                <Image 
-                  src={`/water_level_${godWaterLevel}.png`}
-                  alt={`God's bowl water level ${godWaterLevel}`}
-                  width={isSmallMobile ? 280 : 390} 
-                  height={isSmallMobile ? 160 : 230}
-                  className="object-contain opacity-70"
-                />
-              </div>
-            )}
-            
-            {/* Remove animation */}
-            {showRemoveAnimation && (
-              <div className="absolute inset-0">
-                <Image 
-                  src="/god_remove_elem.gif" 
-                  alt="Removing Element" 
-                  width={isSmallMobile ? 280 : 390} 
-                  height={isSmallMobile ? 160 : 230} 
-                  priority 
-                />
-              </div>
-            )}
-            
-            {/* Blend animation */}
-            {showBlendAnimation && (
-              <div className="absolute inset-0">
-                <Image 
-                  src="/blend.gif" 
-                  alt="Blending Elements" 
-                  width={isSmallMobile ? 280 : 390} 
-                  height={isSmallMobile ? 160 : 230} 
-                  priority 
-                />
-              </div>
-            )}
-            
-            {/* Highlight area when dragging */}
-            {/*
-            <div className="absolute inset-0 rounded-xl border-2 border-dashed border-[#333333]/30 bg-[#EEEEEE]/50 pointer-events-none z-10" />*
-            {draggedItem && (
-              <div className="absolute inset-0 rounded-xl bg-[#EEEEEE]/50 pointer-events-none z-10" />
-            )}
-            */}
           </div>
         </div>
+      )}
 
-        {/* Blend Button */}
-        <div className="w-full px-6 mt-6 mb-4 xs:mt-5 xs:mb-3">
-          <button 
-            onClick={handleBlendClick}
-            disabled={isBlending}
-            onTouchStart={handleButtonTouchStart}
-            onTouchEnd={handleButtonTouchEnd}
-            className={`w-full bg-[#333333] text-white py-4 xs:py-2 rounded-full font-phudu text-2xl
-              transform transition-all duration-300 relative overflow-hidden group
-              ${isBlending ? 'scale-[0.98] shadow-inner' : 'hover:shadow-lg active:scale-[0.98]'}`}
-          >
-            {/* Button text that disappears when loading */}
-            <span className={`relative z-10 xs:text-md transition-all duration-300 ${isBlending ? 'opacity-0' : 'opacity-100 group-hover:tracking-wider'}`}>
-              BLEND IT
-            </span>
-            
-            {/* Loading dots that appear in place of text */}
-            {isBlending && (
-              <div className="absolute inset-0 flex items-center justify-center z-20">
-                <div className="flex space-x-2">
-                  <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse-dot1"></div>
-                  <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse-dot2"></div>
-                  <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse-dot3"></div>
-                </div>
-              </div>
-            )}
-            
-            {/* Hover background effect */}
-            <div className={`absolute inset-0 bg-gradient-to-r from-[#333333] via-[#444444] to-[#333333] transition-opacity duration-300 ${isTouchActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}></div>
-            
-            {/* Hover particle effects */}
-            <div className={`absolute inset-0 overflow-hidden transition-opacity duration-300 ${isTouchActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-              <div className="absolute h-1 w-1 bg-white/40 rounded-full top-[20%] left-[15%] animate-float-particle1"></div>
-              <div className="absolute h-1.5 w-1.5 bg-white/30 rounded-full top-[60%] left-[25%] animate-float-particle2"></div>
-              <div className="absolute h-1 w-1 bg-white/40 rounded-full top-[30%] left-[60%] animate-float-particle3"></div>
-              <div className="absolute h-2 w-2 bg-white/20 rounded-full top-[70%] left-[80%] animate-float-particle4"></div>
-              <div className="absolute h-1.5 w-1.5 bg-white/30 rounded-full top-[40%] left-[40%] animate-float-particle5"></div>
-            </div>
-            
-            {isBlending && (
-              <>
-                {/* Pulse border effect */}
-                <div className="absolute inset-0 rounded-full border-2 border-white/0 animate-pulse-border"></div>
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* Scroll Indicator - 更新显示为滑动手势提示 */}
-        <div 
-          className="flex flex-col items-center cursor-pointer" 
-          onClick={toggleGallery}
-          onTouchStart={handleMainTouchStart}
-          onTouchMove={handleMainTouchMove}
-          onTouchEnd={handleMainTouchEnd}
-        >
-          <ChevronsDown className="w-4 h-4" />
-          <span className="text-xs text-[#666666]">Swipe up to view gallery</span>
-        </div>
-
-        {/* Gallery Section - Full screen in both states, with header visibility toggling on scroll */}
-        <AnimatePresence>
-          {showGallery && (
-            <motion.div 
-              ref={galleryRef}
-              className="fixed inset-0 bg-[#333333] z-50 overflow-auto shadow-lg"
-              initial={{ y: "100%" }}
-              animate={{ 
-                y: galleryPosition === 'partial' ? '0%' : galleryPosition === 'full' ? '0%' : '100%'
-              }}
-              exit={{ y: "100%" }}
-              transition={{ 
-                type: "tween", 
-                ease: "easeOut", 
-                duration: 0.3 
-              }}
-              onScroll={handleGalleryScroll}
-              drag="y"
-              dragConstraints={dragConstraints}
-              dragElastic={0.2}
-              onDragStart={() => setIsDraggingGallery(true)}
-              onDragEnd={handleGalleryDragEnd}
-              onTouchStart={handleGalleryTouchStart}
-              onTouchMove={handleGalleryTouchMove}
-              onTouchEnd={handleGalleryTouchEnd}
-              style={{ overflow: isDraggingGallery ? 'hidden' : 'auto' }}
-            >
-              {/* Drag indicator */}
-              <div className="absolute top-0 left-0 right-0 flex justify-center pt-2">
-                <div className="w-10 h-1 bg-white/30 rounded-full"></div>
-              </div>
-              {/* Gallery Header */}
-              <motion.div 
-                className="sticky top-0 bg-[#333333] shadow-sm z-10 p-4 mt-6 flex flex-col items-center"
-                animate={{ 
-                  opacity: galleryPosition === 'full' && scrollY > scrollThreshold ? 0 : 1,
-                  height: galleryPosition === 'full' && scrollY > scrollThreshold ? 0 : 'auto'
-                }}
-                transition={{ duration: 0.3 }}
-              >
-                <div 
-                  className="flex flex-col items-center cursor-pointer" 
-                  onClick={toggleGallery}
-                >
-                  <motion.div
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ repeat: Infinity, duration: 1.5 }}
-                  >
-                    <ChevronsUp className="w-4 h-4" color="#808080"/>
-                  </motion.div>
-                  <span className="text-sm text-[#808080]">Swipe down to the home</span>
-                </div>
-
-              </motion.div>
-              
-              {/* Scroll to top button - only visible in full mode when scrolled down */}
-              {galleryPosition === 'full' && scrollY > scrollThreshold && (
-                <motion.div 
-                  className="fixed top-4 inset-x-0 mx-auto w-fit z-20 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg cursor-pointer flex items-center justify-center"
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  onClick={() => {
-                    if (galleryRef.current) {
-                      galleryRef.current.scrollTo({ top: 0, behavior: 'smooth' })
-                    }
-                  }}
-                >
-                  <ChevronsUp className="w-4 h-4" color="white" />
-                </motion.div>
-              )}
-              
-              {/* Gallery Grid with dark background */}
-              <div className="p-4 bg-[#f8f8f8] min-h-screen rounded-t-[30px]">
-                <div className="flex justify-center mb-6">
-                  <h2 className="text-xl font-inika text-[#333333] mt-2 bg-[#f5f5f5] px-6 py-1 rounded-full">MEME GALLERY</h2>
-                </div>
-                <div className="columns-2 gap-5 mx-2">
-                  {galleryImages.map((image) => (
-                    <div 
-                      key={image.id} 
-                      className="mb-4 break-inside-avoid relative group"
-                      style={{ 
-                        height: `${image.height}px`,
-                        borderRadius: "12px",
-                        overflow: "hidden"
-                      }}
-                    >
-                      {/* 使用真实图片替换占位符 */}
-                      <div className="absolute inset-0">
-                        <Image 
-                          src={image.src} 
-                          alt={`Meme template ${image.id}`}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                      
-                      {/* Like Button */}
-                      <div className="absolute bottom-2 right-2">
-                        <button 
-                          onClick={() => handleLikeImage(image.id)}
-                          className={`flex items-center space-x-1 px-2 py-1 rounded-full ${
-                            likedImages.includes(image.id) 
-                              ? 'bg-[#333333] text-white' 
-                              : 'bg-white/80 text-gray-700 hover:bg-gray-100'
-                          } transition-colors duration-200 shadow-md`}
-                        >
-                          <svg 
-                            width="16" 
-                            height="16" 
-                            viewBox="0 0 24 24" 
-                            fill={likedImages.includes(image.id) ? "white" : "none"} 
-                            stroke={likedImages.includes(image.id) ? "white" : "currentColor"} 
-                            strokeWidth="2"
-                          >
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                          </svg>
-                          <span className="text-xs">{image.likes}</span>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Floating drag element */}
-        {isDragging && draggedItem && (
-          <div 
-            className="fixed pointer-events-none z-50"
-            style={{ 
-              left: `${dragPosition.x}px`, 
-              top: `${dragPosition.y}px`,
-              transform: 'translate(-50%, -50%)' // Center the element
-            }}
-          >
-            <div className="relative">
-              <Image 
-                src={`/glass_base.png`} 
-                alt={draggedItem} 
-                width={48} 
-                height={72} 
-                className="object-contain relative z-10 opacity-80"
-              />
-              
-              {getWaterLevel(draggedItem) > 0 && (
-                <div className="absolute inset-0 scale-220 bottom-5 left-[calc(-4px)] flex items-center justify-center z-0">
-                  <Image 
-                    src={`/water_level${getWaterLevel(draggedItem)}.png`}
-                    alt={`Water level ${getWaterLevel(draggedItem)}`}
-                    width={48}
-                    height={72}
-                    className="object-contain"
-                  />
-                </div>
-              )}
-              
-            </div>
-          </div>
+      {/* Error Toast Notification */}
+      <AnimatePresence>
+        {showErrorToast && (
+          <ErrorToast 
+            message={errorMessage}
+            isVisible={showErrorToast}
+            onClose={handleCloseErrorToast}
+            autoHideDuration={5000}
+          />
         )}
-
-        {/* Error Toast Notification */}
-        <AnimatePresence>
-          {showErrorToast && (
-            <ErrorToast 
-              message={errorMessage}
-              isVisible={showErrorToast}
-              onClose={handleCloseErrorToast}
-              autoHideDuration={5000}
-            />
-          )}
-        </AnimatePresence>
+      </AnimatePresence>
     </div>
   )
 }

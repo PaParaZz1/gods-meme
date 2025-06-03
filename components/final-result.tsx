@@ -16,8 +16,38 @@ export default function FinalResult() {
   const [showLink2, setShowLink2] = useState(false)
   const [showTags, setShowTags] = useState(false)
   
-  // Trigger animations in sequence
+  // Load meme data and trigger animations
   useEffect(() => {
+    // Load meme data from localStorage
+    try {
+      const memeData = localStorage.getItem('meme_data');
+      if (memeData) {
+        const parsed = JSON.parse(memeData);
+        
+        // Set keywords from array to comma-separated string
+        if (parsed.keywords && parsed.keywords.length > 0) {
+          setKeywords(parsed.keywords.join(', ').toUpperCase());
+        }
+        
+        // Set tags from object to readable string
+        if (parsed.tags) {
+          const tagStrings: string[] = [];
+          Object.entries(parsed.tags).forEach(([category, items]: [string, any]) => {
+            if (Array.isArray(items) && items.length > 0) {
+              items.forEach((item: any) => {
+                tagStrings.push(`${item.content}`);
+              });
+            }
+          });
+          if (tagStrings.length > 0) {
+            setTags(tagStrings.join(', '));
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading meme data:', error);
+    }
+    
     // Start meme animation immediately
     setShowMeme(true)
     
@@ -45,17 +75,17 @@ export default function FinalResult() {
 
   // Add function to download meme image
   const handleDownloadMeme = () => {
-    // 创建一个链接元素
+    // create a link element
     const link = document.createElement('a')
-    // 设置下载的图片路径
-    link.href = '/template1.jpg'
-    // 设置下载的文件名
+    // set the download image path
+    link.href = localStorage.getItem('generated_image') || '/template1.jpg'
+    // set the download file name
     link.download = 'my-meme.jpg'
-    // 将链接添加到文档
+    // add the link to the document
     document.body.appendChild(link)
-    // 模拟点击链接
+    // simulate a click on the link
     link.click()
-    // 从文档中移除链接
+    // remove the link from the document
     document.body.removeChild(link)
   }
 
@@ -82,7 +112,7 @@ export default function FinalResult() {
         <div className="w-full bg-[#FFFFFF] rounded-xl shadow-md mb-4 overflow-hidden border border-[#333333]">
           <div className="relative w-full aspect-[4/3] bg-[#FFFFFF] max-h-[220px] xs:max-h-[180px]">
             <Image
-              src="/template1.jpg"
+              src={localStorage.getItem('generated_image') || '/template1.jpg'}
               alt="Meme"
               fill
               className="object-contain"

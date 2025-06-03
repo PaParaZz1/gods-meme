@@ -16,6 +16,7 @@ export default function GenerationResult() {
   const [showRemoveInput, setShowRemoveInput] = useState(false)
   const [elementInput, setElementInput] = useState("")
   const [isFocused, setIsFocused] = useState(false)
+  const [isRegenerating, setIsRegenerating] = useState(false)
 
   // Load generated image from localStorage
   useEffect(() => {
@@ -65,61 +66,75 @@ export default function GenerationResult() {
     }, 300) // Match this with the animation duration
   }
 
+  // Call regenerate API
+  const callRegenerateAPI = async (detailModify: string, element: string = "") => {
+    try {
+      // Get user ID from localStorage
+      const uid = localStorage.getItem('user_uid');
+      if (!uid) {
+        alert('User not registered. Please return to the landing page.');
+        return;
+      }
+      
+      // Store regeneration parameters for generating page
+      localStorage.setItem('regeneration_params', JSON.stringify({
+        user_id: uid,
+        detail_modify: detailModify,
+        element: element
+      }));
+      
+      // Navigate to generating page immediately to show loading
+      router.push('/generating');
+      
+    } catch (error) {
+      console.error('Error preparing regeneration:', error);
+      alert('An error occurred while preparing regeneration. Please try again.');
+    }
+  };
+
   // Handle option selection
   const handleOptionSelect = (option: string) => {
     if (option === "CHANGE STYLE") {
-      closeModalWithAnimation()
+      closeModalWithAnimation();
       setTimeout(() => {
-        router.push("/generating")
-      }, 300)
-      return
+        callRegenerateAPI("style");
+      }, 300);
+      return;
     }
     
     // Close the modal
-    closeModalWithAnimation()
+    closeModalWithAnimation();
     
     if (option === "ADD ELEMENTS") {
       setTimeout(() => {
-        setShowElementInput(true)
-        setShowRemoveInput(false)
-      }, 300)
-      return
+        setShowElementInput(true);
+        setShowRemoveInput(false);
+      }, 300);
+      return;
     }
     
     if (option === "REMOVE ELEMENTS") {
       setTimeout(() => {
-        setShowRemoveInput(true)
-        setShowElementInput(false)
-      }, 300)
-      return
+        setShowRemoveInput(true);
+        setShowElementInput(false);
+      }, 300);
+      return;
     }
-    
-    // For other regeneration options, go back to generating page
-    setTimeout(() => {
-      router.push("/generating")
-    }, 300)
   }
 
   // Handle element input submission
   const handleElementSubmit = () => {
-    if (elementInput.trim()) {
-      // Store the modification request for the generating page
-      const generationParams = localStorage.getItem('generation_params');
-      if (generationParams) {
-        const params = JSON.parse(generationParams);
-        params.modification = showElementInput ? 'add' : 'remove';
-        params.modification_text = elementInput.trim();
-        localStorage.setItem('generation_params', JSON.stringify(params));
-      }
+    if (elementInput.trim() && !isRegenerating) {
+      const detailModify = showElementInput ? "add" : "remove";
       
-      setElementInput("")
-      setShowElementInput(false)
-      setShowRemoveInput(false)
+      setElementInput("");
+      setShowElementInput(false);
+      setShowRemoveInput(false);
       
-      // Navigate to generating page for regeneration
-      router.push("/generating")
+      // Call regenerate API with user input
+      callRegenerateAPI(detailModify, elementInput.trim());
     }
-  }
+  };
 
   // If still loading or no image, show loading state
   if (isLoading || !generatedImage) {
@@ -171,10 +186,10 @@ export default function GenerationResult() {
         {/* Generated meme result */}
         <div className="flex-1 flex items-center justify-center px-10 max-h-[400px]">
           <div className="relative w-full aspect-square max-w-[350px] rounded-lg overflow-hidden border-2 border-[#333333] animate-fadeIn">
-            <Image
-              src={generatedImage}
-              alt="Generated Meme"
-              fill
+            <Image 
+              src={generatedImage} 
+              alt="Generated Meme" 
+              fill 
               className="object-cover"
               onError={() => {
                 console.error('Failed to load generated image');
@@ -187,20 +202,20 @@ export default function GenerationResult() {
         {/* Action buttons or Element input */}
         {!showElementInput && !showRemoveInput ? (
           <div className="px-8 pb-8 mt-24 space-y-4">
-            <button
-              onClick={handleRegenerate}
+          <button
+            onClick={handleRegenerate}
               className="w-full bg-[#333333] text-white py-3 rounded-full text-center font-phudu text-lg"
             >
               REGENERATE
-            </button>
-            
-            <Link
-              href="/final-result"
-              className="block w-full bg-white text-[#333333] py-3 rounded-full text-center font-phudu text-lg border-2 border-[#333333]"
-            >
-              NEXT
-            </Link>
-          </div>
+          </button>
+          
+          <Link
+            href="/final-result"
+            className="block w-full bg-white text-[#333333] py-3 rounded-full text-center font-phudu text-lg border-2 border-[#333333]"
+          >
+            NEXT
+          </Link>
+        </div>
         ) : (
           // Element input section
           <div className="px-8 pb-8 space-y-4">
@@ -230,6 +245,7 @@ export default function GenerationResult() {
                   setShowRemoveInput(false)
                   setElementInput("")
                 }}
+                disabled={isRegenerating}
                 className="flex-1 bg-white text-[#333333] py-3 rounded-full text-center font-phudu text-lg border-2 border-[#333333]"
               >
                 CANCEL
@@ -237,14 +253,14 @@ export default function GenerationResult() {
               
               <button
                 onClick={handleElementSubmit}
-                disabled={!elementInput.trim()}
+                disabled={!elementInput.trim() || isRegenerating}
                 className={`flex-1 py-3 rounded-full text-center font-phudu text-lg ${
-                  elementInput.trim()
+                  elementInput.trim() && !isRegenerating
                     ? "bg-[#333333] text-white"
                     : "bg-gray-400 text-gray-200 cursor-not-allowed"
                 }`}
               >
-                REGENERATE
+                {isRegenerating ? 'REGENERATING...' : 'REGENERATE'}
               </button>
             </div>
           </div>
