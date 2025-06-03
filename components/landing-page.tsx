@@ -11,6 +11,7 @@ export default function LandingPage() {
   const [isMobile, setIsMobile] = useState(false)
   const [isSmallMobile, setIsSmallMobile] = useState(false)
   const [gifPlayed, setGifPlayed] = useState(false)
+  const [isRegistering, setIsRegistering] = useState(false)
   
   // Animation states
   const [isLoaded, setIsLoaded] = useState(false)
@@ -21,6 +22,37 @@ export default function LandingPage() {
   
   // Ref for the GIF element
   const gifRef = useRef(null)
+
+  // Generate random UID
+  const generateUID = (): string => {
+    return 'user_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now().toString(36);
+  }
+
+  // Register user with backend
+  const registerUser = async (uid: string): Promise<boolean> => {
+    try {
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ uid }),
+      });
+
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        console.log('User registered successfully:', uid);
+        return true;
+      } else {
+        console.error('Registration failed:', result.error);
+        return false;
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      return false;
+    }
+  }
 
   // Handle touch start for mobile
   const handleTouchStart = () => {
@@ -67,17 +99,46 @@ export default function LandingPage() {
     }
   }, [])
 
-  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
+    
+    // Prevent multiple clicks during registration
+    if (isRegistering) return;
+    
     setIsClicking(true)
+    setIsRegistering(true)
     
-    // Clear all localStorage items
-    localStorage.clear()
-    
-    // Delay navigation to show the animation
-    setTimeout(() => {
-      router.push("/meme-generator")
-    }, 800)
+    try {
+      // Clear all localStorage items
+      localStorage.clear()
+      
+      // Generate new UID
+      const newUID = generateUID();
+      console.log('Generated UID:', newUID);
+      
+      // Register user with backend
+      const registrationSuccess = await registerUser(newUID);
+      
+      if (registrationSuccess) {
+        // Store UID in localStorage for future API calls
+        localStorage.setItem('user_uid', newUID);
+        
+        // Delay navigation to show the animation
+        setTimeout(() => {
+          router.push("/meme-generator")
+        }, 500)
+      } else {
+        // Registration failed, reset states
+        setIsClicking(false)
+        setIsRegistering(false)
+        alert('Registration failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error during user registration:', error);
+      setIsClicking(false)
+      setIsRegistering(false)
+      alert('An error occurred. Please try again.');
+    }
   }
 
   // Prevent button animation on mobile
@@ -148,6 +209,7 @@ export default function LandingPage() {
           onMouseEnter={() => setIsHovering(true)}
           onMouseLeave={() => setIsHovering(false)}
           onTouchStart={handleTouchStart}
+          disabled={isRegistering}
           className={`
             relative overflow-hidden text-white py-4 px-8 
             rounded-full text-2xl font-phudu w-[90%] max-w-xs mt-4 
@@ -155,6 +217,7 @@ export default function LandingPage() {
             ${buttonAnimationClass}
             ${isClicking ? 'scale-95' : 'bg-[#333333]'}
             ${showButton ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
+            ${isRegistering ? 'opacity-70 cursor-not-allowed' : ''}
           `}
         >
           {/* Color transition overlay - radial gradient from center */}
@@ -165,7 +228,9 @@ export default function LandingPage() {
           `}></div>
           
           {/* Button text */}
-          <span className="relative z-10">LET THERE BE MEMES</span>
+          <span className="relative z-10">
+            {isRegistering ? 'REGISTERING...' : 'LET THERE BE MEMES'}
+          </span>
         </button>
       </div>
 

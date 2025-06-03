@@ -516,6 +516,7 @@ export default function MemeGenerator() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          user_id: localStorage.getItem('user_uid'),
           keywords: keywordsList,
           tags: tagsData
         }),

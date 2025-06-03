@@ -73,11 +73,29 @@ export default function TemplateEditor() {
     const fetchTemplates = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch('/api/get_base_images');
+        // Get UID from localStorage
+        const uid = localStorage.getItem('user_uid');
+        
+        if (!uid) {
+          throw new Error('User not registered. Please return to the landing page.');
+        }
+        
+        const response = await fetch(`/api/get_base_images`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ user_id: uid }),
+        });
         if (!response.ok) {
           throw new Error('Failed to fetch templates');
         }
         const data = await response.json();
+        
+        if (!data.success) {
+          throw new Error(data.error || 'Failed to fetch templates');
+        }
+        
         setTemplates(data.images || []);
       } catch (error) {
         console.error('Error fetching templates:', error);

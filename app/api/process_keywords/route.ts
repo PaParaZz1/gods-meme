@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 interface KeywordsRequest {
+  user_id: string;
   keywords: string[];
   tags?: Record<string, any>;
 }
@@ -22,11 +23,7 @@ export async function POST(request: Request) {
     // Parse the request body
     const requestBody: KeywordsRequest = await request.json();
     
-    // Add user_id to the request
-    const body = {
-      ...requestBody,
-      user_id: process.env.DEFAULT_UID
-    };
+    const body = requestBody
     
     // Log the received data for debugging
     console.log('Received combined request with:', {
