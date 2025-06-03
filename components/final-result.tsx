@@ -9,6 +9,9 @@ export default function FinalResult() {
   const [keywords, setKeywords] = useState("FUNNY, HUMOROUS, JOKE")
   const [tags, setTags] = useState("happiness, love")
   
+  // Add state for generated image
+  const [generatedImage, setGeneratedImage] = useState('/template1.jpg')
+  
   // Animation states
   const [showMeme, setShowMeme] = useState(false)
   const [showLink1, setShowLink1] = useState(false)
@@ -44,6 +47,12 @@ export default function FinalResult() {
           }
         }
       }
+      
+      // Load generated image
+      const storedImage = localStorage.getItem('generated_image');
+      if (storedImage) {
+        setGeneratedImage(storedImage);
+      }
     } catch (error) {
       console.error('Error loading meme data:', error);
     }
@@ -77,8 +86,8 @@ export default function FinalResult() {
   const handleDownloadMeme = () => {
     // create a link element
     const link = document.createElement('a')
-    // set the download image path
-    link.href = localStorage.getItem('generated_image') || '/template1.jpg'
+    // set the download image path - use state instead of direct localStorage access
+    link.href = generatedImage
     // set the download file name
     link.download = 'my-meme.jpg'
     // add the link to the document
@@ -112,7 +121,7 @@ export default function FinalResult() {
         <div className="w-full bg-[#FFFFFF] rounded-xl shadow-md mb-4 overflow-hidden border border-[#333333]">
           <div className="relative w-full aspect-[4/3] bg-[#FFFFFF] max-h-[220px] xs:max-h-[180px]">
             <Image
-              src={localStorage.getItem('generated_image') || '/template1.jpg'}
+              src={generatedImage}
               alt="Meme"
               fill
               className="object-contain"
