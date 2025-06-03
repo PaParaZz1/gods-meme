@@ -9,6 +9,9 @@ export default function GeneratingPage() {
   const [progress, setProgress] = useState(0)
   const [showMeme, setShowMeme] = useState(false)
   const [imageIndex, setImageIndex] = useState(0)
+  const [isApiComplete, setIsApiComplete] = useState(false)
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
   
   // Array of image paths for the animation sequence
   const animationImages = [
@@ -18,6 +21,52 @@ export default function GeneratingPage() {
     "/template4.jpg",
     "/template5.jpg",
   ]
+  
+  // Call the API when component mounts
+  useEffect(() => {
+    const callGenerationAPI = async () => {
+      try {
+        // Get generation parameters from localStorage
+        const params = localStorage.getItem('generation_params');
+        if (!params) {
+          setError('Generation parameters not found');
+          return;
+        }
+        
+        const { user_id, template_image } = JSON.parse(params);
+        
+        // Call get_result API
+        const response = await fetch('/api/get_result', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            user_id,
+            image_url: template_image
+          }),
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+          setGeneratedImage(result.generated_image);
+          setIsApiComplete(true);
+          
+          // Store the generated image for the next page
+          localStorage.setItem('generated_image', result.generated_image);
+        } else {
+          console.error('Generation failed:', result.error);
+          setError(result.error || 'Generation failed');
+        }
+      } catch (error) {
+        console.error('Error calling generation API:', error);
+        setError('An error occurred while generating the meme');
+      }
+    };
+    
+    callGenerationAPI();
+  }, []);
   
   // Cycle through animation images
   useEffect(() => {
@@ -30,27 +79,56 @@ export default function GeneratingPage() {
     return () => clearInterval(imageInterval);
   }, [showMeme, animationImages.length]);
   
-  // Simulate progress bar growth
+  // Simulate progress bar growth and handle completion
   useEffect(() => {
     const interval = setInterval(() => {
       setProgress(prev => {
-        // When progress reaches 100%
-        if (prev >= 100) {
-          clearInterval(interval)
-          // Show the meme
-          setShowMeme(true)
-          router.push("/generation-result")
-          return 100
+        let newProgress = prev;
+        
+        // If API is complete, accelerate to 100%
+        if (isApiComplete && prev < 95) {
+          newProgress = Math.min(95 + Math.random() * 5, 100);
+        } else if (prev < 90) {
+          // Normal progress increase, but slow down near the end if API isn't complete
+          newProgress = prev + Math.random() * 2 + 0.5;
+        } else if (isApiComplete) {
+          // API is complete and we're near the end, finish up
+          newProgress = prev + Math.random() * 3 + 2;
+        } else {
+          // API not complete yet, slow progress near the end
+          newProgress = prev + Math.random() * 0.5 + 0.2;
         }
-        // Randomly increase progress to make it look more natural
-        prev = prev + Math.random() * 2 + 1
-        prev = prev > 100 ? 100 : prev
-        return prev
-      })
-    }, 100)
+        
+        newProgress = Math.min(newProgress, 100);
+        
+        // When progress reaches 100% and API is complete
+        if (newProgress >= 100 && isApiComplete) {
+          clearInterval(interval);
+          setShowMeme(true);
+          
+          // Navigate to results page after a short delay
+          setTimeout(() => {
+            router.push("/generation-result");
+          }, 1000);
+        }
+        
+        return newProgress;
+      });
+    }, 100);
 
-    return () => clearInterval(interval)
-  }, [router])
+    return () => clearInterval(interval);
+  }, [isApiComplete, router]);
+  
+  // Handle errors
+  useEffect(() => {
+    if (error) {
+      // Show error and redirect back
+      setTimeout(() => {
+        alert(`Error: ${error}`);
+        router.push("/template-selection");
+      }, 2000);
+    }
+  }, [error, router]);
 
   return (
     <div className="flex flex-col items-center min-h-screen bg-white">
@@ -66,7 +144,9 @@ export default function GeneratingPage() {
         <div className="w-full max-w-md flex flex-col items-center">
           {/* Title */}
           <h1 className="font-inika text-2xl text-center mb-8 italic">
-            {progress >= 100 ? "Your meme is ready!" : "God is creating your meme..."}
+            {error ? "Something went wrong..." :
+             progress >= 100 ? "Your meme is ready!" : 
+             "God is creating your meme..."}
           </h1>
           
           {/* Character animation using image sequence - larger and centered */}
@@ -124,9 +204,10 @@ export default function GeneratingPage() {
           </div>
           
           {/* Loading text prompts */}
-          <div className={`text-center transition-opacity duration-300 ${showMeme ? 'opacity-0' : 'opacity-100'}`}>
+          <div className={`text-center transition-opacity duration-300 ${showMeme || error ? 'opacity-0' : 'opacity-100'}`}>
             <p className="text-gray-600 font-phudu text-sm">
-              {progress < 30 ? "Gathering divine inspiration..." : 
+              {error ? "Please wait..." :
+               progress < 30 ? "Gathering divine inspiration..." : 
                progress < 60 ? "Infusing with heavenly humor..." : 
                progress < 90 ? "Adding the final blessed touches..." : 
                "Your meme is almost ready!"}

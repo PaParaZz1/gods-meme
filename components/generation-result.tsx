@@ -7,7 +7,8 @@ import { useRouter } from "next/navigation"
 
 export default function GenerationResult() {
   const router = useRouter()
-  const [generatedImage, setGeneratedImage] = useState("/template1.jpg") // Default to template1 as example
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isModalClosing, setIsModalClosing] = useState(false)
   const [showEntryAnimation, setShowEntryAnimation] = useState(true)
@@ -15,6 +16,29 @@ export default function GenerationResult() {
   const [showRemoveInput, setShowRemoveInput] = useState(false)
   const [elementInput, setElementInput] = useState("")
   const [isFocused, setIsFocused] = useState(false)
+
+  // Load generated image from localStorage
+  useEffect(() => {
+    const loadGeneratedImage = () => {
+      try {
+        const storedImage = localStorage.getItem('generated_image');
+        if (storedImage) {
+          setGeneratedImage(storedImage);
+        } else {
+          console.error('No generated image found in localStorage');
+          // Fallback to template1 or redirect back
+          setGeneratedImage("/template1.jpg");
+        }
+      } catch (error) {
+        console.error('Error loading generated image:', error);
+        setGeneratedImage("/template1.jpg");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadGeneratedImage();
+  }, []);
 
   // Entry animation effect
   useEffect(() => {
@@ -70,28 +94,45 @@ export default function GenerationResult() {
       return
     }
     
-    // Logic for regeneration based on selected option
-    // For demo, just toggle between templates
+    // For other regeneration options, go back to generating page
     setTimeout(() => {
-      setGeneratedImage(prev => 
-        prev === "/template1.jpg" ? "/template2.jpg" : "/template1.jpg"
-      )
+      router.push("/generating")
     }, 300)
   }
 
   // Handle element input submission
   const handleElementSubmit = () => {
     if (elementInput.trim()) {
-      // Logic to regenerate with new elements
-      setGeneratedImage(prev => 
-        prev === "/template1.jpg" ? "/template2.jpg" : "/template1.jpg"
-      )
+      // Store the modification request for the generating page
+      const generationParams = localStorage.getItem('generation_params');
+      if (generationParams) {
+        const params = JSON.parse(generationParams);
+        params.modification = showElementInput ? 'add' : 'remove';
+        params.modification_text = elementInput.trim();
+        localStorage.setItem('generation_params', JSON.stringify(params));
+      }
+      
       setElementInput("")
       setShowElementInput(false)
       setShowRemoveInput(false)
+      
+      // Navigate to generating page for regeneration
+      router.push("/generating")
     }
-    router.push("/generating")
-    return
+  }
+
+  // If still loading or no image, show loading state
+  if (isLoading || !generatedImage) {
+    return (
+      <div className="flex flex-col max-w-md mx-auto min-h-screen">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#333333] mx-auto mb-4"></div>
+            <p className="text-gray-600 font-phudu">Loading your meme...</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -101,8 +142,8 @@ export default function GenerationResult() {
         <div className="absolute inset-0 z-50 bg-white flex flex-col items-center justify-center">
           <div className="relative w-40 h-40 mb-4">
             <Image 
-              src="/template1.jpg" 
-              alt="Meme" 
+              src={generatedImage} 
+              alt="Generated Meme" 
               fill 
               className="object-cover rounded-lg animate-pop"
             />
@@ -135,6 +176,10 @@ export default function GenerationResult() {
               alt="Generated Meme"
               fill
               className="object-cover"
+              onError={() => {
+                console.error('Failed to load generated image');
+                setGeneratedImage("/template1.jpg");
+              }}
             />
           </div>
         </div>
@@ -144,21 +189,22 @@ export default function GenerationResult() {
           <div className="px-8 pb-8 mt-24 space-y-4">
             <button
               onClick={handleRegenerate}
-              className="block w-full bg-white text-[#333333] py-3 rounded-full text-center font-phudu text-lg border-2 border-[#333333]"
+              className="w-full bg-[#333333] text-white py-3 rounded-full text-center font-phudu text-lg"
             >
               REGENERATE
             </button>
             
             <Link
               href="/final-result"
-              className="block w-full bg-[#333333] text-white py-3 rounded-full text-center font-phudu text-lg"
+              className="block w-full bg-white text-[#333333] py-3 rounded-full text-center font-phudu text-lg border-2 border-[#333333]"
             >
               NEXT
             </Link>
           </div>
         ) : (
-          <div className="px-8 pb-8 animate-fadeIn">
-            <h2 className="text-[#333333] text-center mt-4 mb-4 xs:mt-3 xs:mb-3 font-phudu text-xl">
+          // Element input section
+          <div className="px-8 pb-8 space-y-4">
+            <h2 className="text-lg font-inika text-center mb-4">
               {showElementInput ? "Add Elements" : "Remove Elements"}
             </h2>
             
@@ -182,6 +228,7 @@ export default function GenerationResult() {
                 onClick={() => {
                   setShowElementInput(false)
                   setShowRemoveInput(false)
+                  setElementInput("")
                 }}
                 className="flex-1 bg-white text-[#333333] py-3 rounded-full text-center font-phudu text-lg border-2 border-[#333333]"
               >
@@ -190,7 +237,12 @@ export default function GenerationResult() {
               
               <button
                 onClick={handleElementSubmit}
-                className="flex-1 bg-[#333333] text-white py-3 rounded-full text-center font-phudu text-lg"
+                disabled={!elementInput.trim()}
+                className={`flex-1 py-3 rounded-full text-center font-phudu text-lg ${
+                  elementInput.trim()
+                    ? "bg-[#333333] text-white"
+                    : "bg-gray-400 text-gray-200 cursor-not-allowed"
+                }`}
               >
                 REGENERATE
               </button>

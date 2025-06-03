@@ -1139,8 +1139,8 @@ export default function MemeGenerator() {
             {godWaterLevel > 0 && !showAddAnimation && !showRemoveAnimation && !showBlendAnimation && (
               <div className="absolute inset-0">
                 <Image 
-                  src={`/water_level_${godWaterLevel / 2}.png`}
-                  alt={`God's bowl water level ${godWaterLevel / 2}`}
+                  src={`/water_level_${godWaterLevel}.png`}
+                  alt={`God's bowl water level ${godWaterLevel}`}
                   width={isSmallMobile ? 280 : 390} 
                   height={isSmallMobile ? 160 : 230}
                   className="object-contain"
@@ -1165,8 +1165,8 @@ export default function MemeGenerator() {
             {godWaterLevel > 0 && (showAddAnimation || showRemoveAnimation) && (
               <div className="absolute inset-0 pointer-events-none">
                 <Image 
-                  src={`/water_level_${godWaterLevel / 2}.png`}
-                  alt={`God's bowl water level ${godWaterLevel / 2}`}
+                  src={`/water_level_${godWaterLevel}.png`}
+                  alt={`God's bowl water level ${godWaterLevel}`}
                   width={isSmallMobile ? 280 : 390} 
                   height={isSmallMobile ? 160 : 230}
                   className="object-contain opacity-70"

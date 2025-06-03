@@ -227,6 +227,37 @@ export default function TemplateEditor() {
     }
   }, [])
 
+  // Handle generate result - modified to jump to generating page immediately
+  const handleGenerateResult = async () => {
+    if (templates.length === 0) return;
+    
+    try {
+      // Get UID from localStorage
+      const uid = localStorage.getItem('user_uid');
+      
+      if (!uid) {
+        alert('User not registered. Please return to the landing page.');
+        return;
+      }
+      
+      // Get current template
+      const currentTemplateImage = templates[currentTemplate];
+      
+      // Store the generation parameters in localStorage
+      localStorage.setItem('generation_params', JSON.stringify({
+        user_id: uid,
+        template_image: currentTemplateImage
+      }));
+      
+      // Navigate to generating page immediately
+      router.push('/generating');
+      
+    } catch (error) {
+      console.error('Error preparing generation:', error);
+      alert('An error occurred. Please try again.');
+    }
+  };
+
   return (
     <div className="flex flex-col max-w-md mx-auto min-h-screen">
       {/* Header */}
@@ -497,21 +528,17 @@ export default function TemplateEditor() {
 
       {/* Next button */}
       <div className="px-6 mt-4">
-        <Link
-          href="/generating"
+        <button
+          onClick={handleGenerateResult}
+          disabled={isLoading || templates.length === 0}
           className={`block w-full py-3 rounded-full text-center font-phudu text-lg ${
-            isLoading || templates.length === 0 
+            isLoading || templates.length === 0
               ? "bg-gray-400 text-gray-200 cursor-not-allowed" 
-              : "bg-[#333333] text-white"
+              : "bg-[#333333] text-white hover:bg-[#555555] transition-colors"
           }`}
-          onClick={(e) => {
-            if (isLoading || templates.length === 0) {
-              e.preventDefault();
-            }
-          }}
         >
           NEXT
-        </Link>
+        </button>
       </div>
 
       {/* Similar memes section with horizontal scrolling */}
