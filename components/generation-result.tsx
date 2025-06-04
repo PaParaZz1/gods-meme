@@ -126,13 +126,15 @@ export default function GenerationResult() {
   const handleElementSubmit = () => {
     if (elementInput.trim() && !isRegenerating) {
       const detailModify = showElementInput ? "add" : "remove";
+      const inputValue = elementInput.trim();
       
+      // Clear input and hide input sections first
       setElementInput("");
       setShowElementInput(false);
       setShowRemoveInput(false);
       
       // Call regenerate API with user input
-      callRegenerateAPI(detailModify, elementInput.trim());
+      callRegenerateAPI(detailModify, inputValue);
     }
   };
 
@@ -173,7 +175,7 @@ export default function GenerationResult() {
       {/* Main content */}
       <div className={`flex flex-col min-h-screen transition-opacity duration-500 ${showEntryAnimation ? 'opacity-0' : 'opacity-100'}`}>
         {/* Header with title and help button */}
-        <div className="flex items-center justify-between p-8 px-6 pb-32 xs:pb-16">
+        <div className="flex items-center justify-between p-8 px-6 pb-16 xs:pb-8">
           <div className="flex-1"></div>
           <h1 className="text-xl font-inika font-bold flex-1 text-center whitespace-nowrap">MEME Creation</h1>
           <div className="flex-1 flex justify-end">
@@ -184,7 +186,7 @@ export default function GenerationResult() {
         </div>
 
         {/* Generated meme result */}
-        <div className="flex-1 flex items-center justify-center px-10 max-h-[400px]">
+        <div className="flex-1 flex items-center justify-center px-10 max-h-[360px]">
           <div className="relative w-full aspect-square max-w-[350px] rounded-lg overflow-hidden border-2 border-[#333333] animate-fadeIn">
             <Image 
               src={generatedImage} 
@@ -219,7 +221,7 @@ export default function GenerationResult() {
         ) : (
           // Element input section
           <div className="px-8 pb-8 space-y-4">
-            <h2 className="text-lg font-inika text-center mb-4">
+            <h2 className="text-lg font-phudu text-center mt-2 mb-1 xs:mb-0">
               {showElementInput ? "Add Elements" : "Remove Elements"}
             </h2>
             

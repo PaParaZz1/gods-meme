@@ -12,6 +12,9 @@ export default function FinalResult() {
   // Add state for generated image
   const [generatedImage, setGeneratedImage] = useState('/template1.jpg')
   
+  // Add state for success popup
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false)
+  
   // Animation states
   const [showMeme, setShowMeme] = useState(false)
   const [showLink1, setShowLink1] = useState(false)
@@ -84,18 +87,30 @@ export default function FinalResult() {
 
   // Add function to download meme image
   const handleDownloadMeme = () => {
-    // create a link element
-    const link = document.createElement('a')
-    // set the download image path - use state instead of direct localStorage access
-    link.href = generatedImage
-    // set the download file name
-    link.download = 'my-meme.jpg'
-    // add the link to the document
-    document.body.appendChild(link)
-    // simulate a click on the link
-    link.click()
-    // remove the link from the document
-    document.body.removeChild(link)
+    try {
+      // create a link element
+      const link = document.createElement('a')
+      // set the download image path - use state instead of direct localStorage access
+      link.href = generatedImage
+      // set the download file name
+      link.download = 'my-meme.jpg'
+      // add the link to the document
+      document.body.appendChild(link)
+      // simulate a click on the link
+      link.click()
+      // remove the link from the document
+      document.body.removeChild(link)
+      
+      // Show success popup
+      setShowSuccessPopup(true)
+      
+      // Hide popup after 2 seconds
+      setTimeout(() => {
+        setShowSuccessPopup(false)
+      }, 1500)
+    } catch (error) {
+      console.error('Error downloading meme:', error)
+    }
   }
 
   return (
@@ -272,6 +287,47 @@ export default function FinalResult() {
           FINISH CREATION
         </button>
       </div>
+
+      {/* Success Popup */}
+      {showSuccessPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-2xl p-8 px-12 flex flex-col items-center space-y-4 mx-8 max-w-sm w-full animate-popup">
+            {/* Success Icon */}
+            <div className="w-16 h-16 flex items-center justify-center">
+              <Image
+                src="/save_success.png"
+                alt="Success"
+                width={64}
+                height={64}
+                className="object-contain"
+              />
+            </div>
+            
+            {/* Success Text */}
+            <p className="text-gray-800 text-lg font-phudu text-center">
+              Save Success!
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Add popup animation styles */}
+      <style jsx global>{`
+        @keyframes popup {
+          from {
+            opacity: 0;
+            transform: scale(0.8);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        
+        .animate-popup {
+          animation: popup 0.3s ease-out forwards;
+        }
+      `}</style>
     </div>
   )
 } 

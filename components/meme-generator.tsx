@@ -10,8 +10,8 @@ import ErrorToast from "./error-toast"
 // Define types to solve index signature problems
 type TabKey = "sentiment" | "intention" | "style";
 type SentimentKey = "happiness" | "love" | "anger" | "sorrow" | "fear" | "hate";
-type IntentionKey = "humor" | "sarcasm" | "rant" | "encourage" | "self-mockery" | "expressive";
-type StyleKey = "motivational" | "funny" | "wholesome" | "dark" | "romantic" | "sarcastic";
+type IntentionKey = "humor" | "sarcasm" | "rant" | "encourage" | "self-mockery" | "interactive";
+type StyleKey = "inspiring" | "funny" | "wholesome" | "dark" | "romantic" | "sarcastic";
 type ItemKey = SentimentKey | IntentionKey | StyleKey;
 
 export default function MemeGenerator() {
@@ -30,8 +30,8 @@ export default function MemeGenerator() {
     style: Record<StyleKey, number>;
   }>({
     sentiment: { happiness: 3, love: 3, anger: 3, sorrow: 3, fear: 3, hate: 3 },
-    intention: { humor: 3, sarcasm: 3, rant: 3, encourage: 3, "self-mockery": 3, expressive: 3 },
-    style: { motivational: 3, funny: 3, wholesome: 3, dark: 3, romantic: 3, sarcastic: 3 }
+    intention: { humor: 3, sarcasm: 3, rant: 3, encourage: 3, "self-mockery": 3, interactive: 3 },
+    style: { inspiring: 3, funny: 3, wholesome: 3, dark: 3, romantic: 3, sarcastic: 3 }
   })
   const [draggedItem, setDraggedItem] = useState<string | null>(null)
   const godAreaRef = useRef<HTMLDivElement>(null)
@@ -146,11 +146,11 @@ export default function MemeGenerator() {
     },
     intention: {
       title: "Intention",
-      items: ["humor", "sarcasm", "rant", "encourage", "self-mockery", "expressive"]
+      items: ["humor", "sarcasm", "rant", "encourage", "self-mockery", "interactive"]
     },
     style: {
       title: "Style",
-      items: ["motivational", "funny", "wholesome", "dark", "romantic", "sarcastic"]
+      items: ["inspiring", "funny", "wholesome", "dark", "romantic", "sarcastic"]
     }
   }
 
@@ -793,11 +793,11 @@ export default function MemeGenerator() {
             rant: values[8],
             encourage: values[9],
             "self-mockery": values[10],
-            expressive: values[11]
+            interactive: values[11]
           },
           style: {
             ...prev.style,
-            motivational: values[12],
+            inspiring: values[12],
             funny: values[13],
             wholesome: values[14],
             dark: values[15],
@@ -827,9 +827,9 @@ export default function MemeGenerator() {
       waterLevels.intention.rant,
       waterLevels.intention.encourage,
       waterLevels.intention["self-mockery"],
-      waterLevels.intention.expressive,
+      waterLevels.intention.interactive,
       // Style values
-      waterLevels.style.motivational,
+      waterLevels.style.inspiring,
       waterLevels.style.funny,
       waterLevels.style.wholesome,
       waterLevels.style.dark,
@@ -1256,8 +1256,8 @@ export default function MemeGenerator() {
           {godWaterLevel > 0 && !showAddAnimation && !showRemoveAnimation && !showBlendAnimation && (
             <div className="absolute inset-0">
               <Image 
-                src={`/water_level_${godWaterLevel}.png`}
-                alt={`God's bowl water level ${godWaterLevel}`}
+                src={`/water_level_${Math.min(godWaterLevel, 8)}.png`}
+                alt={`God's bowl water level ${Math.min(godWaterLevel, 8)}`}
                 width={isSmallMobile ? 280 : 390} 
                 height={isSmallMobile ? 160 : 230}
                 className="object-contain"
@@ -1282,8 +1282,8 @@ export default function MemeGenerator() {
           {godWaterLevel > 0 && (showAddAnimation || showRemoveAnimation) && (
             <div className="absolute inset-0 pointer-events-none">
               <Image 
-                src={`/water_level_${godWaterLevel}.png`}
-                alt={`God's bowl water level ${godWaterLevel}`}
+                src={`/water_level_${Math.min(godWaterLevel, 8)}.png`}
+                alt={`God's bowl water level ${Math.min(godWaterLevel, 8)}`}
                 width={isSmallMobile ? 280 : 390} 
                 height={isSmallMobile ? 160 : 230}
                 className="object-contain opacity-70"
