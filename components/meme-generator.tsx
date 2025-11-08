@@ -8,11 +8,11 @@ import { motion, AnimatePresence } from "framer-motion"
 import ErrorToast from "./error-toast"
 
 // Define types to solve index signature problems
-type TabKey = "sentiment" | "intention" | "style";
-type SentimentKey = "happiness" | "love" | "anger" | "sorrow" | "fear" | "hate";
-type IntentionKey = "humor" | "sarcasm" | "rant" | "encourage" | "self-mockery" | "interactive";
-type StyleKey = "inspiring" | "funny" | "wholesome" | "dark" | "romantic" | "sarcastic";
-type ItemKey = SentimentKey | IntentionKey | StyleKey;
+type TabKey = "emotion" | "intention" | "style";
+type EmotionKey = "happiness" | "love" | "anger" | "sorrow" | "fear" | "hate" | "surprise";
+type IntentionKey = "humor" | "sarcasm" | "rant" | "encourage" | "self-mockery" | "interactive" | "entertaining" | "expression of surprise" | "expression of love" | "expression of dissatisfaction";
+type StyleKey = "motivational" | "funny" | "wholesome" | "dark" | "romantic" | "sarcastic";
+type ItemKey = EmotionKey | IntentionKey | StyleKey;
 
 export default function MemeGenerator() {
   const router = useRouter()
@@ -23,15 +23,15 @@ export default function MemeGenerator() {
   const [registrationStep, setRegistrationStep] = useState("Generating your divine ID...")
   
   // Existing states
-  const [selectedTab, setSelectedTab] = useState("sentiment")
+  const [selectedTab, setSelectedTab] = useState("emotion")
   const [waterLevels, setWaterLevels] = useState<{
-    sentiment: Record<SentimentKey, number>;
+    emotion: Record<EmotionKey, number>;
     intention: Record<IntentionKey, number>;
     style: Record<StyleKey, number>;
   }>({
-    sentiment: { happiness: 3, love: 3, anger: 3, sorrow: 3, fear: 3, hate: 3 },
-    intention: { humor: 3, sarcasm: 3, rant: 3, encourage: 3, "self-mockery": 3, interactive: 3 },
-    style: { inspiring: 3, funny: 3, wholesome: 3, dark: 3, romantic: 3, sarcastic: 3 }
+    emotion: { happiness: 3, love: 3, anger: 3, sorrow: 3, fear: 3, hate: 3, surprise: 3 },
+    intention: { humor: 3, sarcasm: 3, rant: 3, encourage: 3, "self-mockery": 3, interactive: 3, entertaining: 3, "expression of surprise": 3, "expression of love": 3, "expression of dissatisfaction": 3 },
+    style: { motivational: 3, funny: 3, wholesome: 3, dark: 3, romantic: 3, sarcastic: 3 }
   })
   const [draggedItem, setDraggedItem] = useState<string | null>(null)
   const godAreaRef = useRef<HTMLDivElement>(null)
@@ -46,13 +46,13 @@ export default function MemeGenerator() {
   const [isSmallMobile, setIsSmallMobile] = useState(false)
 
   // New states for advanced gallery transition
-  const [galleryPosition, setGalleryPosition] = useState<'closed' | 'partial' | 'full'>('closed')
+  const [galleryPosition, setGalleryPosition] = useState<'closed' | 'full'>('closed')
   const [scrollY, setScrollY] = useState(0)
   const galleryRef = useRef<HTMLDivElement>(null)
   const scrollThreshold = 100 // Threshold in pixels for showing header in full screen mode
   const [dragConstraints, setDragConstraints] = useState<{ top: number; bottom: number }>({ top: 0, bottom: 0 })
   const [isDraggingGallery, setIsDraggingGallery] = useState(false)
-  const [lastGalleryPosition, setLastGalleryPosition] = useState<'partial' | 'full'>('partial')
+  const [lastGalleryPosition, setLastGalleryPosition] = useState<'full'>('full')
   
   // 添加滑动触摸相关的状态
   const [touchStartY, setTouchStartY] = useState(0)
@@ -62,7 +62,7 @@ export default function MemeGenerator() {
 
   // Calculate drag constraints when gallery position changes
   useEffect(() => {
-    if (galleryPosition === 'partial' || galleryPosition === 'full') {
+    if (galleryPosition === 'full') {
       // Only allow dragging down to close the gallery since both states are full screen
       setDragConstraints({ top: 0, bottom: window.innerHeight / 2 })
     }
@@ -140,17 +140,17 @@ export default function MemeGenerator() {
   };
 
   const tabContent = {
-    sentiment: {
-      title: "Sentiment",
-      items: ["happiness", "love", "anger", "sorrow", "fear", "hate"]
+    emotion: {
+      title: "Emotion",
+      items: ["happiness", "love", "anger", "sorrow", "fear", "hate", "surprise"]
     },
     intention: {
       title: "Intention",
-      items: ["humor", "sarcasm", "rant", "encourage", "self-mockery", "interactive"]
+      items: ["humor", "sarcasm", "rant", "encourage", "self-mockery", "interactive", "entertaining", "expression of surprise", "expression of love", "expression of dissatisfaction"]
     },
     style: {
       title: "Style",
-      items: ["inspiring", "funny", "wholesome", "dark", "romantic", "sarcastic"]
+      items: ["motivational", "funny", "wholesome", "dark", "romantic", "sarcastic"]
     }
   }
 
@@ -161,8 +161,8 @@ export default function MemeGenerator() {
     const itemKey = item as ItemKey;
     
     // Fix: Use type assertion to ensure correct key type matching
-    if (tab === "sentiment") {
-      return waterLevels[tab][itemKey as SentimentKey] || 0;
+    if (tab === "emotion") {
+      return waterLevels[tab][itemKey as EmotionKey] || 0;
     } else if (tab === "intention") {
       return waterLevels[tab][itemKey as IntentionKey] || 0;
     } else {
@@ -196,8 +196,8 @@ export default function MemeGenerator() {
         
         // Fix: Use type assertion to ensure correct key type matching
         let currentLevel = 0;
-        if (tab === "sentiment") {
-          currentLevel = prev[tab][item as SentimentKey];
+        if (tab === "emotion") {
+          currentLevel = prev[tab][item as EmotionKey];
         } else if (tab === "intention") {
           currentLevel = prev[tab][item as IntentionKey];
         } else {
@@ -313,8 +313,8 @@ export default function MemeGenerator() {
         
         // Fix: Use type assertion to ensure correct key type matching
         let currentLevel = 0;
-        if (tab === "sentiment") {
-          currentLevel = prev[tab][item as SentimentKey];
+        if (tab === "emotion") {
+          currentLevel = prev[tab][item as EmotionKey];
         } else if (tab === "intention") {
           currentLevel = prev[tab][item as IntentionKey];
         } else {
@@ -343,12 +343,12 @@ export default function MemeGenerator() {
           };
           
           setTimeout(() => {
-            const hasSelectedSentiment = Object.values(updatedWaterLevels.sentiment).some(level => level < 3);
+            const hasSelectedEmotion = Object.values(updatedWaterLevels.emotion).some(level => level < 3);
             const hasSelectedIntention = Object.values(updatedWaterLevels.intention).some(level => level < 3);
             const hasSelectedStyle = Object.values(updatedWaterLevels.style).some(level => level < 3);
             
             setHighlightCategories(prev => ({
-              sentiment: !hasSelectedSentiment && prev.sentiment,
+              emotion: !hasSelectedEmotion && prev.emotion,
               intention: !hasSelectedIntention && prev.intention,
               style: !hasSelectedStyle && prev.style
             }));
@@ -376,8 +376,8 @@ export default function MemeGenerator() {
       
       // Use type assertion to ensure correct key type matching
       let currentLevel = 0;
-      if (tab === "sentiment") {
-        currentLevel = prev[tab][item as SentimentKey];
+      if (tab === "emotion") {
+        currentLevel = prev[tab][item as EmotionKey];
       } else if (tab === "intention") {
         currentLevel = prev[tab][item as IntentionKey];
       } else {
@@ -416,12 +416,12 @@ export default function MemeGenerator() {
     setTimeout(() => {
       setIsUpdatingWaterLevel(false);
       
-      const hasSelectedSentiment = Object.values(waterLevels.sentiment).some(level => level < 3);
+      const hasSelectedEmotion = Object.values(waterLevels.emotion).some(level => level < 3);
       const hasSelectedIntention = Object.values(waterLevels.intention).some(level => level < 3);
       const hasSelectedStyle = Object.values(waterLevels.style).some(level => level < 3);
       
       setHighlightCategories(prev => ({
-        sentiment: !hasSelectedSentiment && prev.sentiment,
+        emotion: !hasSelectedEmotion && prev.emotion,
         intention: !hasSelectedIntention && prev.intention,
         style: !hasSelectedStyle && prev.style
       }));
@@ -429,11 +429,11 @@ export default function MemeGenerator() {
   };
 
   const [highlightCategories, setHighlightCategories] = useState<{
-    sentiment: boolean;
+    emotion: boolean;
     intention: boolean;
     style: boolean;
   }>({
-    sentiment: false,
+    emotion: false,
     intention: false,
     style: false
   });
@@ -444,23 +444,23 @@ export default function MemeGenerator() {
       return;
     }
     
-    const hasSelectedSentiment = Object.values(waterLevels.sentiment).some(level => level < 3);
+    const hasSelectedEmotion = Object.values(waterLevels.emotion).some(level => level < 3);
     const hasSelectedIntention = Object.values(waterLevels.intention).some(level => level < 3);
     const hasSelectedStyle = Object.values(waterLevels.style).some(level => level < 3);
     
     setHighlightCategories({
-      sentiment: !hasSelectedSentiment,
+      emotion: !hasSelectedEmotion,
       intention: !hasSelectedIntention,
       style: !hasSelectedStyle
     });
     
-    if (!hasSelectedSentiment || !hasSelectedIntention || !hasSelectedStyle) {
+    if (!hasSelectedEmotion || !hasSelectedIntention || !hasSelectedStyle) {
       showError('Please select at least one tag from each category');
       return;
     }
 
     setHighlightCategories({
-      sentiment: false,
+      emotion: false,
       intention: false,
       style: false
     });
@@ -491,7 +491,7 @@ export default function MemeGenerator() {
       }
       const tagsData = {
         "Emotion Category": 
-          Object.entries(waterLevels.sentiment)
+          Object.entries(waterLevels.emotion)
             .filter(([_, value]) => value < 3)  // Only include items with water level < 3
             .map(([key, value]) => ({
               "content": key, 
@@ -612,16 +612,11 @@ export default function MemeGenerator() {
   // New function to toggle gallery with partial expansion
   const toggleGallery = () => {
     if (galleryPosition === 'closed') {
-      // Restore the last position when reopening
-      setGalleryPosition(lastGalleryPosition)
+      // Always open to full when reopening
+      setGalleryPosition('full')
       setShowGallery(true)
     } else {
-      // Remember the current position before closing
-      if (galleryPosition === 'partial' || galleryPosition === 'full') {
-        setLastGalleryPosition(galleryPosition)
-      }
-      
-      // Ensure closed state is set immediately
+      // Close the gallery
       setGalleryPosition('closed')
       
       // Reduce delay time to make closing more immediate
@@ -657,9 +652,9 @@ export default function MemeGenerator() {
       return;
     }
     
-    // If swiping up more than 50px and Gallery is currently closed, open Gallery
+    // If swiping up more than 50px and Gallery is currently closed, open Gallery to full
     if (galleryPosition === 'closed' && touchStartY - touchEndY > 50) {
-      setGalleryPosition(lastGalleryPosition)
+      setGalleryPosition('full')
       setShowGallery(true)
     }
     
@@ -674,41 +669,17 @@ export default function MemeGenerator() {
     const scrollPosition = e.currentTarget.scrollTop
     setScrollY(scrollPosition)
     
-    // Don't change modes while dragging
-    if (isDraggingGallery) return
-    
-    // Switch from partial to full based on scroll
-    if (galleryPosition === 'partial' && scrollPosition > 150) {
-      setGalleryPosition('full')
-    } 
-    // Switch from full to partial when scrolling back up to threshold
-    else if (galleryPosition === 'full' && scrollPosition < 50) {
-      setGalleryPosition('partial')
-    }
+    // Don't change modes while dragging - but allow normal scrolling
+    // No state switching needed since we only have full mode when open
   }
 
   // Handle drag end for the gallery
   const handleGalleryDragEnd = (info: any) => {
     setIsDraggingGallery(false)
     
-    // Support handling Gallery state changes through drag and swipe gestures
-    
-    // If user dragged up in partial mode (header visible)
-    if (galleryPosition === 'partial' && info.offset && info.offset.y < -100) {
-      setGalleryPosition('full') // Switch to header hidden
-      setLastGalleryPosition('full')
-    } 
-    // If user dragged down in full mode (header hidden)
-    else if (galleryPosition === 'full' && info.offset && info.offset.y > 100) {
-      setGalleryPosition('full') // Switch to header visible
-      setLastGalleryPosition('full')
-    }
-    // If user dragged down significantly, close the gallery - lower close threshold
-    else if (info.offset && info.offset.y > 100) {
-      // Remember the position before closing
-      setLastGalleryPosition('full')
-      
-      // Ensure closed state is set immediately
+    // If user dragged down significantly, close the gallery (increased threshold)
+    if (info.offset && info.offset.y > 150) {
+      // Close the gallery
       setGalleryPosition('closed')
       
       // Reduce delay time to make closing more immediate
@@ -729,8 +700,8 @@ export default function MemeGenerator() {
     
     setTouchEndY(e.touches[0].clientY)
     
-    // Detect if it's a clear vertical swipe - lower detection threshold, increase sensitivity
-    if (Math.abs(e.touches[0].clientY - touchStartY) > 5) {
+    // Only set swipe action for significant movements to avoid interfering with scrolling
+    if (Math.abs(e.touches[0].clientY - touchStartY) > 20) {
       setIsSwipeAction(true)
     }
   }
@@ -744,12 +715,9 @@ export default function MemeGenerator() {
       return;
     }
     
-    // In Gallery area, swiping down more than 30px closes Gallery - lower close threshold
-    if (touchEndY - touchStartY > 30) {
-      // Remember the position before closing
-      setLastGalleryPosition('full')
-      
-      // Ensure closed state is set immediately
+    // In Gallery area, swiping down more than 80px closes Gallery (increased threshold)
+    if (touchEndY - touchStartY > 80) {
+      // Close the gallery
       setGalleryPosition('closed')
       
       // Reduce delay time to make closing more immediate
@@ -773,36 +741,41 @@ export default function MemeGenerator() {
       // Parse the saved values
       const values = savedWaterLevel.split(',').map(val => parseInt(val, 10))
       
-      // Only update if we have valid values
-      if (values.length === 18 && !values.some(isNaN)) {
+      // Only update if we have valid values (now 23 values: 7 emotion + 10 intention + 6 style)
+      if (values.length === 23 && !values.some(isNaN)) {
         setWaterLevels(prev => ({
           ...prev,
-          sentiment: {
-            ...prev.sentiment,
+          emotion: {
+            ...prev.emotion,
             happiness: values[0],
             love: values[1],
             anger: values[2],
             sorrow: values[3],
             fear: values[4],
-            hate: values[5]
+            hate: values[5],
+            surprise: values[6]
           },
           intention: {
             ...prev.intention,
-            humor: values[6],
-            sarcasm: values[7],
-            rant: values[8],
-            encourage: values[9],
-            "self-mockery": values[10],
-            interactive: values[11]
+            humor: values[7],
+            sarcasm: values[8],
+            rant: values[9],
+            encourage: values[10],
+            "self-mockery": values[11],
+            interactive: values[12],
+            entertaining: values[13],
+            "expression of surprise": values[14],
+            "expression of love": values[15],
+            "expression of dissatisfaction": values[16]
           },
           style: {
             ...prev.style,
-            inspiring: values[12],
-            funny: values[13],
-            wholesome: values[14],
-            dark: values[15],
-            romantic: values[16],
-            sarcastic: values[17]
+            motivational: values[17],
+            funny: values[18],
+            wholesome: values[19],
+            dark: values[20],
+            romantic: values[21],
+            sarcastic: values[22]
           }
         }))
       }
@@ -815,12 +788,13 @@ export default function MemeGenerator() {
     // Flatten the nested object into an array of values
     const values = [
       // Sentiment values
-      waterLevels.sentiment.happiness,
-      waterLevels.sentiment.love,
-      waterLevels.sentiment.anger,
-      waterLevels.sentiment.sorrow,
-      waterLevels.sentiment.fear,
-      waterLevels.sentiment.hate,
+      waterLevels.emotion.happiness,
+      waterLevels.emotion.love,
+      waterLevels.emotion.anger,
+      waterLevels.emotion.sorrow,
+      waterLevels.emotion.fear,
+      waterLevels.emotion.hate,
+      waterLevels.emotion.surprise,
       // Intention values
       waterLevels.intention.humor,
       waterLevels.intention.sarcasm,
@@ -828,8 +802,12 @@ export default function MemeGenerator() {
       waterLevels.intention.encourage,
       waterLevels.intention["self-mockery"],
       waterLevels.intention.interactive,
+      waterLevels.intention.entertaining,
+      waterLevels.intention["expression of surprise"],
+      waterLevels.intention["expression of love"],
+      waterLevels.intention["expression of dissatisfaction"],
       // Style values
-      waterLevels.style.inspiring,
+      waterLevels.style.motivational,
       waterLevels.style.funny,
       waterLevels.style.wholesome,
       waterLevels.style.dark,
@@ -1052,21 +1030,21 @@ export default function MemeGenerator() {
         <div className="flex space-x-2 items-center justify-center">
           <button
             className={`flex items-center rounded-full relative overflow-hidden transform transition-all duration-300 ease-in-out active:scale-95 ${
-              selectedTab === "sentiment" 
-                ? `pr-3 bg-[#EEEEEE] shadow-inner ${highlightCategories.sentiment ? 'bg-[#FFE4E4] text-[#B72E2E]' : ''}` 
-                : `hover:bg-gray-50 hover:shadow-sm ${highlightCategories.sentiment ? 'bg-[#FFE4E4] text-[#B72E2E]' : 'bg-white'}`
+              selectedTab === "emotion" 
+                ? `pr-3 bg-[#EEEEEE] shadow-inner ${highlightCategories.emotion ? 'bg-[#FFE4E4] text-[#B72E2E]' : ''}` 
+                : `hover:bg-gray-50 hover:shadow-sm ${highlightCategories.emotion ? 'bg-[#FFE4E4] text-[#B72E2E]' : 'bg-white'}`
             }`}
-            onClick={() => setSelectedTab("sentiment")}
+            onClick={() => setSelectedTab("emotion")}
           >
-            <div className={`relative z-10 transition-transform duration-300 ${selectedTab === "sentiment" ? "scale-100" : ""}`}>
-              <Image src={highlightCategories.sentiment ? "/unfinished.png" : "/sentiment.png"} alt="Sentiment" width={49} height={49} className="mr-1" />
+            <div className={`relative z-10 transition-transform duration-300 ${selectedTab === "emotion" ? "scale-100" : ""}`}>
+              <Image src={highlightCategories.emotion ? "/unfinished.png" : "/emotion.png"} alt="Emotion" width={49} height={49} className="mr-1" />
             </div>
-            {selectedTab === "sentiment" && (
+            {selectedTab === "emotion" && (
               <span className="font-inika text-sm relative z-10 animate-fadeIn">
-                Sentiment
+                Emotion
               </span>
             )}
-            {selectedTab === "sentiment" && (
+            {selectedTab === "emotion" && (
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
             )}
           </button>
@@ -1117,7 +1095,7 @@ export default function MemeGenerator() {
       <div className="w-full relative h-4 xs:h-2">
         <motion.div 
           className="absolute w-6 h-6 transform -translate-x-1/2"
-          animate={{ left: selectedTab === "sentiment" ? "33.3%" : selectedTab === "intention" ? "50%" : "66.7%" }}
+          animate={{ left: selectedTab === "emotion" ? "33.3%" : selectedTab === "intention" ? "50%" : "66.7%" }}
           transition={{ type: "spring", stiffness: 300, damping: 25 }}
         >
           <svg width="24" height="18" viewBox="0 0 24 18" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1127,7 +1105,7 @@ export default function MemeGenerator() {
       </div>
       
     {/* Dynamic Content Grid based on selected tab */}
-      <div className="w-full px-2">
+      <div className="w-[90%] px-2">
         <div className="bg-[#EEEEEE] rounded-lg p-4 xs:p-2 mx-2">
           <AnimatePresence mode="wait">
             <motion.div
@@ -1141,95 +1119,102 @@ export default function MemeGenerator() {
                 stiffness: 400,
                 damping: 25
               }}
-              className="grid grid-cols-6 gap-2"
+              className="overflow-x-auto scrollbar-hide"
+              style={{ 
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+              }}
             >
-              {currentTabContent.items.map((item, index) => (
-                <motion.div
-                  key={item} 
-                  className="flex flex-col items-center cursor-pointer relative"
-                  // Add a larger invisible click area
-                  style={{ 
-                    touchAction: "manipulation" // Improves touch response
-                  }}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: 0.2,
-                    delay: index * 0.03,
-                    type: "spring",
-                    stiffness: 400,
-                    damping: 20
-                  }}
-                  whileHover={{ 
-                    scale: isAnimationPlaying ? 1.0 : 1.1,  // 动画播放时禁用悬停效果
-                    transition: { duration: 0.15 }
-                  }}
-                  whileTap={{ scale: isAnimationPlaying ? 1.0 : 0.95 }}  // 动画播放时禁用点击效果
-                >
-                  {/* Add an invisible larger click area */}
-                  <div className="absolute inset-0 z-10" />
-                  
-                  <div 
-                    ref={draggedItem === item ? dragItemRef : null}
-                    className={`h-[78px] flex items-center justify-center relative ${
-                      getWaterLevel(item) > 0 && !isAnimationPlaying 
-                        ? 'cursor-grab active:cursor-grabbing' 
-                        : isAnimationPlaying && getWaterLevel(item) > 0 
-                          ? 'cursor-not-allowed' 
-                          : ''
-                    }`}
-                    draggable={getWaterLevel(item) > 0 && !isAnimationPlaying}
-                    onDragStart={() => !isAnimationPlaying && handleDragStart(item)}
-                    onDragEnd={handleDragEnd}
+              <div className="flex gap-2 pb-1">
+                {currentTabContent.items.map((item, index) => (
+                  <motion.div
+                    key={item} 
+                    className="flex flex-col items-center cursor-pointer relative flex-shrink-0"
+                    // Add a larger invisible click area
+                    style={{ 
+                      touchAction: "manipulation", // Improves touch response
+                      minWidth: 'calc((100% - 40px) / 6)' // Calculate width to show 6 items: container width - gaps (8px * 5)
+                    }}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.2,
+                      delay: index * 0.03,
+                      type: "spring",
+                      stiffness: 400,
+                      damping: 20
+                    }}
+                    whileHover={{ 
+                      scale: isAnimationPlaying ? 1.0 : 1.1,  // 动画播放时禁用悬停效果
+                      transition: { duration: 0.15 }
+                    }}
+                    whileTap={{ scale: isAnimationPlaying ? 1.0 : 0.95 }}  // 动画播放时禁用点击效果
                   >
-                    <Image 
-                      src={`/glass_base.png`} 
-                      alt={item} 
-                      width={isSmallMobile ? 32 : 48} 
-                      height={isSmallMobile ? 48 : 72} 
-                      className={`object-contain relative z-10 ${
-                        draggedItem === item && isDragging 
-                          ? 'opacity-30' 
-                          : draggedItem === item 
-                            ? 'opacity-50' 
-                            : isAnimationPlaying 
-                              ? 'opacity-50 filter grayscale'
-                              : ''
+                    {/* Add an invisible larger click area */}
+                    <div className="absolute inset-0 z-10" />
+                    
+                    <div 
+                      ref={draggedItem === item ? dragItemRef : null}
+                      className={`h-[78px] flex items-center justify-center relative ${
+                        getWaterLevel(item) > 0 && !isAnimationPlaying 
+                          ? 'cursor-grab active:cursor-grabbing' 
+                          : isAnimationPlaying && getWaterLevel(item) > 0 
+                            ? 'cursor-not-allowed' 
+                            : ''
                       }`}
-                      onTouchStart={(e) => !isAnimationPlaying && handleItemTouchStart(e, item)}
-                      onClick={(e) => {
-                        // Stop event propagation to prevent affecting adjacent cups
-                        e.stopPropagation();
-                        if (!isAnimationPlaying) {
-                          handleWaterGlassClick(item as ItemKey);
-                        }
-                      }}
-                    />
-                    
-                    {getWaterLevel(item) > 0 && (
-                      <div className="absolute inset-0 scale-220 bottom-5 left-[calc(-4px)] flex items-center justify-center z-0">
-                        <Image 
-                          src={`/water_level${getWaterLevel(item)}.png`}
-                          alt={`Water level ${getWaterLevel(item)}`}
-                          width={isSmallMobile ? 32 : 48}
-                          height={isSmallMobile ? 48 : 72}
-                          className={`object-contain transition-all duration-300 ease-out ${
-                            draggedItem === item && isDragging 
-                              ? 'opacity-30' 
-                              : draggedItem === item 
-                                ? 'opacity-50' 
-                                : isAnimationPlaying 
-                                  ? 'opacity-50 filter grayscale'
-                                  : ''
-                          }`}
-                        />
-                      </div>
-                    )}
-                    
-                  </div>
-                  <span className={`text-xs font-inika text-center mt-1 ${isAnimationPlaying ? 'opacity-50' : ''}`}>{item}</span>
-                </motion.div>
-              ))}
+                      draggable={getWaterLevel(item) > 0 && !isAnimationPlaying}
+                      onDragStart={() => !isAnimationPlaying && handleDragStart(item)}
+                      onDragEnd={handleDragEnd}
+                    >
+                      <Image 
+                        src={`/glass_base.png`} 
+                        alt={item} 
+                        width={isSmallMobile ? 32 : 48} 
+                        height={isSmallMobile ? 48 : 72} 
+                        className={`object-contain relative z-10 ${
+                          draggedItem === item && isDragging 
+                            ? 'opacity-30' 
+                            : draggedItem === item 
+                              ? 'opacity-50' 
+                              : isAnimationPlaying 
+                                ? 'opacity-50 filter grayscale'
+                                : ''
+                        }`}
+                        onTouchStart={(e) => !isAnimationPlaying && handleItemTouchStart(e, item)}
+                        onClick={(e) => {
+                          // Stop event propagation to prevent affecting adjacent cups
+                          e.stopPropagation();
+                          if (!isAnimationPlaying) {
+                            handleWaterGlassClick(item as ItemKey);
+                          }
+                        }}
+                      />
+                      
+                      {getWaterLevel(item) > 0 && (
+                        <div className="absolute inset-0 scale-220 bottom-5 left-[calc(-4px)] flex items-center justify-center z-0">
+                          <Image 
+                            src={`/water_level${getWaterLevel(item)}.png`}
+                            alt={`Water level ${getWaterLevel(item)}`}
+                            width={isSmallMobile ? 32 : 48}
+                            height={isSmallMobile ? 48 : 72}
+                            className={`object-contain transition-all duration-300 ease-out ${
+                              draggedItem === item && isDragging 
+                                ? 'opacity-30' 
+                                : draggedItem === item 
+                                  ? 'opacity-50' 
+                                  : isAnimationPlaying 
+                                    ? 'opacity-50 filter grayscale'
+                                    : ''
+                            }`}
+                          />
+                        </div>
+                      )}
+                      
+                    </div>
+                    <span className={`text-xs font-inika text-center mt-1 ${isAnimationPlaying ? 'opacity-50' : ''}`}>{item}</span>
+                  </motion.div>
+                ))}
+              </div>
             </motion.div>
           </AnimatePresence>
         </div>
@@ -1395,7 +1380,7 @@ export default function MemeGenerator() {
             className="fixed inset-0 bg-[#333333] z-50 overflow-auto shadow-lg"
             initial={{ y: "100%" }}
             animate={{ 
-              y: galleryPosition === 'partial' ? '0%' : galleryPosition === 'full' ? '0%' : '100%'
+              y: galleryPosition === 'full' ? '0%' : '100%'
             }}
             exit={{ y: "100%" }}
             transition={{ 
