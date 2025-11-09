@@ -99,10 +99,17 @@ const config: Config = {
             height: "0",
           },
         },
+        "pulse-dot": {
+          "0%, 100%": { opacity: "0.4" },
+          "50%": { opacity: "1" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "pulse-dot1": "pulse-dot 1.4s ease-in-out 0s infinite",
+        "pulse-dot2": "pulse-dot 1.4s ease-in-out 0.2s infinite",
+        "pulse-dot3": "pulse-dot 1.4s ease-in-out 0.4s infinite",
       },
     },
   },

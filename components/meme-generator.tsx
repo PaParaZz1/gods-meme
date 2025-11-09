@@ -54,7 +54,7 @@ export default function MemeGenerator() {
   const [isDraggingGallery, setIsDraggingGallery] = useState(false)
   const [lastGalleryPosition, setLastGalleryPosition] = useState<'full'>('full')
   
-  // 添加滑动触摸相关的状态
+  // Add swipe touch related states
   const [touchStartY, setTouchStartY] = useState(0)
   const [touchEndY, setTouchEndY] = useState(0)
   const mainAreaRef = useRef<HTMLDivElement>(null)
@@ -102,6 +102,11 @@ export default function MemeGenerator() {
 
   // Button touch states for error toast
   const [isErrorButtonTouchActive, setIsErrorButtonTouchActive] = useState(false);
+
+  // Add state for QA page
+  const [showQAPage, setShowQAPage] = useState(false)
+  const [selectedQAOption, setSelectedQAOption] = useState<string>("")
+  const [qaOptions, setQaOptions] = useState<string[]>([])
   
   const handleErrorButtonTouchStart = () => {
     setIsErrorButtonTouchActive(true);
@@ -559,7 +564,16 @@ export default function MemeGenerator() {
       // Reset god's bowl water level
       setGodWaterLevel(0)
       saveWaterLevel()
-      router.push("/template-selection")
+      
+      let options: string[] = ["Myself", "The reader", "Someone else"]
+      // Only show QA page if there are options
+      if (options.length > 0) {
+        setQaOptions(options)
+        setShowQAPage(true)
+      } else {
+        // Skip QA page and go directly to template selection
+        router.push("/template-selection")
+      }
     }, 1500)
   }
 
@@ -572,6 +586,29 @@ export default function MemeGenerator() {
     setTimeout(() => {
       setIsTouchActive(false)
     }, 300)
+  }
+
+  // Handle QA option selection
+  const handleQAOptionClick = (option: string) => {
+    setSelectedQAOption(option)
+  }
+
+  // Handle QA page next button
+  const handleQANext = () => {
+    if (!selectedQAOption) {
+      return
+    }
+
+    // Save the selected option to localStorage
+    const memeData = localStorage.getItem('meme_data')
+    if (memeData) {
+      const data = JSON.parse(memeData)
+      data.target = selectedQAOption
+      localStorage.setItem('meme_data', JSON.stringify(data))
+    }
+
+    // Navigate to template selection
+    router.push("/template-selection")
   }
 
   // New state for gallery
@@ -965,6 +1002,142 @@ export default function MemeGenerator() {
     </div>
   )
 
+  // Render QA page if showQAPage is true
+  if (showQAPage) {
+    return (
+      <div className="flex flex-col items-center max-w-md mx-auto min-h-screen bg-white py-8">
+        {/* Header */}
+        <div className="w-full flex flex-col items-center relative px-6 mb-6">
+          {/* Question mark button */}
+          <div className="absolute right-6 top-2">
+            <button className="w-6 h-6 bg-[#333333] rounded-full flex items-center justify-center text-white text-xl">
+              ?
+            </button>
+          </div>
+          
+          {/* Logo and title */}
+          <div className="flex flex-col items-center">
+            <div className="bg-[#333333] rounded-full w-16 h-16 flex items-center justify-center mb-2">
+              <Image src="/logo_head.png" alt="God's Meme Logo" width={96} height={96} />
+            </div>
+            <h1 className="text-3xl font-inika text-[#333333]">GOD'S MEME</h1>
+          </div>
+        </div>
+
+        {/* Keywords display */}
+        <div className="w-full mb-4 relative">
+          <div className="relative px-8">
+            <div className="bg-[#333333] text-white px-6 py-3 rounded-full text-center font-lexend">
+              {inputValue || "Your keywords"}
+            </div>
+          </div>
+          
+          {/* Left curved line - flatter curve from edge to padding */}
+          <div className="absolute left-0 top-1/4 -translate-y-1/2 pointer-events-none">
+            <svg width="32" height="20" viewBox="0 0 32 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M0 5 Q10 15, 32 20" stroke="#333333" strokeWidth="2" />
+            </svg>
+          </div>
+          
+          {/* Right curved line - flatter curve from padding to edge */}
+          <div className="absolute right-0 top-1/4 -translate-y-1/2 pointer-events-none">
+            <svg width="32" height="20" viewBox="0 0 32 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M32 5 Q22 15, 0 20" stroke="#333333" strokeWidth="2" />
+            </svg>
+          </div>
+        </div>
+
+        {/* Question bubble with cloud background */}
+        <div className="w-[90%] relative">
+          {/* Cloud background image */}
+          <div className="relative">
+            <Image 
+              src="/cloud_qa.png" 
+              alt="Cloud background" 
+              width={400} 
+              height={200} 
+              className="w-full h-auto"
+            />
+            
+            {/* Content overlay on cloud */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-6">
+              <p className="text-center text-lg font-lexend text-[#333333] mb-1">
+                Who is the target object of this sarcasm?
+              </p>
+              
+              {/* Options - dynamically generated */}
+              <div className="flex justify-center gap-4 flex-wrap">
+                {qaOptions.map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => handleQAOptionClick(option)}
+                    className={`px-4 py-2 rounded-full font-lexend text-xs transition-all duration-200 ${
+                      selectedQAOption === option
+                        ? "bg-[#333333] text-white"
+                        : "bg-[#EEEEEE] text-[#333333] hover:bg-[#DDDDDD]"
+                    }`}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Character Display - same as main page */}
+        <div className="w-full flex justify-center mb-12">
+          <div className="relative w-[390px] h-[230px] xs:w-[280px] xs:h-[160px]">
+            {/* Static image (always visible as base) */}
+            <div className="absolute inset-0">
+              <Image 
+                src="/meme_god_static_qa.png" 
+                alt="Meme God" 
+                width={isSmallMobile ? 280 : 390} 
+                height={isSmallMobile ? 160 : 230} 
+                className="opacity-100"
+              />
+            </div>
+            
+            {/* God's bowl water level */}
+            {godWaterLevel > 0 && (
+              <div className="absolute inset-0">
+                <Image 
+                  src={`/water_level_${Math.min(godWaterLevel, 8)}.png`}
+                  alt={`God's bowl water level ${Math.min(godWaterLevel, 8)}`}
+                  width={isSmallMobile ? 280 : 390} 
+                  height={isSmallMobile ? 160 : 230}
+                  className="object-contain"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Next button */}
+        <div className="w-full mb-6 px-6">
+          <button
+            onClick={handleQANext}
+            disabled={!selectedQAOption}
+            className={`w-full py-4 rounded-full font-phudu text-2xl transition-all duration-200 ${
+              !selectedQAOption
+                ? "bg-[#CCCCCC] text-[#666666] cursor-not-allowed"
+                : "bg-[#333333] text-white hover:bg-[#444444] active:scale-[0.98]"
+            }`}
+          >
+            BLEND IT
+          </button>
+        </div>
+
+        {/* Scroll hint */}
+        <div className="flex flex-col items-center text-center">
+          <ChevronsDown className="w-4 h-4 text-[#666666]" />
+          <span className="text-xs text-[#666666] mt-1">Scroll down to view gallery</span>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div 
       className="flex flex-col items-center max-w-md mx-auto min-h-screen overscroll-none"
@@ -1105,8 +1278,8 @@ export default function MemeGenerator() {
       </div>
       
     {/* Dynamic Content Grid based on selected tab */}
-      <div className="w-[90%] px-2">
-        <div className="bg-[#EEEEEE] rounded-lg p-4 xs:p-2 mx-2">
+      <div className="w-full px-2 flex justify-center">
+        <div className="bg-[#EEEEEE] rounded-lg py-4 px-2 xs:p-2 max-w-[356px]">
           <AnimatePresence mode="wait">
             <motion.div
               key={selectedTab}
@@ -1119,7 +1292,7 @@ export default function MemeGenerator() {
                 stiffness: 400,
                 damping: 25
               }}
-              className="overflow-x-auto scrollbar-hide"
+              className="overflow-x-auto scrollbar-hide max-w-[300px] mx-2"
               style={{ 
                 scrollbarWidth: 'none',
                 msOverflowStyle: 'none',
@@ -1133,7 +1306,7 @@ export default function MemeGenerator() {
                     // Add a larger invisible click area
                     style={{ 
                       touchAction: "manipulation", // Improves touch response
-                      minWidth: 'calc((100% - 40px) / 6)' // Calculate width to show 6 items: container width - gaps (8px * 5)
+                      width: isSmallMobile ? '40px' : '52px' // Fixed width to show approximately 5 items
                     }}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -1145,10 +1318,10 @@ export default function MemeGenerator() {
                       damping: 20
                     }}
                     whileHover={{ 
-                      scale: isAnimationPlaying ? 1.0 : 1.1,  // 动画播放时禁用悬停效果
+                      scale: isAnimationPlaying ? 1.0 : 1.1,  // Disable hover effect when animation is playing
                       transition: { duration: 0.15 }
                     }}
-                    whileTap={{ scale: isAnimationPlaying ? 1.0 : 0.95 }}  // 动画播放时禁用点击效果
+                    whileTap={{ scale: isAnimationPlaying ? 1.0 : 0.95 }}  // Disable tap effect when animation is playing
                   >
                     {/* Add an invisible larger click area */}
                     <div className="absolute inset-0 z-10" />
@@ -1237,7 +1410,7 @@ export default function MemeGenerator() {
             />
           </div>
           
-          {/* God's bowl water level - 显示在静态图像上 */}
+          {/* God's bowl water level - Display on static image */}
           {godWaterLevel > 0 && !showAddAnimation && !showRemoveAnimation && !showBlendAnimation && (
             <div className="absolute inset-0">
               <Image 
@@ -1263,7 +1436,7 @@ export default function MemeGenerator() {
             </div>
           )}
           
-          {/* 在动画播放时也显示碗里的水 */}
+          {/* Also display water in bowl during animation */}
           {godWaterLevel > 0 && (showAddAnimation || showRemoveAnimation) && (
             <div className="absolute inset-0 pointer-events-none">
               <Image 
@@ -1323,9 +1496,9 @@ export default function MemeGenerator() {
             transform transition-all duration-300 relative overflow-hidden group
             ${isBlending ? 'scale-[0.98] shadow-inner' : 'hover:shadow-lg active:scale-[0.98]'}`}
         >
-          {/* Button text that disappears when loading */}
+          {/* Button text that disappears when loading (BLEND IT) */}
           <span className={`relative z-10 xs:text-md transition-all duration-300 ${isBlending ? 'opacity-0' : 'opacity-100 group-hover:tracking-wider'}`}>
-            BLEND IT
+            NEXT
           </span>
           
           {/* Loading dots that appear in place of text */}
@@ -1360,7 +1533,7 @@ export default function MemeGenerator() {
         </button>
       </div>
 
-      {/* Scroll Indicator - 更新显示为滑动手势提示 */}
+      {/* Scroll Indicator - Updated to show swipe gesture hint */}
       <div 
         className="flex flex-col items-center cursor-pointer" 
         onClick={toggleGallery}
@@ -1460,7 +1633,7 @@ export default function MemeGenerator() {
                       overflow: "hidden"
                     }}
                   >
-                    {/* 使用真实图片替换占位符 */}
+                    {/* Use real image to replace placeholder */}
                     <div className="absolute inset-0">
                       <Image 
                         src={image.src} 
