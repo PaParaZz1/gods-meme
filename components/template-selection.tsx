@@ -551,25 +551,35 @@ export default function TemplateEditor() {
           className="overflow-x-auto hide-scrollbar pb-4"
           style={{ scrollbarWidth: 'none' }}
         >
-          <div className="grid grid-rows-2 xs:grid-rows-1 grid-flow-col gap-2 w-max">
-            {/* Generate random number of similar memes for the current template */}
-            {Array.from({ length: getCurrentSimilarMemesCount() }).map((_, index) => (
-              <div 
-                key={index} 
-                className="w-[150px] h-[150px] border border-[#333333] rounded-lg overflow-hidden cursor-pointer"
-                onClick={() => openFullImage(templates[currentTemplate])}
-              >
-                <Image
-                  src={templates[currentTemplate]}
-                  alt={`Similar meme ${index + 1}`}
-                  width={150}
-                  height={150}
-                  className="w-full h-full object-cover"
-                  draggable={false}
-                />
-              </div>
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="flex items-center justify-center h-[150px]">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#333333]"></div>
+            </div>
+          ) : templates.length > 0 && templates[currentTemplate] ? (
+            <div className="grid grid-rows-2 xs:grid-rows-1 grid-flow-col gap-2 w-max">
+              {/* Generate random number of similar memes for the current template */}
+              {Array.from({ length: getCurrentSimilarMemesCount() }).map((_, index) => (
+                <div 
+                  key={index} 
+                  className="w-[150px] h-[150px] border border-[#333333] rounded-lg overflow-hidden cursor-pointer"
+                  onClick={() => openFullImage(templates[currentTemplate])}
+                >
+                  <Image
+                    src={templates[currentTemplate]}
+                    alt={`Similar meme ${index + 1}`}
+                    width={150}
+                    height={150}
+                    className="w-full h-full object-cover"
+                    draggable={false}
+                  />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-[150px] text-gray-500">
+              <p>No similar memes available</p>
+            </div>
+          )}
         </div>
       </div>
 

@@ -1172,7 +1172,7 @@ export default function MemeGenerator() {
               <Image 
                 src="/meme_god_static_qa.png" 
                 alt="Meme God" 
-                width={isSmallMobile ? 280 : 390} 
+                width={isSmallMobile ? 280 : 390}
                 height={isSmallMobile ? 160 : 230} 
                 className="opacity-100"
               />
