@@ -107,6 +107,7 @@ export default function MemeGenerator() {
   const [showQAPage, setShowQAPage] = useState(false)
   const [selectedQAOption, setSelectedQAOption] = useState<string>("")
   const [qaOptions, setQaOptions] = useState<string[]>([])
+  const [qaQuestion, setQaQuestion] = useState<string>("")
   
   const handleErrorButtonTouchStart = () => {
     setIsErrorButtonTouchActive(true);
@@ -558,7 +559,7 @@ export default function MemeGenerator() {
     }
     
     // Simulate processing time, reset state after animation completes
-    setTimeout(() => {
+    setTimeout(async () => {
       setIsBlending(false)
       setShowBlendAnimation(false)
       setIsAnimationPlaying(false)
@@ -566,16 +567,51 @@ export default function MemeGenerator() {
       // It will be reset when user clicks "BLEND IT" on QA page
       saveWaterLevel()
       
-      let options: string[] = ["Myself", "The reader", "Someone else"]
-      // Only show QA page if there are options
-      if (options.length > 0) {
-        setQaOptions(options)
-        setShowQAPage(true)
-      } else {
-        // Skip QA page and go directly to template selection
-        // Reset water level before navigating
-        setGodWaterLevel(0)
-        router.push("/template-selection")
+      try {
+        // Fetch question and options from backend
+        const questionResponse = await fetch('/api/get_question', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            user_id: localStorage.getItem('user_uid')
+          }),
+        });
+
+        if (!questionResponse.ok) {
+          const errorData = await questionResponse.json();
+          console.error('Failed to fetch question:', errorData.error_msg);
+          
+          // Show error and don't proceed to QA page
+          showError(errorData.error_msg || 'Failed to load questions. Please try again.');
+          return;
+        }
+
+        const questionData = await questionResponse.json();
+        
+        if (questionData.code === 0 && questionData.ret) {
+          // Extract question and options from the response
+          const { question, option } = questionData.ret;
+          
+          // Only show QA page if there are options
+          if (option && option.length > 0) {
+            setQaQuestion(question || "Who is the target object of this sarcasm?")
+            setQaOptions(option)
+            setShowQAPage(true)
+          } else {
+            // Skip QA page and go directly to template selection
+            // Reset water level before navigating
+            setGodWaterLevel(0)
+            router.push("/template-selection")
+          }
+        } else {
+          // If API returns error code, show error
+          showError(questionData.error_msg || 'Failed to load questions. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error fetching question:', error);
+        showError('Network error. Please check your connection and try again.');
       }
     }, 1500)
   }
@@ -1105,7 +1141,7 @@ export default function MemeGenerator() {
             {/* Content overlay on cloud */}
             <div className="absolute inset-0 flex flex-col items-center justify-center p-6">
               <p className="text-center text-lg font-lexend text-[#333333] mb-1">
-                Who is the target object of this sarcasm?
+                {qaQuestion || "Who is the target object of this sarcasm?"}
               </p>
               
               {/* Options - dynamically generated */}
