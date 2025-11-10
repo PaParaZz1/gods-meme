@@ -597,8 +597,16 @@ export default function MemeGenerator() {
         const questionData = await questionResponse.json();
         
         if (questionData.code === 0 && questionData.ret) {
-          // Extract question and options from the response
-          const { question, option } = questionData.ret;
+          // Extract question, options and tag from the response
+          const { question, option, tag } = questionData.ret;
+          
+          // Save the tag to localStorage for later use when submitting answer
+          const currentMemeData = localStorage.getItem('meme_data')
+          if (currentMemeData) {
+            const data = JSON.parse(currentMemeData)
+            data.qaTag = tag || 'general'
+            localStorage.setItem('meme_data', JSON.stringify(data))
+          }
           
           // Only show QA page if there are options
           if (option && option.length > 0) {
@@ -639,7 +647,7 @@ export default function MemeGenerator() {
   }
 
   // Handle QA page next button
-  const handleQANext = () => {
+  const handleQANext = async () => {
     if (!selectedQAOption) {
       return
     }
@@ -650,6 +658,39 @@ export default function MemeGenerator() {
       const data = JSON.parse(memeData)
       data.target = selectedQAOption
       localStorage.setItem('meme_data', JSON.stringify(data))
+    }
+
+      try {
+        // Send the selected answer to backend
+        const response = await fetch('/api/post_answer', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            user_id: localStorage.getItem('user_uid'),
+            answer_data: {
+              question: qaQuestion,
+              answer: selectedQAOption,
+            }
+          }),
+        })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error('Failed to post answer:', errorData.error_msg)
+        // Show error but still allow navigation (optional: you can choose to block navigation)
+        showError(errorData.error_msg || 'Failed to submit answer. Please try again.')
+        return
+      }
+
+      const result = await response.json()
+      console.log('Answer posted successfully:', result)
+    } catch (error) {
+      console.error('Error posting answer:', error)
+      // Show error but still allow navigation (optional: you can choose to block navigation)
+      showError('Network error. Please check your connection.')
+      return
     }
 
     // Reset god's bowl water level after QA page
