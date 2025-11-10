@@ -6,6 +6,12 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import ErrorToast from "./error-toast"
+import PageHeader from "./shared/page-header"
+import InputWithDecoration from "./shared/input-with-decoration"
+import CharacterDisplay from "./shared/character-display"
+import ActionButton from "./shared/action-button"
+import ScrollHint from "./shared/scroll-hint"
+import MemeGallery from "./shared/meme-gallery"
 
 // Define types to solve index signature problems
 type TabKey = "emotion" | "intention" | "style";
@@ -656,38 +662,6 @@ export default function MemeGenerator() {
 
   // New state for gallery
   const [showGallery, setShowGallery] = useState(false)
-  const [galleryImages, setGalleryImages] = useState([
-    { id: 1, src: "/template1.jpg", likes: 120, height: 320 },
-    { id: 2, src: "/template2.jpg", likes: 85, height: 280 },
-    { id: 3, src: "/template3.jpg", likes: 230, height: 350 },
-    { id: 4, src: "/template4.jpg", likes: 67, height: 300 },
-    { id: 5, src: "/template5.jpg", likes: 192, height: 270 },
-    { id: 6, src: "/template1.jpg", likes: 145, height: 330 },
-    { id: 7, src: "/template2.jpg", likes: 78, height: 290 },
-    { id: 8, src: "/template3.jpg", likes: 210, height: 310 },
-    { id: 9, src: "/template5.jpg", likes: 142, height: 280 },
-    { id: 10, src: "/template1.jpg", likes: 245, height: 340 },
-    { id: 11, src: "/template2.jpg", likes: 178, height: 270 },
-    { id: 12, src: "/template3.jpg", likes: 110, height: 330 },
-  ])
-  const [likedImages, setLikedImages] = useState<number[]>([])
-
-  // New function to handle like
-  const handleLikeImage = (id: number) => {
-    if (likedImages.includes(id)) {
-      // Cancel like
-      setLikedImages(prev => prev.filter(imageId => imageId !== id))
-      setGalleryImages(prev => 
-        prev.map(img => img.id === id ? {...img, likes: img.likes - 1} : img)
-      )
-    } else {
-      // Add like
-      setLikedImages(prev => [...prev, id])
-      setGalleryImages(prev => 
-        prev.map(img => img.id === id ? {...img, likes: img.likes + 1} : img)
-      )
-    }
-  }
 
   // New function to toggle gallery with partial expansion
   const toggleGallery = () => {
@@ -1086,45 +1060,14 @@ export default function MemeGenerator() {
         onTouchEnd={handleMainTouchEnd}
       >
         {/* Header */}
-        <div className="w-full flex flex-col items-center relative px-6 mb-6">
-          {/* Question mark button */}
-          <div className="absolute right-6 top-2">
-            <button className="w-6 h-6 bg-[#333333] rounded-full flex items-center justify-center text-white text-xl">
-              ?
-            </button>
-          </div>
-          
-          {/* Logo and title */}
-          <div className="flex flex-col items-center">
-            <div className="bg-[#333333] rounded-full w-16 h-16 flex items-center justify-center mb-2">
-              <Image src="/logo_head.png" alt="God's Meme Logo" width={96} height={96} />
-            </div>
-            <h1 className="text-3xl font-inika text-[#333333]">GOD'S MEME</h1>
-          </div>
-        </div>
+        <PageHeader showLogo={true} logoSize={96} className="mb-6" />
 
         {/* Keywords display */}
-        <div className="w-full mb-4 relative">
-          <div className="relative px-8">
-            <div className="bg-[#333333] text-white px-6 py-3 rounded-full text-center font-lexend text-lg">
-              {inputValue || "Your keywords"}
-            </div>
-          </div>
-          
-          {/* Left curved line - flatter curve from edge to padding */}
-          <div className="absolute left-0 top-1/4 -translate-y-1/2 pointer-events-none">
-            <svg width="32" height="20" viewBox="0 0 32 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M0 5 Q10 15, 32 20" stroke="#333333" strokeWidth="2" />
-            </svg>
-          </div>
-          
-          {/* Right curved line - flatter curve from padding to edge */}
-          <div className="absolute right-0 top-1/4 -translate-y-1/2 pointer-events-none">
-            <svg width="32" height="20" viewBox="0 0 32 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M32 5 Q22 15, 0 20" stroke="#333333" strokeWidth="2" />
-            </svg>
-          </div>
-        </div>
+        <InputWithDecoration 
+          value={inputValue || "Your keywords"}
+          readOnly={true}
+          className="mb-4"
+        />
 
         {/* Question bubble with cloud background */}
         <div className="w-[90%] relative">
@@ -1165,186 +1108,42 @@ export default function MemeGenerator() {
         </div>
 
         {/* Character Display - same as main page */}
-        <div className="w-full flex justify-center mb-12">
-          <div className="relative w-[390px] h-[230px] xs:w-[280px] xs:h-[160px]">
-            {/* Static image (always visible as base) */}
-            <div className="absolute inset-0">
-              <Image 
-                src="/meme_god_static_qa.png" 
-                alt="Meme God" 
-                width={isSmallMobile ? 280 : 390}
-                height={isSmallMobile ? 160 : 230} 
-                className="opacity-100"
-              />
-            </div>
-            
-            {/* God's bowl water level - adjusted for QA page background */}
-            {godWaterLevel > 0 && (
-              <div className="absolute inset-0" style={{ transform: 'translateY(18px)' }}>
-                <Image 
-                  src={`/water_level_${Math.min(godWaterLevel, 8)}.png`}
-                  alt={`God's bowl water level ${Math.min(godWaterLevel, 8)}`}
-                  width={isSmallMobile ? 280 : 390} 
-                  height={isSmallMobile ? 160 : 230}
-                  className="object-contain"
-                />
-              </div>
-            )}
-          </div>
-        </div>
+        <CharacterDisplay 
+          godWaterLevel={godWaterLevel}
+          isSmallMobile={isSmallMobile}
+          variant="qa"
+          className="mb-12"
+        />
 
         {/* Next button */}
         <div className="w-full mb-6 px-6">
-          <button
+          <ActionButton 
+            text="BLEND IT"
             onClick={handleQANext}
             disabled={!selectedQAOption}
-            className={`w-full py-4 rounded-full font-phudu text-2xl transition-all duration-200 ${
-              !selectedQAOption
-                ? "bg-[#CCCCCC] text-[#666666] cursor-not-allowed"
-                : "bg-[#333333] text-white hover:bg-[#444444] active:scale-[0.98]"
-            }`}
-          >
-            BLEND IT
-          </button>
+            variant="enhanced"
+          />
         </div>
 
         {/* Scroll hint */}
-        <div 
-          className="flex flex-col items-center cursor-pointer" 
-          onClick={toggleGallery}
-        >
-          <ChevronsDown className="w-4 h-4 text-[#666666]" />
-          <span className="text-xs text-[#666666] mt-1">Swipe up to view gallery</span>
-        </div>
+        <ScrollHint onClick={toggleGallery} />
 
         {/* Gallery Section - Same as main page */}
-        <AnimatePresence>
-          {showGallery && (
-            <motion.div 
-              ref={galleryRef}
-              className="fixed inset-0 bg-[#333333] z-50 overflow-auto shadow-lg"
-              initial={{ y: "100%" }}
-              animate={{ 
-                y: galleryPosition === 'full' ? '0%' : '100%'
-              }}
-              exit={{ y: "100%" }}
-              transition={{ 
-                type: "tween", 
-                ease: "easeOut", 
-                duration: 0.3 
-              }}
-              onScroll={handleGalleryScroll}
-              drag="y"
-              dragConstraints={dragConstraints}
-              dragElastic={0.2}
-              onDragStart={() => setIsDraggingGallery(true)}
-              onDragEnd={handleGalleryDragEnd}
-              onTouchStart={handleGalleryTouchStart}
-              onTouchMove={handleGalleryTouchMove}
-              onTouchEnd={handleGalleryTouchEnd}
-              style={{ overflow: isDraggingGallery ? 'hidden' : 'auto' }}
-            >
-              {/* Drag indicator */}
-              <div className="absolute top-0 left-0 right-0 flex justify-center pt-2">
-                <div className="w-10 h-1 bg-white/30 rounded-full"></div>
-              </div>
-              {/* Gallery Header */}
-              <motion.div 
-                className="sticky top-0 bg-[#333333] shadow-sm z-10 p-4 mt-6 flex flex-col items-center"
-                animate={{ 
-                  opacity: galleryPosition === 'full' && scrollY > scrollThreshold ? 0 : 1,
-                  height: galleryPosition === 'full' && scrollY > scrollThreshold ? 0 : 'auto'
-                }}
-                transition={{ duration: 0.3 }}
-              >
-                <div 
-                  className="flex flex-col items-center cursor-pointer" 
-                  onClick={toggleGallery}
-                >
-                  <motion.div
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ repeat: Infinity, duration: 1.5 }}
-                  >
-                    <ChevronsUp className="w-4 h-4" color="#808080"/>
-                  </motion.div>
-                  <span className="text-sm text-[#808080]">Swipe down to the home</span>
-                </div>
-
-              </motion.div>
-              
-              {/* Scroll to top button - only visible in full mode when scrolled down */}
-              {galleryPosition === 'full' && scrollY > scrollThreshold && (
-                <motion.div 
-                  className="fixed top-4 inset-x-0 mx-auto w-fit z-20 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg cursor-pointer flex items-center justify-center"
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  onClick={() => {
-                    if (galleryRef.current) {
-                      galleryRef.current.scrollTo({ top: 0, behavior: 'smooth' })
-                    }
-                  }}
-                >
-                  <ChevronsUp className="w-4 h-4" color="white" />
-                </motion.div>
-              )}
-              
-              {/* Gallery Grid with dark background */}
-              <div className="p-4 bg-[#f8f8f8] min-h-screen rounded-t-[30px]">
-                <div className="flex justify-center mb-6">
-                  <h2 className="text-xl font-inika text-[#333333] mt-2 bg-[#f5f5f5] px-6 py-1 rounded-full">MEME GALLERY</h2>
-                </div>
-                <div className="columns-2 gap-5 mx-2">
-                  {galleryImages.map((image) => (
-                    <div 
-                      key={image.id} 
-                      className="mb-4 break-inside-avoid relative group"
-                      style={{ 
-                        height: `${image.height}px`,
-                        borderRadius: "12px",
-                        overflow: "hidden"
-                      }}
-                    >
-                      {/* Use real image to replace placeholder */}
-                      <div className="absolute inset-0">
-                        <Image 
-                          src={image.src} 
-                          alt={`Meme template ${image.id}`}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                      
-                      {/* Like Button */}
-                      <div className="absolute bottom-2 right-2">
-                        <button 
-                          onClick={() => handleLikeImage(image.id)}
-                          className={`flex items-center space-x-1 px-2 py-1 rounded-full ${
-                            likedImages.includes(image.id) 
-                              ? 'bg-[#333333] text-white' 
-                              : 'bg-white/80 text-gray-700 hover:bg-gray-100'
-                          } transition-colors duration-200 shadow-md`}
-                        >
-                          <svg 
-                            width="16" 
-                            height="16" 
-                            viewBox="0 0 24 24" 
-                            fill={likedImages.includes(image.id) ? "white" : "none"} 
-                            stroke={likedImages.includes(image.id) ? "white" : "currentColor"} 
-                            strokeWidth="2"
-                          >
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                          </svg>
-                          <span className="text-xs">{image.likes}</span>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <MemeGallery 
+          showGallery={showGallery}
+          galleryPosition={galleryPosition}
+          scrollY={scrollY}
+          scrollThreshold={scrollThreshold}
+          dragConstraints={dragConstraints}
+          isDraggingGallery={isDraggingGallery}
+          onScroll={handleGalleryScroll}
+          onDragStart={() => setIsDraggingGallery(true)}
+          onDragEnd={handleGalleryDragEnd}
+          onTouchStart={handleGalleryTouchStart}
+          onTouchMove={handleGalleryTouchMove}
+          onTouchEnd={handleGalleryTouchEnd}
+          onToggleGallery={toggleGallery}
+        />
       </div>
     )
   }
@@ -1358,56 +1157,18 @@ export default function MemeGenerator() {
       onTouchStart={handleMainTouchStart}
     >
       {/* Header */}
-      <div className="w-full flex flex-col items-center relative px-6 pt-8 xs:pt-4">
-        {/* Question mark button positioned absolutely to the right */}
-        <div className="absolute right-6 top-10">
-          <button className="w-6 h-6 bg-[#333333] rounded-full flex items-center justify-center text-white text-xl">
-            ?
-          </button>
-        </div>
-        
-        {/* Centered logo and title */}
-        <div className="flex flex-col items-center">
-          <div className="bg-[#333333] rounded-full w-16 h-16 flex items-center justify-center mb-2">
-            <Image src="/logo_head.png" alt="God's Meme Logo" width={96} height={96} />
-          </div>
-          <h1 className="text-3xl xs:text-2xl font-inika text-[#333333]">GOD'S MEME</h1>
-        </div>
-      </div>
+      <PageHeader showLogo={true} logoSize={96} className="pt-8 xs:pt-4" />
 
       {/* Search Input with curved lines */}
-      <div className="w-full mt-4 xs:mt-2 relative">
-        <div className="relative px-8">
-          <input
-            type="text"
-            placeholder="Enter your keywords (e.g. cat, funny)"
-            className={`w-full px-6 py-3 rounded-full border-2 border-[#333333] text-left font-lexend transition-colors duration-300 focus:outline-none ${
-              isInputFocused 
-                ? "bg-[#333333] text-white placeholder-white/70 text-lg" 
-                : "bg-white text-[#333333] placeholder-[#666666]"
-            }`}
-            style={{ textAlign: 'left' }}
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onFocus={() => setIsInputFocused(true)}
-            onBlur={() => setIsInputFocused(false)}
-          />
-        </div>
-        
-        {/* Left curved line - flatter curve from edge to padding */}
-        <div className="absolute left-0 top-1/4 -translate-y-1/2 pointer-events-none">
-          <svg width="32" height="20" viewBox="0 0 32 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M0 5 Q10 15, 32 20" stroke="#333333" strokeWidth="2" />
-          </svg>
-        </div>
-        
-        {/* Right curved line - flatter curve from padding to edge */}
-        <div className="absolute right-0 top-1/4 -translate-y-1/2 pointer-events-none">
-          <svg width="32" height="20" viewBox="0 0 32 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M32 5 Q22 15, 0 20" stroke="#333333" strokeWidth="2" />
-          </svg>
-        </div>
-      </div>
+      <InputWithDecoration 
+        value={inputValue}
+        placeholder="Enter your keywords (e.g. cat, funny)"
+        onChange={setInputValue}
+        onFocus={() => setIsInputFocused(true)}
+        onBlur={() => setIsInputFocused(false)}
+        isFocused={isInputFocused}
+        className="mt-4 xs:mt-2"
+      />
 
       {/* Category Tabs */}
       <div className="w-full px-16 mt-6 xs:mt-2 mb-2 xs:mb-1">
@@ -1605,285 +1366,55 @@ export default function MemeGenerator() {
       </div>
 
       {/* Character Display with fixed animations */}
-      <div 
+      <CharacterDisplay 
         ref={godAreaRef}
-        className={"w-full flex justify-center mt-4 relative"}
-      >
-        <div className="relative w-[390px] h-[230px] xs:w-[280px] xs:h-[160px]">
-          {/* Static image (always visible as base) */}
-          <div className="absolute inset-0">
-            <Image 
-              src="/meme_god_static.png" 
-              alt="Meme God" 
-              width={isSmallMobile ? 280 : 390} 
-              height={isSmallMobile ? 160 : 230} 
-              className={`${showAddAnimation || showRemoveAnimation || showBlendAnimation ? 'opacity-0' : 'opacity-100'} transition-opacity duration-0`}
-            />
-          </div>
-          
-          {/* God's bowl water level - Display on static image */}
-          {godWaterLevel > 0 && !showAddAnimation && !showRemoveAnimation && !showBlendAnimation && (
-            <div className="absolute inset-0">
-              <Image 
-                src={`/water_level_${Math.min(godWaterLevel, 8)}.png`}
-                alt={`God's bowl water level ${Math.min(godWaterLevel, 8)}`}
-                width={isSmallMobile ? 280 : 390} 
-                height={isSmallMobile ? 160 : 230}
-                className="object-contain"
-              />
-            </div>
-          )}
-          
-          {/* Add animation */}
-          {showAddAnimation && (
-            <div className="absolute inset-0">
-              <Image 
-                src="/god_add_elem.gif" 
-                alt="Adding Element" 
-                width={isSmallMobile ? 280 : 390} 
-                height={isSmallMobile ? 160 : 230} 
-                priority 
-              />
-            </div>
-          )}
-          
-          {/* Also display water in bowl during animation */}
-          {godWaterLevel > 0 && (showAddAnimation || showRemoveAnimation) && (
-            <div className="absolute inset-0 pointer-events-none">
-              <Image 
-                src={`/water_level_${Math.min(godWaterLevel, 8)}.png`}
-                alt={`God's bowl water level ${Math.min(godWaterLevel, 8)}`}
-                width={isSmallMobile ? 280 : 390} 
-                height={isSmallMobile ? 160 : 230}
-                className="object-contain opacity-70"
-              />
-            </div>
-          )}
-          
-          {/* Remove animation */}
-          {showRemoveAnimation && (
-            <div className="absolute inset-0">
-              <Image 
-                src="/god_remove_elem.gif" 
-                alt="Removing Element" 
-                width={isSmallMobile ? 280 : 390} 
-                height={isSmallMobile ? 160 : 230} 
-                priority 
-              />
-            </div>
-          )}
-          
-          {/* Blend animation */}
-          {showBlendAnimation && (
-            <div className="absolute inset-0">
-              <Image 
-                src="/blend.gif" 
-                alt="Blending Elements" 
-                width={isSmallMobile ? 280 : 390} 
-                height={isSmallMobile ? 160 : 230} 
-                priority 
-              />
-            </div>
-          )}
-          
-          {/* Highlight area when dragging */}
-          {/*
-          <div className="absolute inset-0 rounded-xl border-2 border-dashed border-[#333333]/30 bg-[#EEEEEE]/50 pointer-events-none z-10" />*
-          {draggedItem && (
-            <div className="absolute inset-0 rounded-xl bg-[#EEEEEE]/50 pointer-events-none z-10" />
-          )}
-          */}
-        </div>
-      </div>
+        godWaterLevel={godWaterLevel}
+        showAddAnimation={showAddAnimation}
+        showRemoveAnimation={showRemoveAnimation}
+        showBlendAnimation={showBlendAnimation}
+        isSmallMobile={isSmallMobile}
+        variant="default"
+        className="mt-4"
+      />
 
       {/* Blend Button */}
       <div className="w-full px-6 mt-6 mb-4 xs:mt-5 xs:mb-3">
-        <button 
+        <ActionButton 
+          text="NEXT"
           onClick={handleBlendClick}
           disabled={isBlending}
+          isLoading={isBlending}
+          isTouchActive={isTouchActive}
           onTouchStart={handleButtonTouchStart}
           onTouchEnd={handleButtonTouchEnd}
-          className={`w-full bg-[#333333] text-white py-4 xs:py-2 rounded-full font-phudu text-2xl
-            transform transition-all duration-300 relative overflow-hidden group
-            ${isBlending ? 'scale-[0.98] shadow-inner' : 'hover:shadow-lg active:scale-[0.98]'}`}
-        >
-          {/* Button text that disappears when loading (BLEND IT) */}
-          <span className={`relative z-10 xs:text-md transition-all duration-300 ${isBlending ? 'opacity-0' : 'opacity-100 group-hover:tracking-wider'}`}>
-            NEXT
-          </span>
-          
-          {/* Loading dots that appear in place of text */}
-          {isBlending && (
-            <div className="absolute inset-0 flex items-center justify-center z-20">
-              <div className="flex space-x-2">
-                <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse-dot1"></div>
-                <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse-dot2"></div>
-                <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse-dot3"></div>
-              </div>
-            </div>
-          )}
-          
-          {/* Hover background effect */}
-          <div className={`absolute inset-0 bg-gradient-to-r from-[#333333] via-[#444444] to-[#333333] transition-opacity duration-300 ${isTouchActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}></div>
-          
-          {/* Hover particle effects */}
-          <div className={`absolute inset-0 overflow-hidden transition-opacity duration-300 ${isTouchActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-            <div className="absolute h-1 w-1 bg-white/40 rounded-full top-[20%] left-[15%] animate-float-particle1"></div>
-            <div className="absolute h-1.5 w-1.5 bg-white/30 rounded-full top-[60%] left-[25%] animate-float-particle2"></div>
-            <div className="absolute h-1 w-1 bg-white/40 rounded-full top-[30%] left-[60%] animate-float-particle3"></div>
-            <div className="absolute h-2 w-2 bg-white/20 rounded-full top-[70%] left-[80%] animate-float-particle4"></div>
-            <div className="absolute h-1.5 w-1.5 bg-white/30 rounded-full top-[40%] left-[40%] animate-float-particle5"></div>
-          </div>
-          
-          {isBlending && (
-            <>
-              {/* Pulse border effect */}
-              <div className="absolute inset-0 rounded-full border-2 border-white/0 animate-pulse-border"></div>
-            </>
-          )}
-        </button>
+          variant="enhanced"
+        />
       </div>
 
       {/* Scroll Indicator - Updated to show swipe gesture hint */}
-      <div 
-        className="flex flex-col items-center cursor-pointer" 
+      <ScrollHint 
         onClick={toggleGallery}
         onTouchStart={handleMainTouchStart}
         onTouchMove={handleMainTouchMove}
         onTouchEnd={handleMainTouchEnd}
-      >
-        <ChevronsDown className="w-4 h-4" />
-        <span className="text-xs text-[#666666]">Swipe up to view gallery</span>
-      </div>
+      />
 
       {/* Gallery Section - Full screen in both states, with header visibility toggling on scroll */}
-      <AnimatePresence>
-        {showGallery && (
-          <motion.div 
-            ref={galleryRef}
-            className="fixed inset-0 bg-[#333333] z-50 overflow-auto shadow-lg"
-            initial={{ y: "100%" }}
-            animate={{ 
-              y: galleryPosition === 'full' ? '0%' : '100%'
-            }}
-            exit={{ y: "100%" }}
-            transition={{ 
-              type: "tween", 
-              ease: "easeOut", 
-              duration: 0.3 
-            }}
-            onScroll={handleGalleryScroll}
-            drag="y"
-            dragConstraints={dragConstraints}
-            dragElastic={0.2}
-            onDragStart={() => setIsDraggingGallery(true)}
-            onDragEnd={handleGalleryDragEnd}
-            onTouchStart={handleGalleryTouchStart}
-            onTouchMove={handleGalleryTouchMove}
-            onTouchEnd={handleGalleryTouchEnd}
-            style={{ overflow: isDraggingGallery ? 'hidden' : 'auto' }}
-          >
-            {/* Drag indicator */}
-            <div className="absolute top-0 left-0 right-0 flex justify-center pt-2">
-              <div className="w-10 h-1 bg-white/30 rounded-full"></div>
-            </div>
-            {/* Gallery Header */}
-            <motion.div 
-              className="sticky top-0 bg-[#333333] shadow-sm z-10 p-4 mt-6 flex flex-col items-center"
-              animate={{ 
-                opacity: galleryPosition === 'full' && scrollY > scrollThreshold ? 0 : 1,
-                height: galleryPosition === 'full' && scrollY > scrollThreshold ? 0 : 'auto'
-              }}
-              transition={{ duration: 0.3 }}
-            >
-              <div 
-                className="flex flex-col items-center cursor-pointer" 
-                onClick={toggleGallery}
-              >
-                <motion.div
-                  animate={{ y: [0, -5, 0] }}
-                  transition={{ repeat: Infinity, duration: 1.5 }}
-                >
-                  <ChevronsUp className="w-4 h-4" color="#808080"/>
-                </motion.div>
-                <span className="text-sm text-[#808080]">Swipe down to the home</span>
-              </div>
-
-            </motion.div>
-            
-            {/* Scroll to top button - only visible in full mode when scrolled down */}
-            {galleryPosition === 'full' && scrollY > scrollThreshold && (
-              <motion.div 
-                className="fixed top-4 inset-x-0 mx-auto w-fit z-20 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg cursor-pointer flex items-center justify-center"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                onClick={() => {
-                  if (galleryRef.current) {
-                    galleryRef.current.scrollTo({ top: 0, behavior: 'smooth' })
-                  }
-                }}
-              >
-                <ChevronsUp className="w-4 h-4" color="white" />
-              </motion.div>
-            )}
-            
-            {/* Gallery Grid with dark background */}
-            <div className="p-4 bg-[#f8f8f8] min-h-screen rounded-t-[30px]">
-              <div className="flex justify-center mb-6">
-                <h2 className="text-xl font-inika text-[#333333] mt-2 bg-[#f5f5f5] px-6 py-1 rounded-full">MEME GALLERY</h2>
-              </div>
-              <div className="columns-2 gap-5 mx-2">
-                {galleryImages.map((image) => (
-                  <div 
-                    key={image.id} 
-                    className="mb-4 break-inside-avoid relative group"
-                    style={{ 
-                      height: `${image.height}px`,
-                      borderRadius: "12px",
-                      overflow: "hidden"
-                    }}
-                  >
-                    {/* Use real image to replace placeholder */}
-                    <div className="absolute inset-0">
-                      <Image 
-                        src={image.src} 
-                        alt={`Meme template ${image.id}`}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                    
-                    {/* Like Button */}
-                    <div className="absolute bottom-2 right-2">
-                      <button 
-                        onClick={() => handleLikeImage(image.id)}
-                        className={`flex items-center space-x-1 px-2 py-1 rounded-full ${
-                          likedImages.includes(image.id) 
-                            ? 'bg-[#333333] text-white' 
-                            : 'bg-white/80 text-gray-700 hover:bg-gray-100'
-                        } transition-colors duration-200 shadow-md`}
-                      >
-                        <svg 
-                          width="16" 
-                          height="16" 
-                          viewBox="0 0 24 24" 
-                          fill={likedImages.includes(image.id) ? "white" : "none"} 
-                          stroke={likedImages.includes(image.id) ? "white" : "currentColor"} 
-                          strokeWidth="2"
-                        >
-                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                        </svg>
-                        <span className="text-xs">{image.likes}</span>
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <MemeGallery 
+        showGallery={showGallery}
+        galleryPosition={galleryPosition}
+        scrollY={scrollY}
+        scrollThreshold={scrollThreshold}
+        dragConstraints={dragConstraints}
+        isDraggingGallery={isDraggingGallery}
+        onScroll={handleGalleryScroll}
+        onDragStart={() => setIsDraggingGallery(true)}
+        onDragEnd={handleGalleryDragEnd}
+        onTouchStart={handleGalleryTouchStart}
+        onTouchMove={handleGalleryTouchMove}
+        onTouchEnd={handleGalleryTouchEnd}
+        onToggleGallery={toggleGallery}
+      />
 
       {/* Floating drag element */}
       {isDragging && draggedItem && (
