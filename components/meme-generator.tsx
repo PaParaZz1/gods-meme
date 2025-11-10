@@ -522,6 +522,7 @@ export default function MemeGenerator() {
       // Save meme data to localStorage for later use
       const memeData = {
         keywords: keywordsList,
+        inputValue: inputValue.trim(), // Save original input value
         tags: tagsData,
       };
       localStorage.setItem('meme_data', JSON.stringify(memeData));
@@ -561,8 +562,8 @@ export default function MemeGenerator() {
       setIsBlending(false)
       setShowBlendAnimation(false)
       setIsAnimationPlaying(false)
-      // Reset god's bowl water level
-      setGodWaterLevel(0)
+      // Don't reset god's bowl water level yet - keep it for QA page display
+      // It will be reset when user clicks "BLEND IT" on QA page
       saveWaterLevel()
       
       let options: string[] = ["Myself", "The reader", "Someone else"]
@@ -572,6 +573,8 @@ export default function MemeGenerator() {
         setShowQAPage(true)
       } else {
         // Skip QA page and go directly to template selection
+        // Reset water level before navigating
+        setGodWaterLevel(0)
         router.push("/template-selection")
       }
     }, 1500)
@@ -606,6 +609,10 @@ export default function MemeGenerator() {
       data.target = selectedQAOption
       localStorage.setItem('meme_data', JSON.stringify(data))
     }
+
+    // Reset god's bowl water level after QA page
+    setGodWaterLevel(0)
+    saveWaterLevel()
 
     // Navigate to template selection
     router.push("/template-selection")
@@ -778,8 +785,8 @@ export default function MemeGenerator() {
       // Parse the saved values
       const values = savedWaterLevel.split(',').map(val => parseInt(val, 10))
       
-      // Only update if we have valid values (now 23 values: 7 emotion + 10 intention + 6 style)
-      if (values.length === 23 && !values.some(isNaN)) {
+      // Support both old format (23 values) and new format (24 values with godWaterLevel)
+      if ((values.length === 23 || values.length === 24) && !values.some(isNaN)) {
         setWaterLevels(prev => ({
           ...prev,
           emotion: {
@@ -815,8 +822,27 @@ export default function MemeGenerator() {
             sarcastic: values[22]
           }
         }))
+        
+        // Restore god's bowl water level if available (new format with 24 values)
+        if (values.length === 24) {
+          setGodWaterLevel(values[23])
+        }
       }
     }
+    
+    // Retrieve the saved input value from localStorage
+    const savedMemeData = localStorage.getItem('meme_data')
+    if (savedMemeData) {
+      try {
+        const memeData = JSON.parse(savedMemeData)
+        if (memeData.inputValue) {
+          setInputValue(memeData.inputValue)
+        }
+      } catch (error) {
+        console.error('Error parsing meme_data from localStorage:', error)
+      }
+    }
+    
     // If no saved water level or invalid data, the default values from useState will be used
   }, [])
 
@@ -849,12 +875,23 @@ export default function MemeGenerator() {
       waterLevels.style.wholesome,
       waterLevels.style.dark,
       waterLevels.style.romantic,
-      waterLevels.style.sarcastic
+      waterLevels.style.sarcastic,
+      // God's bowl water level
+      godWaterLevel
     ]
     
     // Save the current water level to localStorage whenever it changes
     localStorage.setItem('waterLevel', values.join(','))
   }
+
+  // Auto-save when godWaterLevel changes
+  useEffect(() => {
+    // Only save if not initial render (godWaterLevel has been set from localStorage)
+    const savedWaterLevel = localStorage.getItem('waterLevel')
+    if (savedWaterLevel) {
+      saveWaterLevel()
+    }
+  }, [godWaterLevel])
 
   // Clean up touch states to prevent state residue
   useEffect(() => {
@@ -1005,7 +1042,13 @@ export default function MemeGenerator() {
   // Render QA page if showQAPage is true
   if (showQAPage) {
     return (
-      <div className="flex flex-col items-center max-w-md mx-auto min-h-screen bg-white py-8">
+      <div 
+        className="flex flex-col items-center max-w-md mx-auto min-h-screen bg-white py-8"
+        ref={mainAreaRef}
+        onTouchStart={handleMainTouchStart}
+        onTouchMove={handleMainTouchMove}
+        onTouchEnd={handleMainTouchEnd}
+      >
         {/* Header */}
         <div className="w-full flex flex-col items-center relative px-6 mb-6">
           {/* Question mark button */}
@@ -1027,7 +1070,7 @@ export default function MemeGenerator() {
         {/* Keywords display */}
         <div className="w-full mb-4 relative">
           <div className="relative px-8">
-            <div className="bg-[#333333] text-white px-6 py-3 rounded-full text-center font-lexend">
+            <div className="bg-[#333333] text-white px-6 py-3 rounded-full text-center font-lexend text-lg">
               {inputValue || "Your keywords"}
             </div>
           </div>
@@ -1099,9 +1142,9 @@ export default function MemeGenerator() {
               />
             </div>
             
-            {/* God's bowl water level */}
+            {/* God's bowl water level - adjusted for QA page background */}
             {godWaterLevel > 0 && (
-              <div className="absolute inset-0">
+              <div className="absolute inset-0" style={{ transform: 'translateY(18px)' }}>
                 <Image 
                   src={`/water_level_${Math.min(godWaterLevel, 8)}.png`}
                   alt={`God's bowl water level ${Math.min(godWaterLevel, 8)}`}
@@ -1130,10 +1173,142 @@ export default function MemeGenerator() {
         </div>
 
         {/* Scroll hint */}
-        <div className="flex flex-col items-center text-center">
+        <div 
+          className="flex flex-col items-center cursor-pointer" 
+          onClick={toggleGallery}
+        >
           <ChevronsDown className="w-4 h-4 text-[#666666]" />
-          <span className="text-xs text-[#666666] mt-1">Scroll down to view gallery</span>
+          <span className="text-xs text-[#666666] mt-1">Swipe up to view gallery</span>
         </div>
+
+        {/* Gallery Section - Same as main page */}
+        <AnimatePresence>
+          {showGallery && (
+            <motion.div 
+              ref={galleryRef}
+              className="fixed inset-0 bg-[#333333] z-50 overflow-auto shadow-lg"
+              initial={{ y: "100%" }}
+              animate={{ 
+                y: galleryPosition === 'full' ? '0%' : '100%'
+              }}
+              exit={{ y: "100%" }}
+              transition={{ 
+                type: "tween", 
+                ease: "easeOut", 
+                duration: 0.3 
+              }}
+              onScroll={handleGalleryScroll}
+              drag="y"
+              dragConstraints={dragConstraints}
+              dragElastic={0.2}
+              onDragStart={() => setIsDraggingGallery(true)}
+              onDragEnd={handleGalleryDragEnd}
+              onTouchStart={handleGalleryTouchStart}
+              onTouchMove={handleGalleryTouchMove}
+              onTouchEnd={handleGalleryTouchEnd}
+              style={{ overflow: isDraggingGallery ? 'hidden' : 'auto' }}
+            >
+              {/* Drag indicator */}
+              <div className="absolute top-0 left-0 right-0 flex justify-center pt-2">
+                <div className="w-10 h-1 bg-white/30 rounded-full"></div>
+              </div>
+              {/* Gallery Header */}
+              <motion.div 
+                className="sticky top-0 bg-[#333333] shadow-sm z-10 p-4 mt-6 flex flex-col items-center"
+                animate={{ 
+                  opacity: galleryPosition === 'full' && scrollY > scrollThreshold ? 0 : 1,
+                  height: galleryPosition === 'full' && scrollY > scrollThreshold ? 0 : 'auto'
+                }}
+                transition={{ duration: 0.3 }}
+              >
+                <div 
+                  className="flex flex-col items-center cursor-pointer" 
+                  onClick={toggleGallery}
+                >
+                  <motion.div
+                    animate={{ y: [0, -5, 0] }}
+                    transition={{ repeat: Infinity, duration: 1.5 }}
+                  >
+                    <ChevronsUp className="w-4 h-4" color="#808080"/>
+                  </motion.div>
+                  <span className="text-sm text-[#808080]">Swipe down to the home</span>
+                </div>
+
+              </motion.div>
+              
+              {/* Scroll to top button - only visible in full mode when scrolled down */}
+              {galleryPosition === 'full' && scrollY > scrollThreshold && (
+                <motion.div 
+                  className="fixed top-4 inset-x-0 mx-auto w-fit z-20 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg cursor-pointer flex items-center justify-center"
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  onClick={() => {
+                    if (galleryRef.current) {
+                      galleryRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+                    }
+                  }}
+                >
+                  <ChevronsUp className="w-4 h-4" color="white" />
+                </motion.div>
+              )}
+              
+              {/* Gallery Grid with dark background */}
+              <div className="p-4 bg-[#f8f8f8] min-h-screen rounded-t-[30px]">
+                <div className="flex justify-center mb-6">
+                  <h2 className="text-xl font-inika text-[#333333] mt-2 bg-[#f5f5f5] px-6 py-1 rounded-full">MEME GALLERY</h2>
+                </div>
+                <div className="columns-2 gap-5 mx-2">
+                  {galleryImages.map((image) => (
+                    <div 
+                      key={image.id} 
+                      className="mb-4 break-inside-avoid relative group"
+                      style={{ 
+                        height: `${image.height}px`,
+                        borderRadius: "12px",
+                        overflow: "hidden"
+                      }}
+                    >
+                      {/* Use real image to replace placeholder */}
+                      <div className="absolute inset-0">
+                        <Image 
+                          src={image.src} 
+                          alt={`Meme template ${image.id}`}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      
+                      {/* Like Button */}
+                      <div className="absolute bottom-2 right-2">
+                        <button 
+                          onClick={() => handleLikeImage(image.id)}
+                          className={`flex items-center space-x-1 px-2 py-1 rounded-full ${
+                            likedImages.includes(image.id) 
+                              ? 'bg-[#333333] text-white' 
+                              : 'bg-white/80 text-gray-700 hover:bg-gray-100'
+                          } transition-colors duration-200 shadow-md`}
+                        >
+                          <svg 
+                            width="16" 
+                            height="16" 
+                            viewBox="0 0 24 24" 
+                            fill={likedImages.includes(image.id) ? "white" : "none"} 
+                            stroke={likedImages.includes(image.id) ? "white" : "currentColor"} 
+                            strokeWidth="2"
+                          >
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                          </svg>
+                          <span className="text-xs">{image.likes}</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     )
   }
@@ -1172,7 +1347,7 @@ export default function MemeGenerator() {
             placeholder="Enter your keywords (e.g. cat, funny)"
             className={`w-full px-6 py-3 rounded-full border-2 border-[#333333] text-left font-lexend transition-colors duration-300 focus:outline-none ${
               isInputFocused 
-                ? "bg-[#333333] text-white placeholder-white/70" 
+                ? "bg-[#333333] text-white placeholder-white/70 text-lg" 
                 : "bg-white text-[#333333] placeholder-[#666666]"
             }`}
             style={{ textAlign: 'left' }}
