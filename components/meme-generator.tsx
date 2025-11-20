@@ -108,12 +108,23 @@ export default function MemeGenerator() {
 
   // Button touch states for error toast
   const [isErrorButtonTouchActive, setIsErrorButtonTouchActive] = useState(false);
+  
+  // Button touch states for theme selection and QA pages
+  const [isThemeButtonTouchActive, setIsThemeButtonTouchActive] = useState(false);
+  const [isQAButtonTouchActive, setIsQAButtonTouchActive] = useState(false);
 
+  // Add state for theme selection page
+  const [showThemeSelection, setShowThemeSelection] = useState(false)
+  const [selectedThemes, setSelectedThemes] = useState<string[]>([])
+  const [showMoreThemes, setShowMoreThemes] = useState(false)
+  const [isThemeLoading, setIsThemeLoading] = useState(false)
+  
   // Add state for QA page
   const [showQAPage, setShowQAPage] = useState(false)
   const [selectedQAOption, setSelectedQAOption] = useState<string>("")
   const [qaOptions, setQaOptions] = useState<string[]>([])
   const [qaQuestion, setQaQuestion] = useState<string>("")
+  const [isQALoading, setIsQALoading] = useState(false)
   
   const handleErrorButtonTouchStart = () => {
     setIsErrorButtonTouchActive(true);
@@ -565,60 +576,15 @@ export default function MemeGenerator() {
     }
     
     // Simulate processing time, reset state after animation completes
-    setTimeout(async () => {
+    setTimeout(() => {
       setIsBlending(false)
       setShowBlendAnimation(false)
       setIsAnimationPlaying(false)
-      // Don't reset god's bowl water level yet - keep it for QA page display
-      // It will be reset when user clicks "BLEND IT" on QA page
+      // Don't reset god's bowl water level yet - keep it for theme selection page display
       saveWaterLevel()
       
-      try {
-        // Fetch question and options from backend
-        const questionResponse = await fetch('/api/get_question', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            user_id: localStorage.getItem('user_uid')
-          }),
-        });
-
-        if (!questionResponse.ok) {
-          const errorData = await questionResponse.json();
-          console.error('Failed to fetch question:', errorData.error_msg);
-          
-          // Show error and don't proceed to QA page
-          showError(errorData.error_msg || 'Failed to load questions. Please try again.');
-          return;
-        }
-
-        const questionData = await questionResponse.json();
-        
-        if (questionData.code === 0 && questionData.ret) {
-          // Extract question and options from the response
-          const { question, option } = questionData.ret;
-          
-          // Only show QA page if there are options
-          if (option && option.length > 0) {
-            setQaQuestion(question || "Who is the target object of this sarcasm?")
-            setQaOptions(option)
-            setShowQAPage(true)
-          } else {
-            // Skip QA page and go directly to template selection
-            // Reset water level before navigating
-            setGodWaterLevel(0)
-            router.push("/template-selection")
-          }
-        } else {
-          // If API returns error code, show error
-          showError(questionData.error_msg || 'Failed to load questions. Please try again.');
-        }
-      } catch (error) {
-        console.error('Error fetching question:', error);
-        showError('Network error. Please check your connection and try again.');
-      }
+      // Show theme selection page
+      setShowThemeSelection(true)
     }, 1500)
   }
 
@@ -633,6 +599,131 @@ export default function MemeGenerator() {
     }, 300)
   }
 
+  // Theme selection button handlers
+  const handleThemeButtonTouchStart = () => {
+    setIsThemeButtonTouchActive(true)
+  }
+
+  const handleThemeButtonTouchEnd = () => {
+    setTimeout(() => {
+      setIsThemeButtonTouchActive(false)
+    }, 300)
+  }
+
+  // QA button handlers
+  const handleQAButtonTouchStart = () => {
+    setIsQAButtonTouchActive(true)
+  }
+
+  const handleQAButtonTouchEnd = () => {
+    setTimeout(() => {
+      setIsQAButtonTouchActive(false)
+    }, 300)
+  }
+
+  // Recommended themes
+  const recommendedThemes = [
+    "Friendship", "Health", "Food",
+    "Socializing", "Study", "Social Phenomena",
+    "Gaming", "Movies", "Life"
+  ]
+  
+  const moreThemes = [
+    "Travel", "Technology", "Sports",
+    "Music", "Art", "Fashion",
+    "Politics", "Science", "Nature"
+  ]
+
+  // Handle theme selection
+  const handleThemeClick = (theme: string) => {
+    setSelectedThemes(prev => {
+      if (prev.includes(theme)) {
+        // Deselect if already selected
+        return prev.filter(t => t !== theme)
+      } else if (prev.length < 3) {
+        // Select if less than 3 themes selected
+        return [...prev, theme]
+      } else {
+        // If already 3 themes selected, show warning
+        showError('You can select up to 3 themes. Please deselect one to choose another.')
+        return prev
+      }
+    })
+  }
+
+  // Handle theme selection next button
+  const handleThemeNext = async () => {
+    // Validate: must select at least one theme
+    if (selectedThemes.length === 0) {
+      showError('Please select at least one theme for your meme.')
+      return
+    }
+
+    // Set loading state
+    setIsThemeLoading(true)
+
+    // Save theme data to localStorage
+    const memeData = localStorage.getItem('meme_data')
+    if (memeData) {
+      const data = JSON.parse(memeData)
+      data.themes = selectedThemes
+      localStorage.setItem('meme_data', JSON.stringify(data))
+    }
+
+    try {
+      // Fetch question and options from backend
+      const questionResponse = await fetch('/api/get_question', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: localStorage.getItem('user_uid')
+        }),
+      });
+
+      if (!questionResponse.ok) {
+        const errorData = await questionResponse.json();
+        console.error('Failed to fetch question:', errorData.error_msg);
+        
+        // Show error and don't proceed to QA page
+        showError(errorData.error_msg || 'Failed to load questions. Please try again.');
+        setIsThemeLoading(false)
+        return;
+      }
+
+      const questionData = await questionResponse.json();
+      
+      if (questionData.code === 0 && questionData.ret) {
+        // Extract question and options from the response
+        const { question, option } = questionData.ret;
+        
+        // Only show QA page if there are options
+        if (option && option.length > 0) {
+          setQaQuestion(question || "Who is the target object of this sarcasm?")
+          setQaOptions(option)
+          setIsThemeLoading(false)
+          setShowThemeSelection(false)
+          setShowQAPage(true)
+        } else {
+          // Skip QA page and go directly to template selection
+          // Reset water level before navigating
+          setGodWaterLevel(0)
+          setIsThemeLoading(false)
+          router.push("/template-selection")
+        }
+      } else {
+        // If API returns error code, show error
+        showError(questionData.error_msg || 'Failed to load questions. Please try again.');
+        setIsThemeLoading(false)
+      }
+    } catch (error) {
+      console.error('Error fetching question:', error);
+      showError('Network error. Please check your connection and try again.');
+      setIsThemeLoading(false)
+    }
+  }
+
   // Handle QA option selection
   const handleQAOptionClick = (option: string) => {
     setSelectedQAOption(option)
@@ -643,6 +734,9 @@ export default function MemeGenerator() {
     if (!selectedQAOption) {
       return
     }
+
+    // Set loading state
+    setIsQALoading(true)
 
     // Save the selected option to localStorage
     const memeData = localStorage.getItem('meme_data')
@@ -673,15 +767,20 @@ export default function MemeGenerator() {
         console.error('Failed to post answer:', errorData.error_msg)
         // Show error but still allow navigation (optional: you can choose to block navigation)
         showError(errorData.error_msg || 'Failed to submit answer. Please try again.')
+        setIsQALoading(false)
         return
       }
 
       const result = await response.json()
       console.log('Answer posted successfully:', result)
+      
+      // Add a minimum loading time to show the animation
+      await new Promise(resolve => setTimeout(resolve, 1500))
     } catch (error) {
       console.error('Error posting answer:', error)
       // Show error but still allow navigation (optional: you can choose to block navigation)
       showError('Network error. Please check your connection.')
+      setIsQALoading(false)
       return
     }
 
@@ -690,6 +789,7 @@ export default function MemeGenerator() {
     saveWaterLevel()
 
     // Navigate to template selection
+    setIsQALoading(false)
     router.push("/template-selection")
   }
 
@@ -1082,6 +1182,164 @@ export default function MemeGenerator() {
     </div>
   )
 
+  // Render theme selection page if showThemeSelection is true
+  if (showThemeSelection) {
+    return (
+      <div 
+        className="flex flex-col items-center max-w-md mx-auto min-h-screen bg-white py-8"
+        ref={mainAreaRef}
+        onTouchStart={handleMainTouchStart}
+        onTouchMove={handleMainTouchMove}
+        onTouchEnd={handleMainTouchEnd}
+      >
+        {/* Header */}
+        <PageHeader showLogo={true} logoSize={96} className="mb-6" />
+
+        {/* Keywords display */}
+        <InputWithDecoration 
+          value={inputValue || "Your keywords"}
+          readOnly={true}
+          className="mb-6"
+        />
+
+        {/* Title Section */}
+        <div className="w-full px-6 mb-6">
+          <h2 className="text-xl font-bold font-lexend text-[#333333] text-left mb-1">
+            LET&apos;S CHOOSE THREE!
+          </h2>
+          <p className="text-base font-lexend text-[#333333] text-left">
+            What theme do you want?
+          </p>
+        </div>
+
+        {/* Selected Themes Display */}
+        <div className="w-full px-6 mb-4">
+          <div className="w-full px-6 py-3 rounded-full bg-[#F9F9F9] font-inika min-h-[48px] flex items-center justify-center gap-2 flex-wrap">
+            {selectedThemes.length > 0 ? (
+              selectedThemes.map((theme) => (
+                <span
+                  key={theme}
+                  className="px-4 py-1.5 rounded-full bg-[#333333] text-white text-sm font-inika"
+                >
+                  {theme}
+                </span>
+              ))
+            ) : (
+              <span className="text-[#999999]">Select themes below</span>
+            )}
+          </div>
+        </div>
+
+        {/* Recommendation Section */}
+        <div className="w-full px-6 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-lexend text-[#333333]">
+              Recommendation
+            </h3>
+            {selectedThemes.length > 0 && (
+              <span className="text-sm font-lexend text-[#666666]">
+                {selectedThemes.length}/3 selected
+              </span>
+            )}
+          </div>
+          
+          {/* Theme buttons container with fixed height */}
+          <div className="h-[210px] overflow-y-auto mb-3 pr-1" style={{ scrollbarWidth: 'thin', scrollbarColor: '#CCCCCC transparent' }}>
+            <div className="grid grid-cols-3 gap-2">
+              {recommendedThemes.map((theme) => (
+                <button
+                  key={theme}
+                  onClick={() => handleThemeClick(theme)}
+                  className={`px-2 py-2.5 rounded-full font-inika text-xs transition-all duration-200 text-center whitespace-nowrap overflow-hidden text-ellipsis ${
+                    selectedThemes.includes(theme)
+                      ? "bg-[#333333] text-white"
+                      : "bg-white text-[#333333] border border-[#999999] hover:bg-[#F5F5F5]"
+                  }`}
+                >
+                  {theme}
+                </button>
+              ))}
+              
+              {/* Show more themes if expanded - also 3 per row */}
+              {showMoreThemes && moreThemes.map((theme) => (
+                <button
+                  key={theme}
+                  onClick={() => handleThemeClick(theme)}
+                  className={`px-2 py-2.5 rounded-full font-inika text-xs transition-all duration-200 text-center whitespace-nowrap overflow-hidden text-ellipsis ${
+                    selectedThemes.includes(theme)
+                      ? "bg-[#333333] text-white"
+                      : "bg-white text-[#333333] border border-[#999999] hover:bg-[#F5F5F5]"
+                  }`}
+                >
+                  {theme}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* More Theme button */}
+          <div className="flex justify-center">
+            <button
+              onClick={() => setShowMoreThemes(!showMoreThemes)}
+              className="text-[#000000] font-lexend text-sm flex items-center gap-1 hover:text-[#666666] transition-colors duration-200"
+            >
+              <span className="text-lg">+</span> {showMoreThemes ? "See Recommendation" : "More Theme"}
+            </button>
+          </div>
+        </div>
+
+        {/* Spacer to maintain button position */}
+        <div className="flex-grow" style={{ minHeight: '5px' }}></div>
+
+        {/* Next button */}
+        <div className="w-full mb-6 px-6">
+          <ActionButton 
+            text="NEXT"
+            onClick={handleThemeNext}
+            disabled={isThemeLoading}
+            isLoading={isThemeLoading}
+            isTouchActive={isThemeButtonTouchActive}
+            onTouchStart={handleThemeButtonTouchStart}
+            onTouchEnd={handleThemeButtonTouchEnd}
+            variant="enhanced"
+          />
+        </div>
+
+        {/* Scroll hint */}
+        <ScrollHint onClick={toggleGallery} />
+
+        {/* Gallery Section */}
+        <MemeGallery 
+          showGallery={showGallery}
+          galleryPosition={galleryPosition}
+          scrollY={scrollY}
+          scrollThreshold={scrollThreshold}
+          dragConstraints={dragConstraints}
+          isDraggingGallery={isDraggingGallery}
+          onScroll={handleGalleryScroll}
+          onDragStart={() => setIsDraggingGallery(true)}
+          onDragEnd={handleGalleryDragEnd}
+          onTouchStart={handleGalleryTouchStart}
+          onTouchMove={handleGalleryTouchMove}
+          onTouchEnd={handleGalleryTouchEnd}
+          onToggleGallery={toggleGallery}
+        />
+
+        {/* Error Toast Notification */}
+        <AnimatePresence>
+          {showErrorToast && (
+            <ErrorToast 
+              message={errorMessage}
+              isVisible={showErrorToast}
+              onClose={handleCloseErrorToast}
+              autoHideDuration={5000}
+            />
+          )}
+        </AnimatePresence>
+      </div>
+    )
+  }
+
   // Render QA page if showQAPage is true
   if (showQAPage) {
     return (
@@ -1153,7 +1411,11 @@ export default function MemeGenerator() {
           <ActionButton 
             text="BLEND IT"
             onClick={handleQANext}
-            disabled={!selectedQAOption}
+            disabled={!selectedQAOption || isQALoading}
+            isLoading={isQALoading}
+            isTouchActive={isQAButtonTouchActive}
+            onTouchStart={handleQAButtonTouchStart}
+            onTouchEnd={handleQAButtonTouchEnd}
             variant="enhanced"
           />
         </div>
