@@ -192,7 +192,7 @@ export default function GenerationResult() {
               src={generatedImage} 
               alt="Generated Meme" 
               fill 
-              className="object-cover"
+              className="object-contain"
               onError={() => {
                 console.error('Failed to load generated image');
                 setGeneratedImage("/template1.jpg");

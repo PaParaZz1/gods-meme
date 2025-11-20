@@ -597,16 +597,8 @@ export default function MemeGenerator() {
         const questionData = await questionResponse.json();
         
         if (questionData.code === 0 && questionData.ret) {
-          // Extract question, options and tag from the response
-          const { question, option, tag } = questionData.ret;
-          
-          // Save the tag to localStorage for later use when submitting answer
-          const currentMemeData = localStorage.getItem('meme_data')
-          if (currentMemeData) {
-            const data = JSON.parse(currentMemeData)
-            data.qaTag = tag || 'general'
-            localStorage.setItem('meme_data', JSON.stringify(data))
-          }
+          // Extract question and options from the response
+          const { question, option } = questionData.ret;
           
           // Only show QA page if there are options
           if (option && option.length > 0) {
@@ -1311,7 +1303,7 @@ export default function MemeGenerator() {
                 msOverflowStyle: 'none',
               }}
             >
-              <div className="flex gap-2 pb-1">
+              <div className="flex ml-3 gap-2 pb-1">
                 {currentTabContent.items.map((item, index) => (
                   <motion.div
                     key={item} 
