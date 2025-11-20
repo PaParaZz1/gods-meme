@@ -125,7 +125,7 @@ export default function GenerationResult() {
   // Handle element input submission
   const handleElementSubmit = () => {
     if (elementInput.trim() && !isRegenerating) {
-      const detailModify = showElementInput ? "add" : "remove";
+      const detailModify = showElementInput ? "add" : "minus";
       const inputValue = elementInput.trim();
       
       // Clear input and hide input sections first
