@@ -276,8 +276,7 @@ export default function TemplateEditor() {
       <TutorialModal 
         isOpen={showTutorial} 
         onClose={() => setShowTutorial(false)} 
-        imageSrc="/tutorial_template.png"
-        text="Choose a recommended meme template, or upload your own meme with text."
+        initialStep={3} // Index 3 corresponds to tutorial_template.png
       />
 
       {/* Template Preview with navigation arrows */}
