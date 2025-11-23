@@ -3,9 +3,11 @@
 import Image from "next/image"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import TutorialModal from "./shared/tutorial-modal"
 
 export default function FinalResult() {
   const router = useRouter()
+  const [showTutorial, setShowTutorial] = useState(false)
   const [keywords, setKeywords] = useState("FUNNY, HUMOROUS, JOKE")
   const [tags, setTags] = useState("happiness, love")
   
@@ -188,11 +190,21 @@ export default function FinalResult() {
         <div className="flex-1"></div>
         <h1 className="text-xl font-inika font-bold flex-1 text-center whitespace-nowrap">MEME Creation</h1>
         <div className="flex-1 flex justify-end">
-          <button className="w-6 h-6 bg-[#333333] rounded-full flex items-center justify-center text-white text-xl">
+          <button 
+            onClick={() => setShowTutorial(true)}
+            className="w-6 h-6 bg-[#333333] rounded-full flex items-center justify-center text-white text-xl hover:bg-[#555555] transition-colors"
+          >
             ?
           </button>
         </div>
       </div>
+
+      {/* Tutorial Modal */}
+      <TutorialModal 
+        isOpen={showTutorial} 
+        onClose={() => setShowTutorial(false)} 
+        initialStep={5} // Index 5 corresponds to tutorial_result.png
+      />
 
       {/* Dark background container for image and buttons with shadow */}
       <div 

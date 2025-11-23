@@ -4,9 +4,11 @@ import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import TutorialModal from "./shared/tutorial-modal"
 
 export default function GenerationResult() {
   const router = useRouter()
+  const [showTutorial, setShowTutorial] = useState(false)
   const [generatedImage, setGeneratedImage] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -179,11 +181,20 @@ export default function GenerationResult() {
           <div className="flex-1"></div>
           <h1 className="text-xl font-inika font-bold flex-1 text-center whitespace-nowrap">MEME Creation</h1>
           <div className="flex-1 flex justify-end">
-            <button className="w-6 h-6 bg-[#333333] rounded-full flex items-center justify-center text-white text-xl">
+            <button 
+              onClick={() => setShowTutorial(true)}
+              className="w-6 h-6 bg-[#333333] rounded-full flex items-center justify-center text-white text-xl hover:bg-[#555555] transition-colors"
+            >
               ?
             </button>
           </div>
         </div>
+
+        <TutorialModal 
+          isOpen={showTutorial} 
+          onClose={() => setShowTutorial(false)} 
+          initialStep={4} // Index 4 corresponds to tutorial_result.png
+        />
 
         {/* Generated meme result */}
         <div className="flex-1 flex items-center justify-center px-10 max-h-[360px]">

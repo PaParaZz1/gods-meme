@@ -12,6 +12,7 @@ import CharacterDisplay from "./shared/character-display"
 import ActionButton from "./shared/action-button"
 import ScrollHint from "./shared/scroll-hint"
 import MemeGallery from "./shared/meme-gallery"
+import TutorialModal from "./shared/tutorial-modal"
 
 // Define types to solve index signature problems
 type TabKey = "emotion" | "intention" | "style";
@@ -27,6 +28,11 @@ export default function MemeGenerator() {
   const [isRegistering, setIsRegistering] = useState(true)
   const [registrationError, setRegistrationError] = useState("")
   const [registrationStep, setRegistrationStep] = useState("Generating your divine ID...")
+
+  // Tutorial state
+  const [showTutorial, setShowTutorial] = useState(false)
+  // Add state to track if it's the first tutorial show
+  const [isFirstTutorial, setIsFirstTutorial] = useState(false)
   
   // Existing states
   const [selectedTab, setSelectedTab] = useState("emotion")
@@ -1173,7 +1179,10 @@ export default function MemeGenerator() {
         // Short delay to show success message
         setTimeout(() => {
           setIsRegistering(false)
-        }, 1000)
+          // Show tutorial for new users
+          setShowTutorial(true)
+          setIsFirstTutorial(true)
+        }, 300)
 
       } catch (error) {
         console.error('Registration error:', error)
@@ -1245,7 +1254,19 @@ export default function MemeGenerator() {
         onTouchEnd={handleMainTouchEnd}
       >
         {/* Header */}
-        <PageHeader showLogo={true} logoSize={96} className="mb-6" />
+        <PageHeader 
+          showLogo={true} 
+          logoSize={96} 
+          className="mb-6" 
+          onTutorialClick={() => setShowTutorial(true)}
+        />
+
+        {/* Tutorial Modal */}
+        <TutorialModal 
+          isOpen={showTutorial} 
+          onClose={() => setShowTutorial(false)} 
+          initialStep={2} // Index 2 corresponds to tutorial_theme.png
+        />
 
         {/* Keywords display */}
         <InputWithDecoration 
@@ -1403,7 +1424,19 @@ export default function MemeGenerator() {
         onTouchEnd={handleMainTouchEnd}
       >
         {/* Header */}
-        <PageHeader showLogo={true} logoSize={96} className="mb-6" />
+        <PageHeader 
+          showLogo={true} 
+          logoSize={96} 
+          className="mb-6" 
+          onTutorialClick={() => setShowTutorial(true)}
+        />
+
+        {/* Tutorial Modal */}
+        <TutorialModal 
+          isOpen={showTutorial} 
+          onClose={() => setShowTutorial(false)} 
+          initialStep={1} // Index 1 corresponds to tutorial_qa.png
+        />
 
         {/* Keywords display */}
         <InputWithDecoration 
@@ -1504,7 +1537,23 @@ export default function MemeGenerator() {
       onTouchStart={handleMainTouchStart}
     >
       {/* Header */}
-      <PageHeader showLogo={true} logoSize={96} className="pt-8 xs:pt-4" />
+      <PageHeader 
+        showLogo={true} 
+        logoSize={96} 
+        className="pt-8 xs:pt-4" 
+        onTutorialClick={() => setShowTutorial(true)}
+      />
+
+      {/* Tutorial Modal */}
+      <TutorialModal 
+        isOpen={showTutorial} 
+        onClose={() => {
+          setShowTutorial(false)
+          setIsFirstTutorial(false)
+        }} 
+        initialStep={0}
+        showNextButton={isFirstTutorial}
+      />
 
       {/* Search Input with curved lines */}
       <InputWithDecoration 

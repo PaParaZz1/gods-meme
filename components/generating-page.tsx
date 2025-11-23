@@ -177,12 +177,6 @@ export default function GeneratingPage() {
 
   return (
     <div className="flex flex-col items-center min-h-screen bg-white">
-      {/* Question mark button in top right corner */}
-      <div className="w-full flex justify-end p-8 pr-6">
-        <button className="w-6 h-6 bg-[#333333] rounded-full flex items-center justify-center text-white text-xl">
-          ?
-        </button>
-      </div>
       
       {/* Main content - centered vertically and horizontally */}
       <div className="flex-1 flex flex-col items-center justify-center w-[75%] -mt-16">

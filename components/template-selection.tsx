@@ -5,12 +5,14 @@ import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { X, ChevronLeft, ChevronRight } from "lucide-react"
+import TutorialModal from "./shared/tutorial-modal"
 
 interface HeaderProps {
   onBack: () => void
+  onTutorialClick: () => void
 }
 
-function Header({ onBack }: HeaderProps) {
+function Header({ onBack, onTutorialClick }: HeaderProps) {
     return (
       <div className="flex items-center justify-between p-6 px-6 xs:p-4 xs:px-4">
         <button 
@@ -26,7 +28,10 @@ function Header({ onBack }: HeaderProps) {
           />
           <span className="text-xl font-inika font-bold">Choose a template</span>
         </button>
-        <button className="w-6 h-6 bg-[#333333] rounded-full flex items-center justify-center text-white text-xl">
+        <button 
+          onClick={onTutorialClick}
+          className="w-6 h-6 bg-[#333333] rounded-full flex items-center justify-center text-white text-xl hover:bg-[#555555] transition-colors"
+        >
           ?
         </button>
       </div>
@@ -35,6 +40,7 @@ function Header({ onBack }: HeaderProps) {
 
 export default function TemplateEditor() {
   const router = useRouter()
+  const [showTutorial, setShowTutorial] = useState(false)
   const [currentTemplate, setCurrentTemplate] = useState(0)
   const [isFullImageOpen, setIsFullImageOpen] = useState(false)
   const [fullImageSrc, setFullImageSrc] = useState("")
@@ -261,7 +267,18 @@ export default function TemplateEditor() {
   return (
     <div className="flex flex-col max-w-md mx-auto min-h-screen">
       {/* Header */}
-      <Header onBack={() => router.push("/meme-generator")} />
+      <Header 
+        onBack={() => router.push("/meme-generator")} 
+        onTutorialClick={() => setShowTutorial(true)}
+      />
+
+      {/* Tutorial Modal */}
+      <TutorialModal 
+        isOpen={showTutorial} 
+        onClose={() => setShowTutorial(false)} 
+        imageSrc="/tutorial_template.png"
+        text="Choose a recommended meme template, or upload your own meme with text."
+      />
 
       {/* Template Preview with navigation arrows */}
       <div className="px-6 py-4 xs:px-4 xs:py-3 flex justify-center relative">

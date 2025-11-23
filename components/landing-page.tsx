@@ -83,6 +83,7 @@ export default function LandingPage() {
     <div className={`flex flex-col items-center w-full transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
       {/* Top section with cat illustration - fixed at top */}
       <div className="w-full bg-[#333333] fixed top-0 left-0 right-0 z-10" style={{ borderBottomLeftRadius: '75% 18%', borderBottomRightRadius: '75% 18%' }}>
+        
         <div className="flex justify-center items-center w-full">
           {/* Cat logo - using GIF animation that plays once */}
           <div className={`flex justify-center items-center w-full transition-all duration-300 ease-in-out transform ${showLogo ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>

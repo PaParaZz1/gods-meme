@@ -6,18 +6,23 @@ interface PageHeaderProps {
   showLogo?: boolean
   logoSize?: number
   className?: string
+  onTutorialClick?: () => void
 }
 
 export default function PageHeader({ 
   showLogo = true, 
   logoSize = 96,
-  className = ""
+  className = "",
+  onTutorialClick
 }: PageHeaderProps) {
   return (
     <div className={`w-full flex flex-col items-center relative px-6 ${className}`}>
       {/* Question mark button positioned absolutely to the right */}
-      <div className="absolute right-6 top-2">
-        <button className="w-6 h-6 bg-[#333333] rounded-full flex items-center justify-center text-white text-xl">
+      <div className="absolute right-6 top-10">
+        <button 
+          onClick={onTutorialClick}
+          className="w-6 h-6 bg-[#333333] rounded-full flex items-center justify-center text-white text-xl hover:bg-[#555555] transition-colors"
+        >
           ?
         </button>
       </div>
