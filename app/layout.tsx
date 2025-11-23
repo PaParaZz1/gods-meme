@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Inika, Phudu, Lexend } from "next/font/google"
 import "./globals.css"
 
@@ -32,6 +32,13 @@ export default function RootLayout({
   )
 }
 
+export const viewport: Viewport = {
+  themeColor: '#333333',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+}
+
 export const metadata: Metadata = {
   title: "God's Meme",
   description: "A meme generator that delivers memes so perfect, you'll question free will itself.",
@@ -46,11 +53,5 @@ export const metadata: Metadata = {
     ],
   },
   manifest: '/site.webmanifest',
-  themeColor: '#333333',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-  },
 }
 
