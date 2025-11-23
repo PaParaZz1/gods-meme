@@ -576,12 +576,15 @@ export default function MemeGenerator() {
     }
     
     // Simulate processing time, reset state after animation completes
-    setTimeout(() => {
+    setTimeout(async () => {
       setIsBlending(false)
       setShowBlendAnimation(false)
       setIsAnimationPlaying(false)
       // Don't reset god's bowl water level yet - keep it for theme selection page display
       saveWaterLevel()
+      
+      // Fetch recommended themes before showing theme selection page
+      await fetchRecommendedThemes()
       
       // Show theme selection page
       setShowThemeSelection(true)
@@ -621,18 +624,67 @@ export default function MemeGenerator() {
     }, 300)
   }
 
-  // Recommended themes
-  const recommendedThemes = [
+  // Recommended themes - will be dynamically loaded from API
+  const [recommendedThemes, setRecommendedThemes] = useState<string[]>([
     "Friendship", "Health", "Food",
     "Socializing", "Study", "Social Phenomena",
     "Gaming", "Movies", "Life"
-  ]
+  ])
   
-  const moreThemes = [
+  const [moreThemes, setMoreThemes] = useState<string[]>([
     "Travel", "Technology", "Sports",
     "Music", "Art", "Fashion",
     "Politics", "Science", "Nature"
-  ]
+  ])
+
+  // Function to fetch recommended themes from backend
+  const fetchRecommendedThemes = async () => {
+    try {
+      const memeData = localStorage.getItem('meme_data')
+      if (!memeData) return
+      
+      const data = JSON.parse(memeData)
+      const keywordsList = data.keywords || []
+      
+      // Call the recommendation API
+      const response = await fetch('/api/recommend_scene_themes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: localStorage.getItem('user_uid'),
+          keywords: keywordsList,
+          top_k: 18  // Get 18 themes total (9 for recommended + 9 for more)
+        }),
+      })
+      
+      if (!response.ok) {
+        console.error('Failed to fetch recommended themes')
+        return
+      }
+      
+      const result = await response.json()
+      
+      if (result.code === 0 && result.ret && Array.isArray(result.ret)) {
+        // Helper function to convert to Title Case
+        const toTitleCase = (str: string) => {
+          return str.replace(
+            /\w\S*/g,
+            (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+          )
+        }
+
+        // Split the results into recommended and more themes and format them
+        const themes = result.ret.map((theme: string) => toTitleCase(theme))
+        setRecommendedThemes(themes.slice(0, 9))
+        setMoreThemes(themes.slice(9, 18))
+      }
+    } catch (error) {
+      console.error('Error fetching recommended themes:', error)
+      // Keep default themes if API fails
+    }
+  }
 
   // Handle theme selection
   const handleThemeClick = (theme: string) => {
