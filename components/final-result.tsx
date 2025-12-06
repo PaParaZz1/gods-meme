@@ -17,6 +17,9 @@ export default function FinalResult() {
   // Add state for success popup
   const [showSuccessPopup, setShowSuccessPopup] = useState(false)
   
+  // Add state for upload success popup
+  const [showUploadSuccessPopup, setShowUploadSuccessPopup] = useState(false)
+  
   // Add state for share modal
   const [showShareModal, setShowShareModal] = useState(false)
   const [isShareModalClosing, setIsShareModalClosing] = useState(false)
@@ -117,6 +120,19 @@ export default function FinalResult() {
     } catch (error) {
       console.error('Error downloading meme:', error)
     }
+  }
+
+  // Add function to upload meme (placeholder for backend integration)
+  const handleUploadMeme = () => {
+    // Show upload success popup after 0.8 seconds
+    setTimeout(() => {
+      setShowUploadSuccessPopup(true)
+      
+      // Hide popup after 1.5 seconds
+      setTimeout(() => {
+        setShowUploadSuccessPopup(false)
+      }, 1500)
+    }, 800)
   }
 
   // Handle share button click
@@ -243,7 +259,8 @@ export default function FinalResult() {
               <span className="text-xs mt-1 text-white">Save</span>
             </button>
             
-            <button className="flex flex-col items-center">
+            {/* Edit button - temporarily hidden */}
+            {/* <button className="flex flex-col items-center">
               <div className="w-10 h-10 bg-[#FFFFFF] rounded-md shadow-md flex items-center justify-center">
                 <Image 
                   src="/final_result_edit.png" 
@@ -253,12 +270,15 @@ export default function FinalResult() {
                 />
               </div>
               <span className="text-xs mt-1 text-white">Edit</span>
-            </button>
+            </button> */}
           </div>
           
           {/* Right buttons group */}
           <div className="flex space-x-6">
-            <button className="flex flex-col items-center">
+            <button 
+              className="flex flex-col items-center"
+              onClick={handleUploadMeme}
+            >
                 <div className="w-10 h-10 bg-[#FFFFFF] rounded-md shadow-md flex items-center justify-center">
                 <Image 
                   src="/final_result_upload.png" 
@@ -389,6 +409,29 @@ export default function FinalResult() {
             {/* Success Text */}
             <p className="text-gray-800 text-lg font-phudu text-center">
               Save Success!
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Upload Success Popup */}
+      {showUploadSuccessPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-2xl p-8 px-12 flex flex-col items-center space-y-4 mx-8 max-w-sm w-full animate-popup">
+            {/* Success Icon */}
+            <div className="w-16 h-16 flex items-center justify-center">
+              <Image
+                src="/save_success.png"
+                alt="Success"
+                width={64}
+                height={64}
+                className="object-contain"
+              />
+            </div>
+            
+            {/* Success Text */}
+            <p className="text-gray-800 text-lg font-phudu text-center">
+              Upload Success!
             </p>
           </div>
         </div>
