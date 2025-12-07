@@ -1,11 +1,12 @@
 "use client"
 
 import { useState, useRef, useEffect, TouchEvent } from "react"
-import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { X, ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
+import { AnimatePresence } from "framer-motion"
 import TutorialModal from "./shared/tutorial-modal"
+import ErrorToast from "./error-toast"
 
 interface HeaderProps {
   onBack: () => void
@@ -52,6 +53,11 @@ export default function TemplateEditor() {
   const [nextTemplateIndex, setNextTemplateIndex] = useState<number | null>(null)
   const [templates, setTemplates] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  // Error toast states
+  const [showErrorToast, setShowErrorToast] = useState(false)
+  const [errorMessage, setErrorMessage] = useState("")
   
   const imageRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -233,6 +239,61 @@ export default function TemplateEditor() {
     }
   }, [])
 
+  // Utility function to show error toast
+  const showError = (message: string) => {
+    setShowErrorToast(false);
+    
+    setErrorMessage(message);
+    
+    setTimeout(() => {
+      setShowErrorToast(true);
+    }, 50);
+  };
+
+  // Function to handle error toast closing
+  const handleCloseErrorToast = () => {
+    setShowErrorToast(false);
+    setErrorMessage("");
+  };
+
+  // Handle upload button click
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Handle file upload
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      showError('Please upload an image file.');
+      return;
+    }
+
+    // Validate file size (e.g., max 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      showError('Image size should be less than 10MB.');
+      return;
+    }
+
+    // Create object URL for the uploaded image
+    const imageUrl = URL.createObjectURL(file);
+    
+    // Add the uploaded image to templates
+    setTemplates(prev => [...prev, imageUrl]);
+    
+    // Switch to the newly uploaded template
+    setCurrentTemplate(templates.length);
+    
+    // Reset file input
+    if (event.target) {
+      event.target.value = '';
+    }
+  };
+
   // Handle generate result - modified to jump to generating page immediately
   const handleGenerateResult = async () => {
     if (templates.length === 0) return;
@@ -242,7 +303,7 @@ export default function TemplateEditor() {
       const uid = localStorage.getItem('user_uid');
       
       if (!uid) {
-        alert('User not registered. Please return to the landing page.');
+        showError('User not registered. Please return to the landing page.');
         return;
       }
       
@@ -260,7 +321,7 @@ export default function TemplateEditor() {
       
     } catch (error) {
       console.error('Error preparing generation:', error);
-      alert('An error occurred. Please try again.');
+      showError('An error occurred. Please try again.');
     }
   };
 
@@ -542,12 +603,35 @@ export default function TemplateEditor() {
         ))}
       </div>
 
-      {/* Next button */}
-      <div className="px-6 mt-4">
+      {/* Upload and Next buttons */}
+      <div className="px-6 mt-4 flex gap-3">
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileUpload}
+          className="hidden"
+        />
+        
+        {/* Upload button */}
+        <button
+          onClick={handleUploadClick}
+          disabled={isLoading}
+          className={`flex-1 py-3 rounded-full text-center font-phudu text-lg border-2 ${
+            isLoading
+              ? "bg-gray-400 text-gray-200 cursor-not-allowed border-gray-400" 
+              : "bg-white text-[#333333] border-[#333333] hover:bg-gray-100 transition-colors"
+          }`}
+        >
+          UPLOAD
+        </button>
+        
+        {/* Next button */}
         <button
           onClick={handleGenerateResult}
           disabled={isLoading || templates.length === 0}
-          className={`block w-full py-3 rounded-full text-center font-phudu text-lg ${
+          className={`flex-1 py-3 rounded-full text-center font-phudu text-lg ${
             isLoading || templates.length === 0
               ? "bg-gray-400 text-gray-200 cursor-not-allowed" 
               : "bg-[#333333] text-white hover:bg-[#555555] transition-colors"
@@ -677,6 +761,18 @@ export default function TemplateEditor() {
           scrollbar-width: none;
         }
       `}</style>
+
+      {/* Error Toast Notification */}
+      <AnimatePresence>
+        {showErrorToast && (
+          <ErrorToast 
+            message={errorMessage}
+            isVisible={showErrorToast}
+            onClose={handleCloseErrorToast}
+            autoHideDuration={5000}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
