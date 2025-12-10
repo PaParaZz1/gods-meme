@@ -26,7 +26,7 @@ export default function ScrollHint({
       onTouchEnd={onTouchEnd}
     >
       <ChevronsDown className="w-4 h-4 text-[#666666]" />
-      <span className="text-xs text-[#666666] mt-1">Swipe up to view gallery</span>
+      <span className="text-xs text-[#666666] mt-1">Click to view gallery</span>
     </div>
   )
 }

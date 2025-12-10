@@ -97,10 +97,8 @@ export default function GenerationResult() {
   // Handle option selection
   const handleOptionSelect = (option: string) => {
     if (option === "CHANGE STYLE") {
-      closeModalWithAnimation();
-      setTimeout(() => {
-        callRegenerateAPI("style");
-      }, 300);
+      // Directly call regenerate API without waiting for modal animation
+      callRegenerateAPI("style");
       return;
     }
     
@@ -130,12 +128,8 @@ export default function GenerationResult() {
       const detailModify = showElementInput ? "add" : "minus";
       const inputValue = elementInput.trim();
       
-      // Clear input and hide input sections first
-      setElementInput("");
-      setShowElementInput(false);
-      setShowRemoveInput(false);
-      
-      // Call regenerate API with user input
+      // Directly call regenerate API with user input without clearing state first
+      // (state clearing is unnecessary since we're navigating away)
       callRegenerateAPI(detailModify, inputValue);
     }
   };

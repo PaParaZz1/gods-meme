@@ -132,7 +132,7 @@ export default function MemeGallery({
               >
                 <ChevronsUp className="w-4 h-4" color="#808080"/>
               </motion.div>
-              <span className="text-sm text-[#808080]">Swipe down to the home</span>
+              <span className="text-sm text-[#808080]">Click to the home</span>
             </div>
           </motion.div>
           

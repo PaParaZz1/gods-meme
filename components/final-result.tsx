@@ -88,21 +88,61 @@ export default function FinalResult() {
   }, [])
   
   const handleFinishCreation = () => {
+    // Save user_uid before clearing
+    const userUid = localStorage.getItem('user_uid')
+    
     // Clear all localStorage items
     localStorage.clear()
+    
+    // Restore user_uid so the user doesn't see tutorial again
+    if (userUid) {
+      localStorage.setItem('user_uid', userUid)
+    }
+    
     // Navigate to meme-generator page when finished
     router.push("/meme-generator")
   }
 
   // Add function to download meme image
-  const handleDownloadMeme = () => {
+  const handleDownloadMeme = async () => {
     try {
+      // 1. Try Web Share API first for mobile "Save to Album" support
+      if (typeof navigator !== 'undefined' && navigator.share && navigator.canShare) {
+        try {
+          const response = await fetch(generatedImage)
+          const blob = await response.blob()
+          const file = new File([blob], 'gods_meme.png', { type: blob.type })
+          
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: 'God\'s MEME',
+              text: 'Check out my meme! Created with God\'s MEME'
+            })
+            
+            // Show success popup
+            setShowSuccessPopup(true)
+            setTimeout(() => {
+              setShowSuccessPopup(false)
+            }, 1500)
+            return
+          }
+        } catch (error: any) {
+          // If user cancelled share, don't fallback to download
+          if (error.name === 'AbortError') {
+            return
+          }
+          console.log('Share failed, falling back to download:', error)
+        }
+      }
+
+      // 2. Fallback to standard download (PC or mobile fallback)
       // create a link element
       const link = document.createElement('a')
       // set the download image path - use state instead of direct localStorage access
       link.href = generatedImage
       // set the download file name
-      link.download = 'my-meme.jpg'
+      link.download = 'gods_meme.png'
       // add the link to the document
       document.body.appendChild(link)
       // simulate a click on the link
@@ -155,7 +195,7 @@ export default function FinalResult() {
     try {
       const link = document.createElement('a')
       link.href = generatedImage
-      link.download = `gods-meme-${Date.now()}.jpg`
+      link.download = 'gods_meme.png'
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
@@ -338,8 +378,8 @@ export default function FinalResult() {
             height={100} 
             className="w-full h-auto rounded-xl"
           />
-          <div className="absolute inset-0 p-4 text-white">
-            <h2 className="font-bold mb-2 text-md">Key Words</h2>
+          <div className="absolute inset-0 px-4 py-2 text-white">
+            <h2 className="font-bold mb-1 text-md">Key Words</h2>
             <p className="text-sm">{keywords}</p>
           </div>
         </div>
@@ -374,8 +414,8 @@ export default function FinalResult() {
             height={100} 
             className="w-full h-auto rounded-xl"
           />
-          <div className="absolute inset-0 p-4 text-white">
-            <h2 className="font-bold mb-2 text-md">Tags</h2>
+          <div className="absolute inset-0 px-4 py-2 text-white">
+            <h2 className="font-bold mb-1 text-md">Tags</h2>
             <p className="text-sm">{tags}</p>
           </div>
         </div>

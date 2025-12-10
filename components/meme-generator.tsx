@@ -185,6 +185,18 @@ export default function MemeGenerator() {
 
   const currentTabContent = tabContent[selectedTab as keyof typeof tabContent]
 
+  // Format display name: convert "expression of xxx" to "xxx", "entertaining" to "enter-taining"
+  // which is more readable for the user
+  const formatDisplayName = (name: string): string => {
+    if (name.startsWith("expression of ")) {
+      return name.replace("expression of ", "");
+    }
+    else if (name.startsWith("entertaining")) {
+      return name.replace("entertaining", "enter-taining");
+    }
+    return name;
+  };
+
   const getWaterLevel = (item: string) => {
     const tab = selectedTab as TabKey;
     const itemKey = item as ItemKey;
@@ -1265,7 +1277,7 @@ export default function MemeGenerator() {
         <TutorialModal 
           isOpen={showTutorial} 
           onClose={() => setShowTutorial(false)} 
-          initialStep={2} // Index 2 corresponds to tutorial_theme.png
+          initialStep={1} // Index 1 corresponds to tutorial_theme.png
         />
 
         {/* Keywords display */}
@@ -1435,7 +1447,7 @@ export default function MemeGenerator() {
         <TutorialModal 
           isOpen={showTutorial} 
           onClose={() => setShowTutorial(false)} 
-          initialStep={1} // Index 1 corresponds to tutorial_qa.png
+          initialStep={2} // Index 2 corresponds to tutorial_qa.png
         />
 
         {/* Keywords display */}
@@ -1459,7 +1471,7 @@ export default function MemeGenerator() {
             
             {/* Content overlay on cloud */}
             <div className="absolute inset-0 flex flex-col items-center justify-center p-6">
-              <p className="text-center text-lg font-lexend text-[#333333] mb-1">
+              <p className="text-center text-md font-lexend text-[#333333] mb-1">
                 {qaQuestion || "Who is the target object of this sarcasm?"}
               </p>
               
@@ -1752,7 +1764,7 @@ export default function MemeGenerator() {
                       )}
                       
                     </div>
-                    <span className={`text-xs font-inika text-center mt-1 ${isAnimationPlaying ? 'opacity-50' : ''}`}>{item}</span>
+                    <span className={`text-xs font-inika text-center mt-1 ${isAnimationPlaying ? 'opacity-50' : ''}`}>{formatDisplayName(item)}</span>
                   </motion.div>
                 ))}
               </div>

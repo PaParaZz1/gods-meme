@@ -10,7 +10,7 @@ export default function LandingPage() {
   const [isClicking, setIsClicking] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [isSmallMobile, setIsSmallMobile] = useState(false)
-  const [gifPlayed, setGifPlayed] = useState(false)
+  const [isTransitioning, setIsTransitioning] = useState(false)
   
   // Animation states
   const [isLoaded, setIsLoaded] = useState(false)
@@ -20,7 +20,8 @@ export default function LandingPage() {
   const [showButton, setShowButton] = useState(false)
   
   // Ref for the GIF element
-  const gifRef = useRef(null)
+  const gifRef = useRef<HTMLImageElement>(null)
+  const gifTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   // Check if device is mobile
   useEffect(() => {
@@ -48,9 +49,6 @@ export default function LandingPage() {
     const textTimer = setTimeout(() => setShowText(true), 2000)
     const buttonTimer = setTimeout(() => setShowButton(true), 3000)
     
-    // Set GIF to played after its duration 
-    const gifTimer = setTimeout(() => setGifPlayed(true), 4000)
-    
     // Clean up timers
     return () => {
       clearTimeout(loadTimer)
@@ -58,7 +56,21 @@ export default function LandingPage() {
       clearTimeout(titleTimer)
       clearTimeout(textTimer)
       clearTimeout(buttonTimer)
-      clearTimeout(gifTimer)
+    }
+  }, [])
+
+  // Handle GIF animation timing - crossfade to waiting animation after first GIF completes
+  useEffect(() => {
+    // Start crossfade transition before the GIF loops
+    // Adjust this timing to match your landing_cat.gif duration
+    gifTimerRef.current = setTimeout(() => {
+      setIsTransitioning(true)
+    }, 3600) // Start fade transition ~200ms before GIF would loop at 3800ms
+    
+    return () => {
+      if (gifTimerRef.current) {
+        clearTimeout(gifTimerRef.current)
+      }
     }
   }, [])
 
@@ -87,35 +99,41 @@ export default function LandingPage() {
         <div className="flex justify-center items-center w-full">
           {/* Cat logo - using GIF animation that plays once */}
           <div className={`flex justify-center items-center w-full transition-all duration-300 ease-in-out transform ${showLogo ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
-            {/* Show GIF initially, then switch to static image */}
-            <div className="flex justify-center w-full">
-              {!gifPlayed ? (
-                <Image 
-                  ref={gifRef}
-                  src="/landing_cat.gif" 
-                  alt="God's Meme Cat Logo Animation" 
-                  width={isSmallMobile ? 240 : 400} 
-                  height={isSmallMobile ? 200 : 320}
-                  className="transform-gpu mx-auto"
-                  style={{ 
-                    width: isSmallMobile ? '240px' : '400px',
-                    height: 'auto' 
-                  }}
-                  priority
-                />
-              ) : (
-                <Image 
-                  src="/landing_cat_waiting.gif" 
-                  alt="God's Meme Cat Logo" 
-                  width={isSmallMobile ? 240 : 400} 
-                  height={isSmallMobile ? 200 : 320}
-                  className="transform-gpu mx-auto"
-                  style={{ 
-                    width: isSmallMobile ? '240px' : '400px',
-                    height: 'auto' 
-                  }}
-                />
-              )}
+            {/* Overlapping GIFs with crossfade transition */}
+            <div className="relative flex justify-center items-center w-full overflow-hidden" style={{ 
+              width: isSmallMobile ? '240px' : '400px',
+              height: isSmallMobile ? '240px' : '380px',
+              margin: '0 auto'
+            }}>
+              {/* First GIF - intro animation */}
+              <Image 
+                key="landing-cat-intro"
+                ref={gifRef}
+                src="/landing_cat.gif" 
+                alt="God's Meme Cat Logo Animation" 
+                width={isSmallMobile ? 240 : 400} 
+                height={isSmallMobile ? 200 : 320}
+                className="transform-gpu absolute top-0 left-0 w-full h-full object-contain transition-opacity duration-500 ease-in-out"
+                style={{ 
+                  opacity: isTransitioning ? 0 : 1
+                }}
+                unoptimized
+                priority
+              />
+              
+              {/* Second GIF - waiting animation (preloaded) */}
+              <Image 
+                key="landing-cat-waiting"
+                src="/landing_cat_waiting.gif" 
+                alt="God's Meme Cat Logo" 
+                width={isSmallMobile ? 240 : 400} 
+                height={isSmallMobile ? 200 : 320}
+                className="transform-gpu absolute top-0 left-0 w-full h-full object-contain transition-opacity duration-500 ease-in-out"
+                style={{ 
+                  opacity: isTransitioning ? 1 : 0
+                }}
+                unoptimized
+              />
             </div>
           </div>
         </div>

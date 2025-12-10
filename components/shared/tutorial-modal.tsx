@@ -17,12 +17,12 @@ const TUTORIAL_STEPS = [
     text: "Welcome to God's Meme. Enter the keyword and make sure to select at least one tag under each category."
   },
   {
-    image: "/tutorial_qa.png",
-    text: "Answer God's random question — be as honest or mysterious as you like."
-  },
-  {
     image: "/tutorial_theme.png",
     text: "Pick at least one theme. Don't be greedy though — you can't choose more than three."
+  },
+  {
+    image: "/tutorial_qa.png",
+    text: "Answer God's random question — be as honest or mysterious as you like."
   },
   {
     image: "/tutorial_template.png",
