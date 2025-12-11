@@ -231,6 +231,7 @@ export default function MemeGenerator() {
       e.clientY <= godRect.bottom
     ) {
       // Dragged to god area, decrease water level
+      setGodWaterLevel(prevLevel => Math.min(prevLevel + 1, 16));
       setWaterLevels(prev => {
         const tab = selectedTab as TabKey;
         const item = draggedItem as ItemKey;
@@ -251,8 +252,6 @@ export default function MemeGenerator() {
           setShowRemoveAnimation(false);
           // Set animation playing state
           setIsAnimationPlaying(true);
-          
-          setGodWaterLevel(prevLevel => Math.min(prevLevel + 1, 16));
           
           setTimeout(() => {
             setShowAddAnimation(false);
@@ -347,6 +346,7 @@ export default function MemeGenerator() {
       touch.clientY >= godRect.top &&
       touch.clientY <= godRect.bottom
     ) {
+      setGodWaterLevel(prevLevel => Math.min(prevLevel + 1, 16));
       // Dragged to god area, decrease water level
       setWaterLevels(prev => {
         const tab = selectedTab as TabKey;
@@ -367,8 +367,6 @@ export default function MemeGenerator() {
           setShowAddAnimation(true);
           setShowRemoveAnimation(false); // Ensure remove animation is not triggered simultaneously
           setIsAnimationPlaying(true);
-          
-          setGodWaterLevel(prevLevel => Math.min(prevLevel + 1, 16));
           
           setTimeout(() => {
             setShowAddAnimation(false);
@@ -411,6 +409,8 @@ export default function MemeGenerator() {
     if (isUpdatingWaterLevel) return;
     
     setIsUpdatingWaterLevel(true);
+    // When clicking the water glass to increase water level, the bowl's water should decrease
+    setGodWaterLevel(prevLevel => Math.max(prevLevel - 1, 0));
     
     setWaterLevels(prev => {
       const tab = selectedTab as TabKey;
@@ -434,9 +434,6 @@ export default function MemeGenerator() {
       setShowRemoveAnimation(true);
       setShowAddAnimation(false);
       setIsAnimationPlaying(true);
-      
-      // When clicking the water glass to increase water level, the bowl's water should decrease
-      setGodWaterLevel(prevLevel => Math.max(prevLevel - 1, 0));
       
       setTimeout(() => {
         setShowRemoveAnimation(false);

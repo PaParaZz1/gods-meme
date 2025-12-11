@@ -71,28 +71,28 @@ const CharacterDisplay = forwardRef<HTMLDivElement, CharacterDisplayProps>(
             </div>
           )}
           
-          {/* Display water in bowl during animation */}
-          {godWaterLevel > 0 && (showAddAnimation || showRemoveAnimation) && (
-            <div className="absolute inset-0 pointer-events-none">
-              <Image 
-                src={`/water_level_${Math.min(godWaterLevel, 8)}.png`}
-                alt={`God's bowl water level ${Math.min(godWaterLevel, 8)}`}
-                width={width}
-                height={height}
-                className="object-contain opacity-70"
-              />
-            </div>
-          )}
-          
           {/* Remove animation */}
           {showRemoveAnimation && (
-            <div className="absolute inset-0">
+            <div className="absolute inset-0 z-10">
               <Image 
                 src="/god_remove_elem.gif" 
                 alt="Removing Element" 
                 width={width}
                 height={height}
                 priority 
+              />
+            </div>
+          )}
+          
+          {/* Display water in bowl during animation */}
+          {godWaterLevel > 0 && (showAddAnimation || showRemoveAnimation) && (
+            <div className="absolute inset-0 pointer-events-none z-20">
+              <Image 
+                src={`/water_level_${Math.min(godWaterLevel, 8)}.png`}
+                alt={`God's bowl water level ${Math.min(godWaterLevel, 8)}`}
+                width={width}
+                height={height}
+                className="object-contain opacity-70"
               />
             </div>
           )}
